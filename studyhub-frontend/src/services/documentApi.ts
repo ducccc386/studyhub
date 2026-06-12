@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api/v1/public-documents';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
+const API_URL = `${BASE_URL}/public-documents`;
 
 export interface PublicDocument {
   id: number;

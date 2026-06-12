@@ -13,7 +13,7 @@ const TestPayment: React.FC = () => {
     setError(null);
     try {
       // Dùng ID = 1 là ID của lớp TRIAL đã được seed sẵn trong DB
-      const response = await fetch('http://localhost:8080/api/v1/payment/confirm-hire/1', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'}/payment/confirm-hire/1`, {
         method: 'POST',
       });
       const data = await response.json();
@@ -46,7 +46,7 @@ const TestPayment: React.FC = () => {
       if (!transactionCode || paymentStatus !== 'PENDING') return;
 
       try {
-        const response = await fetch(`http://localhost:8080/api/v1/payment/status/${transactionCode}`);
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'}/payment/status/${transactionCode}`);
         const data = await response.json();
         
         if (data.status === 'SUCCESS' || data.status === 'CONFIRMED') {

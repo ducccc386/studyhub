@@ -72,7 +72,7 @@ const Homepage: React.FC = () => {
     }, 400); // 400ms delay gives enough time for 200ms-300ms CSS transitions to finish
 
     // Fetch featured courses
-    fetch('http://localhost:8080/api/v1/courses/featured')
+    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'}/courses/featured`)
       .then(res => res.json())
       .then(data => {
         setClassesToShow(Array.isArray(data) ? data : []);
@@ -80,7 +80,7 @@ const Homepage: React.FC = () => {
       .catch(err => console.error('Failed to fetch featured courses:', err));
 
     // Fetch featured testimonials
-    fetch('http://localhost:8080/api/v1/testimonials/featured')
+    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'}/testimonials/featured`)
       .then(res => res.json())
       .then(data => {
         setTestimonials(Array.isArray(data) ? data : []);

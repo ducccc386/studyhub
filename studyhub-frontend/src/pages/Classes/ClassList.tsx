@@ -16,7 +16,7 @@ const ClassList: React.FC = () => {
 
   useEffect(() => {
     // Fetch subjects
-    fetch('http://localhost:8080/api/v1/subjects')
+    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'}/subjects`)
       .then(res => res.json())
       .then(data => setSubjects(Array.isArray(data) ? data : []))
       .catch(err => console.error('Failed to fetch subjects:', err));
@@ -41,7 +41,7 @@ const ClassList: React.FC = () => {
       queryParams.append('keyword', searchKeyword);
     }
     
-    fetch(`http://localhost:8080/api/v1/courses?${queryParams.toString()}`)
+    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'}/courses?${queryParams.toString()}`)
       .then(res => res.json())
       .then(data => {
         // Sort data manually for now since backend doesn't support sortBy query param

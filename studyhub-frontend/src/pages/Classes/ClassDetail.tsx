@@ -27,7 +27,7 @@ const ClassDetail: React.FC = () => {
     }
     
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/enrollments?parentId=${userId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'}/enrollments?parentId=${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -50,7 +50,7 @@ const ClassDetail: React.FC = () => {
   };
 
   useEffect(() => {
-    fetch(`http://localhost:8080/api/v1/courses/${id}`)
+    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'}/courses/${id}`)
       .then(res => {
         if (!res.ok) throw new Error('Not found');
         return res.json();
