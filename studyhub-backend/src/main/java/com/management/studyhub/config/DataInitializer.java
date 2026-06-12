@@ -46,6 +46,9 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        log.info("✅ DataInitializer: Disabled for production deployment.");
+        if (true) return;
+        
         if (userRepository.count() > 0) {
             log.info("✅ DataInitializer: Database already has data. Skipping seed.");
             return;
