@@ -42,6 +42,7 @@ const TutorSettings = lazy(() => import('../pages/TutorPortal/TutorSettings'));
 
 const ClassWorkspace = lazy(() => import('../pages/Shared/ClassWorkspace'));
 
+const AdminClasses = lazy(() => import('../pages/AdminPortal/AdminClasses'));
 const AdminDashboard = lazy(() => import('../pages/AdminPortal/AdminDashboard'));
 const AdminUsers = lazy(() => import('../pages/AdminPortal/AdminUsers'));
 const AdminContent = lazy(() => import('../pages/AdminPortal/AdminContent'));
@@ -123,6 +124,8 @@ const AppRouter: React.FC = () => {
         <Route path="reports" element={<AdminReports />} />
         <Route path="payouts" element={<AdminPayouts />} />
         <Route path="documents" element={<DocumentManagement />} />
+        <Route path="classes" element={<AdminClasses />} />
+        <Route path="classes/:id/workspace" element={<ClassWorkspace />} />
         {/* Catch-all redirect within /admin */}
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Route>

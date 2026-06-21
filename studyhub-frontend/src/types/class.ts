@@ -3,8 +3,10 @@ export interface ClassDto {
   title: string;
   rating: string;
   reviewCount?: number;
+  totalReviews?: number;
   location: string;
   locationType: string; // e.g. 'location_on', 'videocam'
+  tutorId: number;
   tutorName: string;
   tutorDesc: string;
   tutorAvatar: string;

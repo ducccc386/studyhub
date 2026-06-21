@@ -38,7 +38,8 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOriginPatterns(Arrays.asList("*")); // Allow any origin
+        // FIXME: Thay đổi "*" thành domain cụ thể của frontend khi deploy lên production (VD: https://studyhub.vn)
+        config.setAllowedOriginPatterns(Arrays.asList("*")); // Allow any origin in dev
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         source.registerCorsConfiguration("/**", config);

@@ -33,10 +33,16 @@ public class StudyMaterial {
     @Column(length = 50)
     private String fileType; // pdf, docx, png, jpg...
 
+    @Column(name = "material_type", length = 30)
+    private String materialType; // OFFICIAL, REFERENCE
+
     private LocalDateTime uploadedAt;
 
     @PrePersist
     protected void onCreate() {
         uploadedAt = LocalDateTime.now();
+        if (materialType == null) {
+            materialType = "REFERENCE";
+        }
     }
 }

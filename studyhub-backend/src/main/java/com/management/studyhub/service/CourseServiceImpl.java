@@ -110,6 +110,7 @@ public class CourseServiceImpl implements CourseService {
         dto.setReviewCount(course.getReviewCount() != null ? course.getReviewCount() : 0);
 
         if (course.getTutor() != null) {
+            dto.setTutorId(course.getTutor().getId());
             dto.setTutorName(course.getTutor().getFullName());
             dto.setTutorDesc(course.getTutor().getIntroduction() != null ? course.getTutor().getIntroduction() : "Gia sư tâm huyết");
             dto.setTutorAvatar(course.getTutor().getAvatarUrl());

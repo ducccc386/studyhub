@@ -2,6 +2,7 @@ import { BrowserRouter } from 'react-router-dom';
 import AppRouter from './routes/AppRouter';
 import ScrollToTop from './components/Shared/ScrollToTop';
 import { Toaster, toast } from 'react-hot-toast';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Ghi đè hàm alert mặc định của trình duyệt để sử dụng giao diện toast xịn xò
 window.alert = (message?: any) => {
@@ -19,35 +20,37 @@ window.alert = (message?: any) => {
 
 function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <Toaster 
-        position="top-right" 
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#333',
-            color: '#fff',
-            padding: '16px',
-            borderRadius: '10px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-          },
-          success: {
-            iconTheme: {
-              primary: '#4ade80',
-              secondary: '#fff',
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ScrollToTop />
+        <Toaster 
+          position="top-right" 
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#333',
+              color: '#fff',
+              padding: '16px',
+              borderRadius: '10px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
             },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
+            success: {
+              iconTheme: {
+                primary: '#4ade80',
+                secondary: '#fff',
+              },
             },
-          },
-        }}
-      />
-      <AppRouter />
-    </BrowserRouter>
+            error: {
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
+        <AppRouter />
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

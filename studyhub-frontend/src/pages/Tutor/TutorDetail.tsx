@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../utils/api';
@@ -42,6 +42,7 @@ const TutorDetail: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -190,19 +191,37 @@ const TutorDetail: React.FC = () => {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {tutor.universityName && (
-                    <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex gap-4">
+                    <button 
+                      onClick={() => {
+                        if (!tutor.degreeImageUrl) return;
+                        if (!isLoggedIn) {
+                          alert('Vui lòng đăng nhập để xem chi tiết bằng cấp của gia sư.');
+                          navigate('/login');
+                          return;
+                        }
+                        setSelectedImage(tutor.degreeImageUrl);
+                      }}
+                      className={`bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex gap-4 text-left w-full ${tutor.degreeImageUrl ? 'hover:shadow-md transition-shadow cursor-pointer' : 'cursor-default'}`}>
                       <div className="w-12 h-12 bg-primary-fixed rounded-lg flex items-center justify-center flex-shrink-0">
                         <span className="material-symbols-outlined text-on-primary-fixed-variant">history_edu</span>
                       </div>
                       <div>
                         <h3 className="font-label-md text-label-md text-on-surface">{tutor.major || 'Sinh viên đại học'}</h3>
                         <p className="text-body-sm text-on-surface-variant">{tutor.universityName}</p>
+                        {tutor.degreeImageUrl && <p className="text-body-sm text-primary hover:underline mt-1">Xem bằng cấp / thẻ sinh viên</p>}
                       </div>
-                    </div>
+                    </button>
                   )}
                   {tutor.certificates?.map((cert, i) => (
-                    <a key={i} href={cert} target="_blank" rel="noreferrer"
-                      className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex gap-4 hover:shadow-md transition-shadow">
+                    <button key={i} onClick={() => {
+                        if (!isLoggedIn) {
+                          alert('Vui lòng đăng nhập để xem chi tiết chứng chỉ của gia sư.');
+                          navigate('/login');
+                          return;
+                        }
+                        setSelectedImage(cert);
+                      }}
+                      className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex gap-4 hover:shadow-md transition-shadow text-left w-full">
                       <div className="w-12 h-12 bg-primary-fixed rounded-lg flex items-center justify-center flex-shrink-0">
                         <span className="material-symbols-outlined text-on-primary-fixed-variant">verified</span>
                       </div>
@@ -210,7 +229,7 @@ const TutorDetail: React.FC = () => {
                         <h3 className="font-label-md text-label-md text-on-surface">Chứng chỉ #{i + 1}</h3>
                         <p className="text-body-sm text-primary hover:underline">Xem chứng chỉ</p>
                       </div>
-                    </a>
+                    </button>
                   ))}
                 </div>
               </section>
@@ -321,6 +340,16 @@ const TutorDetail: React.FC = () => {
           </aside>
         </div>
       </main>
+
+      {/* Image Viewer Popup */}
+      {selectedImage && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onClick={() => setSelectedImage(null)}>
+          <button className="absolute top-4 right-4 text-white hover:text-gray-300 p-2" onClick={() => setSelectedImage(null)}>
+            <span className="material-symbols-outlined text-4xl">close</span>
+          </button>
+          <img src={selectedImage} alt="Phóng to" className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" onClick={e => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   );
 };

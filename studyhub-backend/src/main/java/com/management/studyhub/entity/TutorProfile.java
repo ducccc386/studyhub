@@ -30,6 +30,9 @@ public class TutorProfile {
     private String avatarUrl;
     
     @Column(columnDefinition = "LONGTEXT")
+    private String portraitUrl;
+    
+    @Column(columnDefinition = "LONGTEXT")
     private String idCardFrontUrl;
     
     @Column(columnDefinition = "LONGTEXT")

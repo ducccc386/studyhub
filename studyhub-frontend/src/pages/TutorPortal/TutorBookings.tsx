@@ -80,7 +80,7 @@ const TutorBookings: React.FC = () => {
           bookings.map((booking) => (
             <div key={booking.id} className="bg-surface rounded-2xl border border-outline-variant p-6 shadow-sm flex flex-col hover:border-primary/30 transition-colors">
               <div className="flex items-start gap-4 mb-4">
-                <img src={booking.parentAvatarUrl || 'https://via.placeholder.com/150'} alt="Parent" className="w-12 h-12 rounded-full object-cover border border-outline-variant" />
+                <img src={booking.parentAvatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(booking.parentName || 'User')}&background=random`} alt="Parent" className="w-12 h-12 rounded-full object-cover border border-outline-variant" />
                 <div>
                   <h3 className="font-bold text-on-surface">{booking.parentName}</h3>
                   <p className="text-xs text-on-surface-variant">{new Date(booking.createdAt).toLocaleDateString('vi-VN')}</p>

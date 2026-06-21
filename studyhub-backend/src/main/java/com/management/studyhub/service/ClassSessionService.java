@@ -1,14 +1,18 @@
 package com.management.studyhub.service;
 
 import com.management.studyhub.dto.ClassSessionDTO;
+import com.management.studyhub.dto.ClassSyllabusDTO;
+import com.management.studyhub.dto.SyllabusSessionDTO;
 import com.management.studyhub.entity.Applicant;
 import com.management.studyhub.entity.ClassSession;
 import com.management.studyhub.entity.JobPosting;
+import com.management.studyhub.entity.SyllabusSession;
 import com.management.studyhub.entity.enums.ClassSessionStatus;
 import com.management.studyhub.repository.ApplicantRepository;
 import com.management.studyhub.repository.ClassSessionRepository;
 import com.management.studyhub.repository.JobPostingRepository;
 import com.management.studyhub.repository.ParentRepository;
+import com.management.studyhub.repository.SyllabusSessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +28,7 @@ public class ClassSessionService {
     private final ApplicantRepository applicantRepository;
     private final JobPostingRepository jobPostingRepository;
     private final ParentRepository parentRepository;
+    private final SyllabusSessionRepository syllabusSessionRepository;
 
     /**
      * Phụ huynh chấp nhận 1 ứng viên:
@@ -110,6 +115,16 @@ public class ClassSessionService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Admin: lấy tất cả lớp học trong hệ thống
+     */
+    public List<ClassSessionDTO> getAllSessions() {
+        return classSessionRepository.findAll()
+                .stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
     public ClassSessionDTO getSessionById(Long id) {
         ClassSession session = classSessionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("ClassSession not found"));
@@ -177,6 +192,8 @@ public class ClassSessionService {
         dto.setStatus(s.getStatus() != null ? s.getStatus().name() : null);
         dto.setPricePerSession(s.getPricePerSession());
         dto.setProgress(s.getProgress());
+        dto.setSyllabusType(s.getSyllabusType());
+        dto.setSyllabusStatus(s.getSyllabusStatus());
         dto.setCreatedAt(s.getCreatedAt());
         dto.setNextSessionDate(s.getNextSessionDate());
 
@@ -185,6 +202,79 @@ public class ClassSessionService {
             dto.setParentName(s.getParentName());
         }
 
+        return dto;
+    }
+
+    @Transactional(readOnly = true)
+    public ClassSyllabusDTO getSyllabus(Long classSessionId) {
+        ClassSession session = classSessionRepository.findById(classSessionId)
+                .orElseThrow(() -> new RuntimeException("Lớp học không tồn tại"));
+
+        ClassSyllabusDTO dto = new ClassSyllabusDTO();
+        dto.setSyllabusType(session.getSyllabusType() != null ? session.getSyllabusType() : "STANDARD");
+        dto.setSyllabusStatus(session.getSyllabusStatus() != null ? session.getSyllabusStatus() : "APPROVED");
+
+        List<SyllabusSession> sessions = syllabusSessionRepository.findByClassSessionIdOrderBySessionNumberAsc(classSessionId);
+        dto.setSessions(sessions.stream().map(this::mapToSyllabusSessionDTO).collect(Collectors.toList()));
+        return dto;
+    }
+
+    @Transactional
+    public ClassSyllabusDTO updateSyllabus(Long classSessionId, ClassSyllabusDTO syllabusDTO) {
+        ClassSession session = classSessionRepository.findById(classSessionId)
+                .orElseThrow(() -> new RuntimeException("Lớp học không tồn tại"));
+
+        session.setSyllabusType(syllabusDTO.getSyllabusType());
+        session.setSyllabusStatus(syllabusDTO.getSyllabusStatus() != null ? syllabusDTO.getSyllabusStatus() : "DRAFT");
+        classSessionRepository.save(session);
+
+        // Delete old sessions if any
+        syllabusSessionRepository.deleteByClassSessionId(classSessionId);
+
+        if (syllabusDTO.getSessions() != null) {
+            for (SyllabusSessionDTO sd : syllabusDTO.getSessions()) {
+                SyllabusSession entity = new SyllabusSession();
+                entity.setClassSession(session);
+                entity.setSessionNumber(sd.getSessionNumber());
+                entity.setTitle(sd.getTitle());
+                entity.setContent(sd.getContent());
+                entity.setKeyKnowledge(sd.getKeyKnowledge());
+                entity.setExpectedOutcome(sd.getExpectedOutcome());
+                entity.setScheduledDate(sd.getScheduledDate());
+                syllabusSessionRepository.save(entity);
+            }
+        }
+
+        return getSyllabus(classSessionId);
+    }
+
+    @Transactional
+    public ClassSyllabusDTO submitSyllabus(Long classSessionId) {
+        ClassSession session = classSessionRepository.findById(classSessionId)
+                .orElseThrow(() -> new RuntimeException("Lớp học không tồn tại"));
+        session.setSyllabusStatus("SUBMITTED");
+        classSessionRepository.save(session);
+        return getSyllabus(classSessionId);
+    }
+
+    @Transactional
+    public ClassSyllabusDTO approveSyllabus(Long classSessionId) {
+        ClassSession session = classSessionRepository.findById(classSessionId)
+                .orElseThrow(() -> new RuntimeException("Lớp học không tồn tại"));
+        session.setSyllabusStatus("APPROVED");
+        classSessionRepository.save(session);
+        return getSyllabus(classSessionId);
+    }
+
+    private SyllabusSessionDTO mapToSyllabusSessionDTO(SyllabusSession s) {
+        SyllabusSessionDTO dto = new SyllabusSessionDTO();
+        dto.setId(s.getId());
+        dto.setSessionNumber(s.getSessionNumber());
+        dto.setTitle(s.getTitle());
+        dto.setContent(s.getContent());
+        dto.setKeyKnowledge(s.getKeyKnowledge());
+        dto.setExpectedOutcome(s.getExpectedOutcome());
+        dto.setScheduledDate(s.getScheduledDate());
         return dto;
     }
 }

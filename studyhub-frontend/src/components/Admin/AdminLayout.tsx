@@ -1,13 +1,14 @@
 import React from 'react';
-import { Outlet, Navigate, Link } from 'react-router-dom';
+import { Outlet, Navigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import AdminSideNavBar from './AdminSideNavBar';
 
 const AdminLayout: React.FC = () => {
   const { role, isLoggedIn } = useAuth();
+  const location = useLocation();
 
   if (!isLoggedIn || role !== 'admin') {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return (
@@ -21,6 +22,14 @@ const AdminLayout: React.FC = () => {
             className="w-8 h-8 rounded object-contain"
           />
           <span className="font-headline-sm text-headline-sm text-on-primary-fixed font-bold tracking-tight">StudyHub Admin</span>
+        </Link>
+        {/* Home button */}
+        <Link
+          to="/"
+          className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-on-primary-fixed text-sm font-semibold transition-all"
+        >
+          <span className="material-symbols-outlined text-[18px]">home</span>
+          Về trang chủ
         </Link>
       </header>
 

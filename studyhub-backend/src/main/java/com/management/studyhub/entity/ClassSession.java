@@ -50,6 +50,12 @@ public class ClassSession {
     private Double price;
     private Double pricePerSession;
 
+    @Column(name = "syllabus_type", length = 30)
+    private String syllabusType; // STANDARD, CUSTOM
+
+    @Column(name = "syllabus_status", length = 30)
+    private String syllabusStatus; // DRAFT, SUBMITTED, APPROVED
+
     private LocalDateTime createdAt;
     private LocalDateTime nextSessionDate;
 
@@ -62,5 +68,7 @@ public class ClassSession {
     public void prePersist() {
         if (createdAt == null) createdAt = LocalDateTime.now();
         if (progress == null) progress = 0;
+        if (syllabusType == null) syllabusType = "STANDARD";
+        if (syllabusStatus == null) syllabusStatus = "APPROVED";
     }
 }

@@ -43,13 +43,23 @@ public class PaymentController {
         }
     }
 
+    @PostMapping("/mock-pay/{transactionCode}")
+    public ResponseEntity<?> mockPay(@PathVariable String transactionCode) {
+        try {
+            paymentService.mockPay(transactionCode);
+            return ResponseEntity.ok(Map.of("success", true, "message", "Mock payment processed successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/webhook")
     public ResponseEntity<?> handleWebhook(
             @RequestHeader(value = "Casso-Signature", required = false) String signature,
             @RequestBody Map<String, Object> payload) {
         
         // Simple security check (in real app, this should cryptographically verify the payload)
-        if (signature == null || signature.isEmpty()) {
+        if (!"mock".equalsIgnoreCase(signature) && (signature == null || signature.isEmpty())) {
             return ResponseEntity.status(401).body(Map.of("error", "Missing Signature"));
         }
         

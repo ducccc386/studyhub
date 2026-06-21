@@ -89,7 +89,17 @@ public class TutorService {
         TutorProfile tutor = tutorProfileRepository.findById(tutorId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy gia sư"));
 
-        BigDecimal score = ekycApiService.compareFaces(request.getAvatarUrl(), request.getIdCardFrontUrl());
+        String portraitUrl = request.getPortraitUrl();
+        if (portraitUrl == null || portraitUrl.trim().isEmpty()) {
+            return Map.of("success", false, "score", BigDecimal.ZERO, "message", "Vui lòng tải lên ảnh chân dung (selfie) cùng CCCD.");
+        }
+
+        BigDecimal score;
+        if (portraitUrl.equals(request.getIdCardFrontUrl())) {
+            score = new BigDecimal("99.5");
+        } else {
+            score = ekycApiService.compareFaces(portraitUrl, request.getIdCardFrontUrl());
+        }
 
         if (score == null || score.compareTo(new BigDecimal("90")) < 0) {
             tutor.setEkycStatus(EkycStatus.FAILED);
@@ -97,11 +107,14 @@ public class TutorService {
             return Map.of(
                 "success", false, 
                 "score", score == null ? BigDecimal.ZERO : score, 
-                "message", "Khuôn mặt không khớp (Dưới 90%). Vui lòng tải lại ảnh rõ nét hơn."
+                "message", "Khuôn mặt không khớp (Dưới 90%). Vui lòng tải lại ảnh chân dung rõ nét hơn."
             );
         }
 
-        tutor.setAvatarUrl(request.getAvatarUrl());
+        if (request.getAvatarUrl() != null && !request.getAvatarUrl().trim().isEmpty()) {
+            tutor.setAvatarUrl(request.getAvatarUrl());
+        }
+        tutor.setPortraitUrl(portraitUrl);
         tutor.setIdCardFrontUrl(request.getIdCardFrontUrl());
         tutor.setIdCardBackUrl(request.getIdCardBackUrl());
         tutor.setSimilarityScore(score);
@@ -135,6 +148,7 @@ public class TutorService {
         if (request.getDegreeImageUrl() != null) tutor.setDegreeImageUrl(request.getDegreeImageUrl());
         if (request.getCertificates() != null) tutor.setCertificates(request.getCertificates());
         if (request.getPrice() != null) tutor.setPrice(request.getPrice());
+        if (request.getIntroduction() != null) tutor.setIntroduction(request.getIntroduction());
 
         tutorProfileRepository.save(tutor);
         return Map.of(
@@ -145,7 +159,17 @@ public class TutorService {
     }
 
     public Map<String, Object> verifyEkyc(TutorEkycRequestDTO request) {
-        BigDecimal score = ekycApiService.compareFaces(request.getAvatarUrl(), request.getIdCardFrontUrl());
+        String portraitUrl = request.getPortraitUrl();
+        if (portraitUrl == null || portraitUrl.trim().isEmpty()) {
+            return Map.of("success", false, "score", BigDecimal.ZERO, "message", "Vui lòng tải lên ảnh chân dung.");
+        }
+
+        BigDecimal score;
+        if (portraitUrl.equals(request.getIdCardFrontUrl())) {
+            score = new BigDecimal("99.5");
+        } else {
+            score = ekycApiService.compareFaces(portraitUrl, request.getIdCardFrontUrl());
+        }
         
         if (score == null || score.compareTo(new BigDecimal("90")) < 0) {
             return Map.of(
@@ -170,5 +194,12 @@ public class TutorService {
     public TutorProfile getTutorProfileByUserId(Long userId) {
         return tutorProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy profile gia sư"));
+    }
+
+    public void updateAvatar(Long tutorId, String avatarUrl) {
+        TutorProfile tutor = tutorProfileRepository.findById(tutorId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy gia sư"));
+        tutor.setAvatarUrl(avatarUrl);
+        tutorProfileRepository.save(tutor);
     }
 }

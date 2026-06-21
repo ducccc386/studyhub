@@ -30,4 +30,15 @@ public class LessonLog {
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private LessonStatus status; // SCHEDULED, PRESENT, ABSENT, CANCELLED
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private com.management.studyhub.entity.enums.ParentApprovalStatus parentApprovalStatus = com.management.studyhub.entity.enums.ParentApprovalStatus.PENDING;
+
+    private Integer parentRating;
+
+    @Column(columnDefinition = "TEXT")
+    private String parentFeedback;
+
+    private String parentFeedbackTags; // e.g., "Đúng giờ, Nhiệt tình"
 }

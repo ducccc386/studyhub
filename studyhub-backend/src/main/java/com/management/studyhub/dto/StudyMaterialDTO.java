@@ -12,5 +12,6 @@ public class StudyMaterialDTO {
     private String title;
     private String fileUrl;
     private String fileType;
+    private String materialType;
     private LocalDateTime uploadedAt;
 }

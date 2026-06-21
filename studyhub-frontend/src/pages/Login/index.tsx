@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import StudyHubLogo from '../../components/StudyHubLogo';
 import { authApi } from '../../services/authApi';
@@ -15,15 +15,25 @@ const Login: React.FC = () => {
 
   const { login, isLoggedIn, role } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   React.useEffect(() => {
     if (isLoggedIn) {
-      if (role === 'admin') navigate('/admin/dashboard');
-      else if (role === 'parent') navigate('/parent/dashboard');
-      else if (role === 'tutor') navigate('/tutor/dashboard');
-      else navigate('/');
+      const fromState = location.state as { from?: { pathname: string; search?: string } } | null;
+      const redirectTo = fromState?.from?.pathname
+        ? fromState.from.pathname + (fromState.from.search || '')
+        : '';
+
+      if (redirectTo) {
+        navigate(redirectTo, { replace: true });
+      } else {
+        if (role === 'admin') navigate('/admin/dashboard');
+        else if (role === 'parent') navigate('/parent/dashboard');
+        else if (role === 'tutor') navigate('/tutor/dashboard');
+        else navigate('/');
+      }
     }
-  }, [isLoggedIn, role, navigate]);
+  }, [isLoggedIn, role, navigate, location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,6 +91,7 @@ const Login: React.FC = () => {
             </Link>
             <Link
               to="/register"
+              state={location.state}
               style={{
                 flex: 1, textAlign: 'center', padding: '10px',
                 borderRadius: '10px',

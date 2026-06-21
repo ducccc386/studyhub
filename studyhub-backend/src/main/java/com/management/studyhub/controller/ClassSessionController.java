@@ -46,6 +46,15 @@ public class ClassSessionController {
         return ResponseEntity.ok(classSessionService.getSessionsByParent(userId));
     }
 
+    /**
+     * Admin: lấy tất cả lớp học trong hệ thống
+     * GET /api/v1/class-sessions/admin/all
+     */
+    @GetMapping("/admin/all")
+    public ResponseEntity<List<ClassSessionDTO>> getAllSessionsForAdmin() {
+        return ResponseEntity.ok(classSessionService.getAllSessions());
+    }
+
     @GetMapping("/tutor/{tutorProfileId}")
     public ResponseEntity<List<ClassSessionDTO>> getSessionsByTutor(@PathVariable Long tutorProfileId) {
         return ResponseEntity.ok(classSessionService.getSessionsByTutor(tutorProfileId));
@@ -96,6 +105,44 @@ public class ClassSessionController {
             }
             ClassSessionDTO updated = classSessionService.updateStatus(id, newStatus);
             return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{id}/syllabus")
+    public ResponseEntity<?> getSyllabus(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(classSessionService.getSyllabus(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}/syllabus")
+    public ResponseEntity<?> updateSyllabus(
+            @PathVariable Long id,
+            @RequestBody com.management.studyhub.dto.ClassSyllabusDTO dto) {
+        try {
+            return ResponseEntity.ok(classSessionService.updateSyllabus(id, dto));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/syllabus/submit")
+    public ResponseEntity<?> submitSyllabus(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(classSessionService.submitSyllabus(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/syllabus/approve")
+    public ResponseEntity<?> approveSyllabus(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(classSessionService.approveSyllabus(id));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

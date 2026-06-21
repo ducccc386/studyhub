@@ -19,6 +19,7 @@ public class CourseDto {
     private Integer reviewCount;
 
     // Tutor info
+    private Long tutorId;
     private String tutorName;
     private String tutorDesc;
     private String tutorAvatar;

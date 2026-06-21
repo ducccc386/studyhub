@@ -33,26 +33,44 @@ public class PaymentService {
         ClassSession classSession = classSessionRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Class not found"));
 
-        if (classSession.getStatus() != ClassSessionStatus.TRIAL) {
-            throw new RuntimeException("Class is not in TRIAL status");
+        ClassSessionStatus status = classSession.getStatus();
+        if (status != ClassSessionStatus.TRIAL && status != ClassSessionStatus.PENDING_PAYMENT) {
+            throw new RuntimeException("Class is not in TRIAL or PENDING_PAYMENT status");
         }
 
-        // Tạo Transaction
-        String transactionCode = "SH" + classId + System.currentTimeMillis() % 10000;
-        
-        Transaction transaction = new Transaction();
-        transaction.setClassSession(classSession);
-        transaction.setTransactionCode(transactionCode);
-        transaction.setAmount(classSession.getPrice());
-        transaction.setStatus(TransactionStatus.PENDING);
-        transactionRepository.save(transaction);
+        // Tìm transaction PENDING cũ
+        Transaction transaction = transactionRepository.findByClassSessionIdAndStatus(classId, TransactionStatus.PENDING)
+                .orElse(null);
+
+        String transactionCode;
+        if (transaction != null) {
+            transactionCode = transaction.getTransactionCode();
+        } else {
+            // Tạo Transaction mới
+            transactionCode = "SH" + classId + (System.currentTimeMillis() % 10000);
+            transaction = new Transaction();
+            transaction.setClassSession(classSession);
+            transaction.setTransactionCode(transactionCode);
+            
+            Double amount = classSession.getPrice();
+            if (amount == null || amount <= 0) {
+                // Fallback nếu price null: tính theo số buổi (ví dụ mặc định chốt 8 buổi học thử xong)
+                Double pricePerSession = classSession.getPricePerSession() != null ? classSession.getPricePerSession() : 0.0;
+                amount = pricePerSession * 8.0; 
+            }
+            transaction.setAmount(amount);
+            transaction.setStatus(TransactionStatus.PENDING);
+            transactionRepository.save(transaction);
+        }
 
         // Update Class status
-        classSession.setStatus(ClassSessionStatus.PENDING_PAYMENT);
-        classSessionRepository.save(classSession);
+        if (status == ClassSessionStatus.TRIAL) {
+            classSession.setStatus(ClassSessionStatus.PENDING_PAYMENT);
+            classSessionRepository.save(classSession);
+        }
 
         // Tạo VietQR link
-        long amountStr = classSession.getPrice() != null ? classSession.getPrice().longValue() : 0L;
+        long amountStr = transaction.getAmount() != null ? transaction.getAmount().longValue() : 0L;
         String qrUrl = String.format("https://img.vietqr.io/image/%s-%s-compact2.png?amount=%d&addInfo=%s&accountName=%s",
                 BANK_BIN, ACCOUNT_NUMBER, amountStr, transactionCode, ACCOUNT_NAME);
         
@@ -60,6 +78,34 @@ public class PaymentService {
             "qrUrl", qrUrl,
             "transactionCode", transactionCode
         );
+    }
+
+    @Transactional
+    public void mockPay(String transactionCode) {
+        Transaction transaction = transactionRepository.findByTransactionCode(transactionCode)
+                .orElseThrow(() -> new RuntimeException("Transaction not found: " + transactionCode));
+
+        if (transaction.getStatus() != TransactionStatus.PENDING) {
+            throw new RuntimeException("Transaction is already processed");
+        }
+
+        transaction.setStatus(TransactionStatus.SUCCESS);
+        transactionRepository.save(transaction);
+
+        ClassSession classSession = transaction.getClassSession();
+        classSession.setStatus(ClassSessionStatus.CONFIRMED);
+        classSessionRepository.save(classSession);
+
+        // Tạo CommissionRecord (Hoa hồng 20%)
+        com.management.studyhub.entity.CommissionRecord commission = new com.management.studyhub.entity.CommissionRecord();
+        commission.setTransaction(transaction);
+        commission.setTotalAmount(transaction.getAmount());
+        double platformFee = transaction.getAmount() * 0.20;
+        commission.setPlatformFee(platformFee);
+        commission.setTutorPayout(transaction.getAmount() - platformFee);
+        commissionRecordRepository.save(commission);
+
+        log.info("Mock payment confirmed for transaction: {}", transactionCode);
     }
 
     public TransactionStatus getTransactionStatus(String transactionCode) {

@@ -4,6 +4,7 @@ import { TutorDto } from '../types/tutor';
 export const MOCK_CLASSES: ClassDto[] = [
   {
     id: 1,
+    tutorId: 1,
     title: "Ôn thi Đại học môn Toán - Lớp 12: Chuyên sâu Giải tích & Hình học",
     rating: "4.9",
     location: "Trực tuyến qua Zoom (Online)",
@@ -30,6 +31,7 @@ export const MOCK_CLASSES: ClassDto[] = [
   },
   {
     id: 2,
+    tutorId: 2,
     title: "Bồi dưỡng HSG Vật lý 11",
     rating: "4.8",
     location: "Học qua Zoom/Google Meet (Online)",
@@ -55,6 +57,7 @@ export const MOCK_CLASSES: ClassDto[] = [
   },
   {
     id: 3,
+    tutorId: 3,
     title: "IELTS General 6.5+ Cam kết",
     rating: "5.0",
     location: "Quận Bình Thạnh, TP.HCM (Offline)",
@@ -80,6 +83,7 @@ export const MOCK_CLASSES: ClassDto[] = [
   },
   {
     id: 4,
+    tutorId: 4,
     title: "Lập trình Python cho người mới",
     rating: "4.7",
     location: "Học qua Discord (Online)",

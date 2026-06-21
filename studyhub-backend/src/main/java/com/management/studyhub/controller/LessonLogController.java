@@ -29,4 +29,23 @@ public class LessonLogController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    @PutMapping("/{id}/parent-confirm")
+    public ResponseEntity<LessonLogDTO> parentConfirmLesson(@PathVariable Long id, @RequestBody com.management.studyhub.dto.ParentConfirmDTO dto) {
+        try {
+            return ResponseEntity.ok(lessonLogService.parentConfirmLesson(id, dto));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/parent/{userId}/pending")
+    public ResponseEntity<List<LessonLogDTO>> getPendingLogsForParent(@PathVariable Long userId) {
+        return ResponseEntity.ok(lessonLogService.getPendingLogsForParent(userId));
+    }
+
+    @GetMapping("/parent/{userId}/reviewed")
+    public ResponseEntity<List<LessonLogDTO>> getReviewedLogsForParent(@PathVariable Long userId) {
+        return ResponseEntity.ok(lessonLogService.getReviewedLogsForParent(userId));
+    }
 }

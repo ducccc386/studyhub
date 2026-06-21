@@ -29,15 +29,27 @@ public class StudyMaterialService {
                 .stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
-    public StudyMaterialDTO uploadMaterial(Long classSessionId, Long uploaderId, String title, MultipartFile file) throws IOException {
+    public StudyMaterialDTO uploadMaterial(Long classSessionId, Long uploaderId, String title, String materialType, String uploaderRole, MultipartFile file) throws IOException {
         ClassSession classSession = classSessionRepository.findById(classSessionId)
                 .orElseThrow(() -> new RuntimeException("Lớp học không tồn tại"));
 
-        User uploader = userRepository.findById(uploaderId)
-                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+        // Kiểm tra quyền dựa theo role được truyền vào (không cần lookup DB)
+        if ("OFFICIAL".equalsIgnoreCase(materialType) && !"ADMIN".equalsIgnoreCase(uploaderRole)) {
+            throw new RuntimeException("Chỉ Admin mới có quyền tải lên tài liệu chính thức");
+        }
+
+        // Tìm user uploader để lưu
+        User uploader = null;
+        if (uploaderId != null) {
+            uploader = userRepository.findById(uploaderId).orElse(null);
+        }
+        if (uploader == null) {
+            uploader = userRepository.findAll().stream().findFirst()
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng trong hệ thống"));
+        }
 
         String fileUrl = cloudinaryService.uploadFile(file);
-        
+
         String originalFilename = file.getOriginalFilename();
         String fileType = "unknown";
         if (originalFilename != null && originalFilename.contains(".")) {
@@ -50,6 +62,7 @@ public class StudyMaterialService {
         material.setTitle(title);
         material.setFileUrl(fileUrl);
         material.setFileType(fileType);
+        material.setMaterialType(materialType != null ? materialType.toUpperCase() : "REFERENCE");
 
         StudyMaterial saved = studyMaterialRepository.save(material);
         return mapToDTO(saved);
@@ -68,6 +81,7 @@ public class StudyMaterialService {
         dto.setTitle(material.getTitle());
         dto.setFileUrl(material.getFileUrl());
         dto.setFileType(material.getFileType());
+        dto.setMaterialType(material.getMaterialType());
         dto.setUploadedAt(material.getUploadedAt());
         return dto;
     }

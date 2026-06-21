@@ -21,6 +21,8 @@ public class ClassSessionDTO {
     private String status;
     private Double pricePerSession;
     private Integer progress;
+    private String syllabusType;
+    private String syllabusStatus;
     private LocalDateTime createdAt;
     private LocalDateTime nextSessionDate;
 }

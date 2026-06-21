@@ -1,6 +1,76 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../../utils/api';
+import {
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart
+} from 'recharts';
+
+interface KPIsData {
+  activeTutors: number;
+  activeTutorsGrowth: number;
+  averageRating: number;
+}
+
+interface GrowthData {
+  month: string;
+  newUsers: number;
+}
+
+interface TutorQualityData {
+  tutorId: number;
+  tutorName: string;
+  tutorAvatar: string;
+  rating: number;
+  reportCount: number;
+  status: string;
+}
+
+interface PopularSubjectData {
+  subject: string;
+  count: number;
+  percentage: number;
+}
 
 const AdminReports: React.FC = () => {
+  const [kpis, setKpis] = useState<KPIsData | null>(null);
+  const [growthData, setGrowthData] = useState<GrowthData[]>([]);
+  const [tutorQuality, setTutorQuality] = useState<TutorQualityData[]>([]);
+  const [popularSubjects, setPopularSubjects] = useState<PopularSubjectData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReportsData = async () => {
+      try {
+        const [kpiRes, growthRes, tutorRes, subjectRes] = await Promise.all([
+          apiFetch('/admin/reports/kpis'),
+          apiFetch('/admin/reports/growth'),
+          apiFetch('/admin/reports/tutor-quality'),
+          apiFetch('/admin/reports/popular-subjects')
+        ]);
+
+        if (kpiRes.ok) setKpis(await kpiRes.json());
+        if (growthRes.ok) setGrowthData(await growthRes.json());
+        if (tutorRes.ok) setTutorQuality(await tutorRes.json());
+        if (subjectRes.ok) setPopularSubjects(await subjectRes.json());
+      } catch (error) {
+        console.error("Failed to fetch reports", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReportsData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // Define colors for the chart
+  const blueColor = "#0052cc";
+
   return (
     <div className="max-w-[1440px] mx-auto pb-20">
       {/* Header Section */}
@@ -12,7 +82,7 @@ const AdminReports: React.FC = () => {
         <div className="flex gap-3">
           <button className="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors shadow-sm">
             <span className="material-symbols-outlined text-[18px]">calendar_today</span>
-            30 ngày qua
+            6 tháng qua
           </button>
           <button className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm">
             <span className="material-symbols-outlined text-[18px]">download</span>
@@ -31,9 +101,9 @@ const AdminReports: React.FC = () => {
               <span className="material-symbols-outlined text-secondary bg-secondary-fixed p-1.5 rounded-md">school</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="font-headline-xl text-headline-xl text-on-surface">1,432</span>
+              <span className="font-headline-xl text-headline-xl text-on-surface">{kpis?.activeTutors?.toLocaleString() || '0'}</span>
               <span className="font-body-sm text-body-sm text-secondary font-medium flex items-center">
-                <span className="material-symbols-outlined text-[16px]">trending_up</span> 12%
+                <span className="material-symbols-outlined text-[16px]">trending_up</span> {kpis?.activeTutorsGrowth}%
               </span>
             </div>
           </div>
@@ -43,7 +113,7 @@ const AdminReports: React.FC = () => {
               <span className="material-symbols-outlined text-tertiary bg-tertiary-fixed p-1.5 rounded-md">star</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="font-headline-xl text-headline-xl text-on-surface">4.8</span>
+              <span className="font-headline-xl text-headline-xl text-on-surface">{kpis?.averageRating?.toFixed(1) || '0.0'}</span>
               <span className="font-body-sm text-body-sm text-on-surface-variant">/ 5.0</span>
             </div>
           </div>
@@ -52,31 +122,30 @@ const AdminReports: React.FC = () => {
         {/* Main Chart: Growth */}
         <div className="md:col-span-2 bg-surface-container-lowest rounded-xl p-6 border border-outline-variant shadow-sm flex flex-col">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="font-headline-sm text-headline-sm text-on-surface">Tăng trưởng nền tảng</h3>
+            <h3 className="font-headline-sm text-headline-sm text-on-surface">Tăng trưởng nền tảng (Người dùng mới)</h3>
             <button className="p-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-md transition-colors">
               <span className="material-symbols-outlined">more_vert</span>
             </button>
           </div>
-          <div className="flex-1 relative min-h-[200px] flex items-end gap-2 w-full pt-4">
-            <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
-              <path className="opacity-80" d="M0,80 Q10,75 20,60 T40,50 T60,30 T80,40 T100,10" fill="none" stroke="#003d9b" strokeWidth="2"></path>
-              <path className="opacity-20" d="M0,80 Q10,75 20,60 T40,50 T60,30 T80,40 T100,10 L100,100 L0,100 Z" fill="url(#blue-gradient)"></path>
-              <defs>
-                <linearGradient id="blue-gradient" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="#0052cc" stopOpacity="0.8"></stop>
-                  <stop offset="100%" stopColor="#dae2ff" stopOpacity="0"></stop>
-                </linearGradient>
-              </defs>
-            </svg>
-            <div className="absolute inset-0 flex flex-col justify-between opacity-10 pointer-events-none">
-              <div className="border-b border-on-surface w-full h-0"></div>
-              <div className="border-b border-on-surface w-full h-0"></div>
-              <div className="border-b border-on-surface w-full h-0"></div>
-              <div className="border-b border-on-surface w-full h-0"></div>
-            </div>
-          </div>
-          <div className="flex justify-between mt-4 text-body-sm font-body-sm text-on-surface-variant px-2">
-            <span>Th 1</span><span>Th 2</span><span>Th 3</span><span>Th 4</span><span>Th 5</span><span>Th 6</span>
+          <div className="flex-1 w-full h-[240px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={growthData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={blueColor} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={blueColor} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  labelStyle={{ fontWeight: 'bold', color: '#0f172a', marginBottom: '4px' }}
+                />
+                <Area type="monotone" dataKey="newUsers" name="Người dùng mới" stroke={blueColor} strokeWidth={3} fillOpacity={1} fill="url(#colorUsers)" />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
@@ -102,24 +171,35 @@ const AdminReports: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="font-body-sm text-body-sm">
-                <tr className="border-b border-outline-variant hover:bg-surface-container-low transition-colors">
-                  <td className="py-3 px-5 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold">EK</div>
-                    <span className="font-medium text-on-surface">Elena K.</span>
-                  </td>
-                  <td className="py-3 px-5"><span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px] text-tertiary-fixed-dim" style={{fontVariationSettings: "'FILL' 1"}}>star</span> 4.9</span></td>
-                  <td className="py-3 px-5 text-on-surface-variant">0</td>
-                  <td className="py-3 px-5"><span className="px-2 py-1 bg-secondary-fixed text-on-secondary-fixed-variant rounded-full text-[11px] font-semibold tracking-wide">XUẤT SẮC</span></td>
-                </tr>
-                <tr className="border-b border-outline-variant hover:bg-surface-container-low transition-colors">
-                  <td className="py-3 px-5 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-bold">MJ</div>
-                    <span className="font-medium text-on-surface">Marcus J.</span>
-                  </td>
-                  <td className="py-3 px-5"><span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px] text-tertiary-fixed-dim" style={{fontVariationSettings: "'FILL' 1"}}>star</span> 3.2</span></td>
-                  <td className="py-3 px-5 text-error font-medium">4</td>
-                  <td className="py-3 px-5"><span className="px-2 py-1 bg-error-container text-on-error-container rounded-full text-[11px] font-semibold tracking-wide">CẦN DUYỆT</span></td>
-                </tr>
+                {tutorQuality.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-on-surface-variant">Chưa có dữ liệu đánh giá.</td>
+                  </tr>
+                ) : (
+                  tutorQuality.map((tutor) => (
+                    <tr key={tutor.tutorId} className="border-b border-outline-variant hover:bg-surface-container-low transition-colors">
+                      <td className="py-3 px-5 flex items-center gap-3">
+                        <img 
+                          src={tutor.tutorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(tutor.tutorName)}&background=random`} 
+                          alt={tutor.tutorName} 
+                          className="w-8 h-8 rounded-full object-cover border border-outline-variant"
+                        />
+                        <span className="font-medium text-on-surface">{tutor.tutorName}</span>
+                      </td>
+                      <td className="py-3 px-5"><span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px] text-tertiary-fixed-dim" style={{fontVariationSettings: "'FILL' 1"}}>star</span> {tutor.rating?.toFixed(1) || '0.0'}</span></td>
+                      <td className={`py-3 px-5 font-medium ${tutor.reportCount > 0 ? 'text-error' : 'text-on-surface-variant'}`}>{tutor.reportCount}</td>
+                      <td className="py-3 px-5">
+                        <span className={`px-2 py-1 rounded-full text-[11px] font-semibold tracking-wide ${
+                          tutor.status === 'XUẤT SẮC' ? 'bg-secondary-fixed text-on-secondary-fixed-variant' : 
+                          tutor.status === 'CẦN DUYỆT' ? 'bg-error-container text-on-error-container' : 
+                          'bg-amber-100 text-amber-800'
+                        }`}>
+                          {tutor.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -129,27 +209,24 @@ const AdminReports: React.FC = () => {
         <div className="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant shadow-sm flex flex-col">
           <h3 className="font-headline-sm text-headline-sm text-on-surface mb-6">Môn học phổ biến</h3>
           <div className="flex-1 flex flex-col justify-center gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-24 font-body-sm text-body-sm text-on-surface-variant truncate">Toán học</div>
-              <div className="flex-1 bg-surface-container-high rounded-full h-3 overflow-hidden">
-                <div className="bg-primary h-full rounded-full" style={{ width: '85%' }}></div>
-              </div>
-              <div className="w-10 text-right font-label-md text-label-md text-on-surface">85%</div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="w-24 font-body-sm text-body-sm text-on-surface-variant truncate">Tin học</div>
-              <div className="flex-1 bg-surface-container-high rounded-full h-3 overflow-hidden">
-                <div className="bg-secondary h-full rounded-full" style={{ width: '72%' }}></div>
-              </div>
-              <div className="w-10 text-right font-label-md text-label-md text-on-surface">72%</div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="w-24 font-body-sm text-body-sm text-on-surface-variant truncate">Vật lý</div>
-              <div className="flex-1 bg-surface-container-high rounded-full h-3 overflow-hidden">
-                <div className="bg-tertiary h-full rounded-full" style={{ width: '45%' }}></div>
-              </div>
-              <div className="w-10 text-right font-label-md text-label-md text-on-surface">45%</div>
-            </div>
+            {popularSubjects.length === 0 ? (
+              <div className="text-center py-8 text-on-surface-variant">Chưa có dữ liệu lớp học.</div>
+            ) : (
+              popularSubjects.map((sub, index) => {
+                const colors = ['bg-primary', 'bg-secondary', 'bg-tertiary', 'bg-error', 'bg-amber-500'];
+                const colorClass = colors[index % colors.length];
+                
+                return (
+                  <div key={index} className="flex items-center gap-4">
+                    <div className="w-24 font-body-sm text-body-sm text-on-surface-variant truncate">{sub.subject}</div>
+                    <div className="flex-1 bg-surface-container-high rounded-full h-3 overflow-hidden">
+                      <div className={`${colorClass} h-full rounded-full transition-all duration-1000 ease-out`} style={{ width: `${sub.percentage}%` }}></div>
+                    </div>
+                    <div className="w-10 text-right font-label-md text-label-md text-on-surface">{sub.percentage}%</div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>

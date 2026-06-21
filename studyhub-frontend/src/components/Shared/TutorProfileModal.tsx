@@ -39,22 +39,12 @@ interface TutorProfileModalProps {
 }
 
 const TutorProfileModal: React.FC<TutorProfileModalProps> = ({ tutorId, onClose }) => {
-  const { role, userId } = useAuth();
+  const { role, isLoggedIn } = useAuth();
   const [profile, setProfile] = useState<TutorProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // Booking state
-  const [showBooking, setShowBooking] = useState(false);
-  const [bookingData, setBookingData] = useState({
-    subject: '',
-    schedule: '',
-    learningMode: 'ONLINE',
-    address: '',
-    pricePerSession: 0,
-    parentMessage: ''
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!tutorId) return;
@@ -74,34 +64,6 @@ const TutorProfileModal: React.FC<TutorProfileModalProps> = ({ tutorId, onClose 
         setLoading(false);
       });
   }, [tutorId]);
-
-  const handleBookingSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userId) return alert('Vui lòng đăng nhập để mời dạy!');
-    if (!bookingData.subject || !bookingData.schedule || !bookingData.pricePerSession) {
-      return alert('Vui lòng điền đầy đủ Môn học, Lịch học và Học phí.');
-    }
-
-    setIsSubmitting(true);
-    try {
-      const response = await fetch(`${BASE_URL}/bookings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          parentId: userId,
-          tutorId: profile?.id,
-          ...bookingData
-        })
-      });
-      if (!response.ok) throw new Error('Không thể gửi lời mời');
-      alert('Gửi lời mời dạy thành công! Vui lòng chờ gia sư phản hồi.');
-      setShowBooking(false);
-    } catch (err: any) {
-      alert(err.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
@@ -131,61 +93,13 @@ const TutorProfileModal: React.FC<TutorProfileModalProps> = ({ tutorId, onClose 
               <span className="material-symbols-outlined text-5xl mb-2">error</span>
               <p>{error || 'Lỗi tải dữ liệu'}</p>
             </div>
-          ) : showBooking ? (
-            <form onSubmit={handleBookingSubmit} className="max-w-2xl mx-auto bg-surface p-8 rounded-2xl shadow-sm border border-outline-variant space-y-6">
-              <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold text-primary mb-2">Mời dạy trực tiếp</h3>
-                <p className="text-sm text-on-surface-variant">Gửi yêu cầu giảng dạy trực tiếp đến gia sư <b>{profile.fullName}</b></p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-on-surface mb-2">Môn học cần tìm <span className="text-error">*</span></label>
-                  <input type="text" required placeholder="VD: Toán lớp 10" value={bookingData.subject} onChange={e => setBookingData({...bookingData, subject: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-on-surface mb-2">Mức học phí / Buổi <span className="text-error">*</span></label>
-                  <input type="number" required min="10000" placeholder="VD: 150000" value={bookingData.pricePerSession} onChange={e => setBookingData({...bookingData, pricePerSession: parseInt(e.target.value) || 0})} className="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-on-surface mb-2">Lịch học mong muốn <span className="text-error">*</span></label>
-                <input type="text" required placeholder="VD: Tối thứ 2, 4, 6 từ 19h-21h" value={bookingData.schedule} onChange={e => setBookingData({...bookingData, schedule: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-on-surface mb-2">Hình thức học <span className="text-error">*</span></label>
-                  <select value={bookingData.learningMode} onChange={e => setBookingData({...bookingData, learningMode: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
-                    <option value="ONLINE">Học Trực tuyến (Online)</option>
-                    <option value="OFFLINE">Học Trực tiếp (Offline)</option>
-                  </select>
-                </div>
-                {bookingData.learningMode === 'OFFLINE' && (
-                  <div>
-                    <label className="block text-sm font-semibold text-on-surface mb-2">Địa chỉ học Offline</label>
-                    <input type="text" placeholder="Nhập địa chỉ nhà của bạn" value={bookingData.address} onChange={e => setBookingData({...bookingData, address: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" />
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-on-surface mb-2">Lời nhắn cho gia sư</label>
-                <textarea rows={4} placeholder="Mô tả thêm về lực học của học sinh, yêu cầu riêng..." value={bookingData.parentMessage} onChange={e => setBookingData({...bookingData, parentMessage: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"></textarea>
-              </div>
-
-              <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all shadow-md disabled:opacity-70 disabled:cursor-not-allowed">
-                {isSubmitting ? 'Đang gửi...' : 'Xác nhận Gửi lời mời'}
-              </button>
-            </form>
           ) : (
             <div className="space-y-8">
               {/* Basic Info */}
               <div className="flex flex-col md:flex-row gap-6 items-start bg-surface p-6 rounded-2xl border border-outline-variant shadow-sm">
                 <div className="relative shrink-0">
                   <img 
-                    src={profile.avatarUrl || 'https://via.placeholder.com/150'} 
+                    src={profile.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName || 'User')}&background=random`} 
                     alt="Avatar" 
                     className="w-32 h-32 rounded-2xl object-cover border-4 border-surface-container-high shadow-md" 
                   />
@@ -304,7 +218,13 @@ const TutorProfileModal: React.FC<TutorProfileModalProps> = ({ tutorId, onClose 
                   {profile.degreeImageUrl && (
                     <div>
                       <h5 className="text-xs font-bold text-on-surface-variant mb-2">Bằng Đại học / Thẻ sinh viên</h5>
-                      <img src={profile.degreeImageUrl} alt="Degree" className="w-48 h-auto object-cover rounded-xl border border-outline-variant shadow-sm cursor-pointer hover:opacity-90 transition-opacity" onClick={() => window.open(profile.degreeImageUrl, '_blank')} />
+                      <img src={profile.degreeImageUrl} alt="Degree" className="w-48 h-auto object-cover rounded-xl border border-outline-variant shadow-sm cursor-pointer hover:opacity-90 transition-opacity" onClick={() => {
+                        if (!isLoggedIn) {
+                          alert('Vui lòng đăng nhập để xem chi tiết chứng chỉ của gia sư.');
+                          return;
+                        }
+                        setSelectedImage(profile.degreeImageUrl!);
+                      }} />
                     </div>
                   )}
 
@@ -314,7 +234,13 @@ const TutorProfileModal: React.FC<TutorProfileModalProps> = ({ tutorId, onClose 
                       <h5 className="text-xs font-bold text-on-surface-variant mb-2">Chứng chỉ khác</h5>
                       <div className="flex flex-wrap gap-4">
                         {profile.certificates.map((cert, idx) => (
-                          <img key={idx} src={cert} alt={`Certificate ${idx}`} className="w-32 h-auto object-cover rounded-xl border border-outline-variant shadow-sm cursor-pointer hover:opacity-90 transition-opacity" onClick={() => window.open(cert, '_blank')} />
+                          <img key={idx} src={cert} alt={`Certificate ${idx}`} className="w-32 h-auto object-cover rounded-xl border border-outline-variant shadow-sm cursor-pointer hover:opacity-90 transition-opacity" onClick={() => {
+                            if (!isLoggedIn) {
+                              alert('Vui lòng đăng nhập để xem chi tiết chứng chỉ của gia sư.');
+                              return;
+                            }
+                            setSelectedImage(cert);
+                          }} />
                         ))}
                       </div>
                     </div>
@@ -327,7 +253,7 @@ const TutorProfileModal: React.FC<TutorProfileModalProps> = ({ tutorId, onClose 
               </div>
               
               {/* Căn cước công dân (Chỉ hiện nếu đã được xác thực) */}
-              {profile.idCardFrontUrl && profile.ekycStatus === 'SUCCESS' && (
+              {profile.idCardFrontUrl && profile.ekycStatus === 'SUCCESS' && role === 'admin' && (
                 <div className="bg-green-50 p-6 rounded-2xl border border-green-200 shadow-sm">
                   <h4 className="text-sm font-bold text-green-800 uppercase tracking-wider mb-2 flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px]">fingerprint</span>
@@ -347,28 +273,23 @@ const TutorProfileModal: React.FC<TutorProfileModalProps> = ({ tutorId, onClose 
         {/* Footer */}
         <div className="p-4 border-t border-outline-variant bg-surface text-right shrink-0 flex justify-end gap-3">
           <button 
-            onClick={() => {
-              if (showBooking) setShowBooking(false);
-              else onClose();
-            }}
+            onClick={onClose}
             className="px-6 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-semibold rounded-xl transition-colors shadow-sm"
           >
-            {showBooking ? 'Hủy' : 'Đóng hồ sơ'}
+            Đóng hồ sơ
           </button>
-          {!showBooking && role === 'parent' && (
-            <button 
-              onClick={() => {
-                setBookingData(prev => ({ ...prev, pricePerSession: profile?.price || 0 }));
-                setShowBooking(true);
-              }}
-              className="px-6 py-2.5 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 transition-all shadow-md flex items-center gap-2"
-            >
-              <span className="material-symbols-outlined text-[20px]">person_add</span>
-              Mời dạy trực tiếp
-            </button>
-          )}
         </div>
       </div>
+
+      {/* Image Viewer Popup */}
+      {selectedImage && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onClick={() => setSelectedImage(null)}>
+          <button className="absolute top-4 right-4 text-white hover:text-gray-300 p-2" onClick={() => setSelectedImage(null)}>
+            <span className="material-symbols-outlined text-4xl">close</span>
+          </button>
+          <img src={selectedImage} alt="Phóng to" className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" onClick={e => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   );
 };

@@ -19,6 +19,7 @@ import com.management.studyhub.dto.TutorEkycRequestDTO;
 public class TutorController {
 
     private final TutorService tutorService;
+    private final com.management.studyhub.service.GeminiAiService geminiAiService;
 
     @GetMapping
     public ResponseEntity<PageResponseDTO<TutorListDTO>> getTutors(
@@ -90,6 +91,30 @@ public class TutorController {
                 "score", 0,
                 "message", e.getMessage()
             ));
+        }
+    }
+
+    @PostMapping("/parse-cv")
+    public ResponseEntity<?> parseCv(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        try {
+            com.management.studyhub.dto.CvParsedResultDTO result = geminiAiService.parseCv(file);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "Lỗi khi phân tích CV: " + e.getMessage()
+            ));
+        }
+    }
+
+    @PostMapping("/{id}/avatar")
+    public ResponseEntity<?> updateAvatar(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        try {
+            tutorService.updateAvatar(id, body.get("avatarUrl"));
+            return ResponseEntity.ok(Map.of("success", true, "message", "Cập nhật ảnh đại diện thành công!"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         }
     }
 }

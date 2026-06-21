@@ -1,17 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ClassDto } from '../../types/class';
+import TutorProfileModal from '../../components/Shared/TutorProfileModal';
 
 const ClassDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isLoggedIn, role, userId } = useAuth();
   const [currentClass, setCurrentClass] = useState<ClassDto | null>(null);
   const [loading, setLoading] = useState(true);
   
   // Registration Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('autoOpenRegister') === 'true' && isLoggedIn && role === 'parent') {
+      setIsModalOpen(true);
+      // Xóa query param để tránh reload trang lại tự động mở tiếp
+      navigate(`/classes/${id}`, { replace: true });
+    }
+  }, [location.search, isLoggedIn, role, navigate, id]);
   const [registerForm, setRegisterForm] = useState({
     studentName: '',
     studentGrade: '',
@@ -101,12 +113,12 @@ const ClassDetail: React.FC = () => {
                 <h1 className="font-headline-lg text-headline-lg text-on-surface mb-4">{currentClass.title}</h1>
                 <div className="flex flex-wrap items-center gap-6 text-on-surface-variant">
                   <div className="flex items-center gap-2">
-                    <img alt={currentClass.tutorName} className="w-6 h-6 rounded-full object-cover" src={currentClass.tutorAvatar} />
+                    <img alt={currentClass.tutorName} className="w-6 h-6 rounded-full object-cover" src={currentClass.tutorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentClass.tutorName || 'T')}&background=003d9b&color=fff`} />
                     <span className="font-label-md text-label-md font-bold text-on-surface">{currentClass.tutorName}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="material-symbols-outlined text-tertiary text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                    <span className="font-label-md text-label-md">{currentClass.rating} (128 đánh giá)</span>
+                    <span className="font-label-md text-label-md">{currentClass.rating} ({currentClass.reviewCount || currentClass.totalReviews || 0} đánh giá)</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="material-symbols-outlined text-[20px]">groups</span>
@@ -142,7 +154,7 @@ const ClassDetail: React.FC = () => {
             <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-8">
               <div className="flex flex-col md:flex-row gap-8">
                 <div className="flex-shrink-0">
-                  <img alt={currentClass.tutorName} className="w-32 h-32 rounded-full border-4 border-surface-container-high object-cover" src={currentClass.tutorAvatar} />
+                  <img alt={currentClass.tutorName} className="w-32 h-32 rounded-full border-4 border-surface-container-high object-cover" src={currentClass.tutorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentClass.tutorName || 'T')}&background=003d9b&color=fff&size=256`} />
                 </div>
                 <div className="flex-grow">
                   <div className="flex justify-between items-start mb-2">
@@ -150,7 +162,16 @@ const ClassDetail: React.FC = () => {
                       <h3 className="font-headline-sm text-headline-sm text-on-surface">{currentClass.tutorName}</h3>
                       <p className="text-primary font-label-md text-label-md uppercase tracking-wider">{currentClass.tutorDesc}</p>
                     </div>
-                    <button className="px-4 py-2 border border-primary text-primary rounded-lg font-label-md text-label-md hover:bg-primary-container/10 transition-colors">Xem hồ sơ</button>
+                    {currentClass.tutorId && (
+                      <button onClick={() => {
+                        if (!isLoggedIn) {
+                          alert('Vui lòng đăng nhập để xem hồ sơ chi tiết của gia sư!');
+                          navigate('/login');
+                          return;
+                        }
+                        setIsProfileModalOpen(true);
+                      }} className="px-4 py-2 border border-primary text-primary rounded-lg font-label-md text-label-md hover:bg-primary-container/10 transition-colors">Xem hồ sơ</button>
+                    )}
                   </div>
                   <div className="flex gap-4 mb-4 flex-wrap">
                     {currentClass.tutorVerified && (
@@ -226,7 +247,7 @@ const ClassDetail: React.FC = () => {
               <button onClick={() => {
                 if (!isLoggedIn) {
                   alert('Vui lòng đăng nhập để đăng ký lớp học này!');
-                  navigate('/login');
+                  navigate('/login', { state: { from: { pathname: `/classes/${id}`, search: '?autoOpenRegister=true' } } });
                 } else if (role === 'parent') {
                   setIsModalOpen(true);
                 } else {
@@ -302,6 +323,14 @@ const ClassDetail: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Tutor Profile Modal */}
+      {isProfileModalOpen && currentClass?.tutorId && (
+        <TutorProfileModal 
+          tutorId={currentClass.tutorId} 
+          onClose={() => setIsProfileModalOpen(false)} 
+        />
       )}
     </div>
   );

@@ -123,7 +123,7 @@ const Navbar: React.FC = () => {
               {/* Dashboard quick-access */}
               {role === 'parent' && (
                 <Link
-                  to="/parent/dashboard"
+                  to="/parent/posts"
                   className={`hidden md:flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full transition-all ${
                     isActive('/parent')
                       ? 'bg-primary text-white shadow-md shadow-primary/25'
@@ -297,7 +297,7 @@ const Navbar: React.FC = () => {
               <>
                 <div className="my-1 border-t border-outline-variant/40" />
                 <Link
-                  to={role === 'admin' ? "/admin/dashboard" : role === 'parent' ? "/parent/dashboard" : "/tutor/dashboard"}
+                  to={role === 'admin' ? "/admin/dashboard" : role === 'parent' ? "/parent/posts" : "/tutor/dashboard"}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-primary hover:bg-primary/10 transition-all"
                 >
                   <span className="material-symbols-outlined text-[18px]">dashboard</span>

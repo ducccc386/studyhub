@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import StudyHubLogo from '../../components/StudyHubLogo';
 import { authApi } from '../../services/authApi';
@@ -19,15 +19,25 @@ const Register: React.FC = () => {
 
   const { isLoggedIn, role: currentRole } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   React.useEffect(() => {
     if (isLoggedIn) {
-      if (currentRole === 'admin') navigate('/admin/dashboard');
-      else if (currentRole === 'parent') navigate('/parent/dashboard');
-      else if (currentRole === 'tutor') navigate('/tutor/dashboard');
-      else navigate('/');
+      const fromState = location.state as { from?: { pathname: string; search?: string } } | null;
+      const redirectTo = fromState?.from?.pathname
+        ? fromState.from.pathname + (fromState.from.search || '')
+        : '';
+
+      if (redirectTo) {
+        navigate(redirectTo, { replace: true });
+      } else {
+        if (currentRole === 'admin') navigate('/admin/dashboard');
+        else if (currentRole === 'parent') navigate('/parent/dashboard');
+        else if (currentRole === 'tutor') navigate('/tutor/dashboard');
+        else navigate('/');
+      }
     }
-  }, [isLoggedIn, currentRole, navigate]);
+  }, [isLoggedIn, currentRole, navigate, location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +52,7 @@ const Register: React.FC = () => {
       const apiRole = roleSelect === 'student' ? 'PARENT' : 'TUTOR';
       await authApi.register({ email, password, role: apiRole, fullName });
       alert('Đăng ký thành công! Vui lòng đăng nhập.');
-      navigate('/login');
+      navigate('/login', { state: location.state });
     } catch (error: any) {
       setErrorMsg(error.response?.data || 'Đăng ký thất bại. Vui lòng thử lại.');
     } finally {
@@ -85,6 +95,7 @@ const Register: React.FC = () => {
           }}>
             <Link
               to="/login"
+              state={location.state}
               style={{
                 flex: 1, textAlign: 'center', padding: '10px',
                 borderRadius: '10px',

@@ -29,6 +29,12 @@ const navGroups = [
         label: 'Tài liệu công khai',
         sublabel: 'Quản lý & Tải lên PDF',
       },
+      {
+        to: '/admin/classes',
+        icon: 'school',
+        label: 'Quản lý Lớp học',
+        sublabel: 'Workspace & Tài liệu lớp',
+      },
     ],
   },
   {

@@ -9,10 +9,14 @@ const TutorSettings: React.FC = () => {
   const [idCardFront, setIdCardFront] = useState<string | null>(null);
   const [idCardBack, setIdCardBack] = useState<string | null>(null);
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [portrait, setPortrait] = useState<string | null>(null);
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [ekycScore, setEkycScore] = useState<number | null>(null);
   const [ekycError, setEkycError] = useState<string | null>(null);
+  const [isParsingCv, setIsParsingCv] = useState(false);
+  const cvFileInputRef = React.useRef<HTMLInputElement>(null);
   const [profileStatus, setProfileStatus] = useState<string>('NOT_STARTED');
   const [fullName, setFullName] = useState<string>('');
   const [birthDate, setBirthDate] = useState<string>('');
@@ -21,6 +25,7 @@ const TutorSettings: React.FC = () => {
   const [universityName, setUniversityName] = useState<string>('');
   const [major, setMajor] = useState<string>('');
   const [experienceYears, setExperienceYears] = useState<string>('Chưa có kinh nghiệm');
+  const [introduction, setIntroduction] = useState<string>('');
   const [price, setPrice] = useState<string>('');
 
   // Thêm state cho phần Bằng cấp và Chứng chỉ
@@ -41,6 +46,7 @@ const TutorSettings: React.FC = () => {
           setProfileStatus(data.ekycStatus);
           if (data.fullName) setFullName(data.fullName);
           if (data.avatarUrl) setAvatar(data.avatarUrl);
+          if (data.portraitUrl) setPortrait(data.portraitUrl);
           if (data.idCardFrontUrl) setIdCardFront(data.idCardFrontUrl);
           if (data.idCardBackUrl) setIdCardBack(data.idCardBackUrl);
           if (data.similarityScore) setEkycScore(data.similarityScore);
@@ -56,6 +62,9 @@ const TutorSettings: React.FC = () => {
           }
           if (data.degreeImageUrl) {
             setDegreeFileUrl(data.degreeImageUrl);
+          }
+          if (data.introduction) {
+            setIntroduction(data.introduction);
           }
           if (data.price) {
             setPrice(data.price.toString());
@@ -113,9 +122,47 @@ const TutorSettings: React.FC = () => {
     setCertificates((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleCvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsParsingCv(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await apiFetch('/tutors/parse-cv', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Lỗi phân tích CV');
+      }
+
+      if (data.fullName) setFullName(data.fullName);
+      if (data.phoneNumber) setPhoneNumber(data.phoneNumber);
+      if (data.universityName) setUniversityName(data.universityName);
+      if (data.major) setMajor(data.major);
+      if (data.experienceYears !== undefined && data.experienceYears !== null) {
+        if (data.experienceYears === 0) setExperienceYears('Dưới 1 năm');
+        else if (data.experienceYears <= 2) setExperienceYears('1 - 3 năm');
+        else if (data.experienceYears >= 3) setExperienceYears('Trên 3 năm');
+      }
+      
+      alert('Đã lấy dữ liệu từ CV thành công! Hãy kiểm tra lại thông tin bên dưới.');
+    } catch (error: any) {
+      alert('Thất bại: ' + error.message);
+    } finally {
+      setIsParsingCv(false);
+      if (cvFileInputRef.current) cvFileInputRef.current.value = '';
+    }
+  };
+
+
   useEffect(() => {
     const verifyScore = async () => {
-      if (idCardFront && avatar) {
+      if (idCardFront && portrait) {
         setIsVerifying(true);
         setEkycScore(null);
         setEkycError(null);
@@ -123,7 +170,7 @@ const TutorSettings: React.FC = () => {
           const response = await apiFetch(`/tutors/verify-ekyc`, {
             method: 'POST',
             body: JSON.stringify({
-              avatarUrl: avatar,
+              portraitUrl: portrait,
               idCardFrontUrl: idCardFront
             })
           });
@@ -144,7 +191,7 @@ const TutorSettings: React.FC = () => {
     };
 
     verifyScore();
-  }, [idCardFront, avatar]);
+  }, [idCardFront, portrait]);
 
   const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -153,9 +200,34 @@ const TutorSettings: React.FC = () => {
     reader.onerror = error => reject(error);
   });
 
+  const saveAvatar = async () => {
+    if (!avatar) return;
+    setIsSavingAvatar(true);
+    try {
+      const response = await apiFetch(`/tutors/${tutorId}/avatar`, {
+        method: 'POST',
+        body: JSON.stringify({ avatarUrl: avatar })
+      });
+      if (response.ok) {
+        alert('Cập nhật ảnh đại diện thành công!');
+        updateProfile(fullName, avatar);
+      } else {
+        throw new Error('Cập nhật ảnh thất bại');
+      }
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setIsSavingAvatar(false);
+    }
+  };
+
   const submitEkyc = async () => {
-    if (!idCardFront || !avatar || !idCardBack) {
-      alert('Vui lòng tải lên đầy đủ ảnh (Mặt trước, mặt sau CCCD và ảnh chân dung).');
+    if (!idCardFront || !idCardBack) {
+      alert('Vui lòng tải lên đầy đủ ảnh Căn cước công dân (mặt trước và mặt sau).');
+      return;
+    }
+    if (!portrait) {
+      alert('Vui lòng tải lên ảnh chân dung (selfie) cùng CCCD.');
       return;
     }
     
@@ -175,6 +247,7 @@ const TutorSettings: React.FC = () => {
         method: 'POST',
         body: JSON.stringify({
           avatarUrl: avatar,
+          portraitUrl: portrait,
           idCardFrontUrl: idCardFront,
           idCardBackUrl: idCardBack,
           fullName,
@@ -184,6 +257,7 @@ const TutorSettings: React.FC = () => {
           universityName,
           major,
           experienceYears,
+          introduction,
           degreeImageUrl,
           certificates: combinedCertificates,
           price: price ? Number(price) : null
@@ -228,9 +302,24 @@ const TutorSettings: React.FC = () => {
             </button>
           )}
           {!isReadOnly && (
-            <button className="px-4 py-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-on-primary-fixed-variant transition-colors shadow-sm" onClick={submitEkyc} disabled={isSubmitting}>
-              {isSubmitting ? 'Đang gửi...' : 'Gửi xét duyệt'}
-            </button>
+            <>
+              <input type="file" ref={cvFileInputRef} onChange={handleCvUpload} accept="application/pdf,image/*" className="hidden" />
+              <button 
+                className="px-4 py-2 bg-tertiary-container text-on-tertiary-container font-label-md text-label-md rounded-lg hover:bg-tertiary hover:text-on-tertiary transition-colors shadow-sm flex items-center gap-2" 
+                onClick={() => cvFileInputRef.current?.click()} 
+                disabled={isParsingCv}
+              >
+                {isParsingCv ? (
+                  <span className="w-4 h-4 border-2 border-tertiary border-t-transparent rounded-full animate-spin"></span>
+                ) : (
+                  <span className="material-symbols-outlined text-[18px]">document_scanner</span>
+                )}
+                {isParsingCv ? 'Đang đọc CV...' : 'Tự động điền CV'}
+              </button>
+              <button className="px-4 py-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-on-primary-fixed-variant transition-colors shadow-sm" onClick={submitEkyc} disabled={isSubmitting}>
+                {isSubmitting ? 'Đang gửi...' : 'Gửi xét duyệt'}
+              </button>
+            </>
           )}
         </div>
       </header>
@@ -238,14 +327,68 @@ const TutorSettings: React.FC = () => {
       {/* Bento Grid Layout */}
       <div className="max-w-[1440px] mx-auto pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
-          {/* Section 1: Thông tin định danh */}
-          <section className="lg:col-span-8 glass border border-white/20 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 animate-slide-up stagger-1 hover:-translate-y-1">
+          {/* Section 1: Ảnh đại diện */}
+          <section className="lg:col-span-12 glass border border-white/20 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 animate-slide-up stagger-1 hover:-translate-y-1">
+            <div className="flex items-center gap-3 mb-6 border-b border-outline-variant pb-4">
+              <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface">
+                <span className="material-symbols-outlined">account_circle</span>
+              </div>
+              <div>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface">1. Ảnh đại diện</h3>
+                <p className="font-body-sm text-body-sm text-on-surface-variant">Tải lên ảnh chân dung rõ nét để làm ảnh đại diện cho hồ sơ gia sư của bạn.</p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col md:flex-row gap-6 items-center">
+              <div className="flex-shrink-0 relative">
+                <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-surface-container shadow-md flex items-center justify-center bg-surface-container-lowest group relative">
+                  {avatar ? (
+                    <img src={avatar} alt="Ảnh đại diện" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="material-symbols-outlined text-[64px] text-outline-variant">face</span>
+                  )}
+                  {!isReadOnly && (
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                      <span className="material-symbols-outlined text-white text-[32px]">photo_camera</span>
+                      <input accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" type="file" onChange={(e) => handleImageChange(e, setAvatar)} />
+                    </div>
+                  )}
+                </div>
+                {avatar && !isReadOnly && (
+                  <button 
+                    onClick={() => handleRemoveImage(setAvatar, false)}
+                    className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-error text-on-error flex items-center justify-center shadow-lg hover:bg-error-container hover:text-error transition-colors"
+                    title="Xóa ảnh"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">delete</span>
+                  </button>
+                )}
+              </div>
+              <div className="flex-grow space-y-2 text-center md:text-left">
+                <h4 className="font-label-lg text-label-lg text-on-surface">Yêu cầu ảnh đại diện:</h4>
+                <ul className="text-body-sm font-body-sm text-on-surface-variant list-disc list-inside space-y-1 mb-4">
+                  <li>Ảnh chân dung chụp một mình, rõ mặt.</li>
+                  <li>Trang phục lịch sự, gọn gàng.</li>
+                  <li>Không sử dụng ảnh Căn cước công dân.</li>
+                  <li>Khuyến nghị tỉ lệ 1:1, định dạng JPG/PNG (Tối đa 5MB).</li>
+                </ul>
+                {!isReadOnly && avatar && (
+                  <button onClick={saveAvatar} disabled={isSavingAvatar} className="px-6 py-2 bg-primary text-on-primary font-label-md rounded-lg hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm">
+                    {isSavingAvatar ? 'Đang lưu...' : 'Lưu ảnh đại diện'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* Section 2: Thông tin định danh */}
+          <section className="lg:col-span-12 glass border border-white/20 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 animate-slide-up stagger-2 hover:-translate-y-1 mt-6">
             <div className="flex items-center gap-3 mb-6 border-b border-outline-variant pb-4">
               <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
                 <span className="material-symbols-outlined">badge</span>
               </div>
               <div>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface">1. Thông tin định danh</h3>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface">2. Thông tin định danh</h3>
                 <p className="font-body-sm text-body-sm text-on-surface-variant">Thông tin cơ bản để xác thực danh tính của bạn.</p>
               </div>
             </div>
@@ -266,34 +409,21 @@ const TutorSettings: React.FC = () => {
                 <label className="font-label-md text-label-md text-on-surface">Số điện thoại liên hệ <span className="text-error">*</span></label>
                 <input className="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md text-body-md text-on-surface disabled:opacity-70 disabled:bg-surface-container" placeholder="09xxxxxxxxx" type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} disabled={isReadOnly} />
               </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="font-label-md text-label-md text-on-surface">Mô tả giới thiệu bản thân / Mong muốn của gia sư</label>
+                <textarea className="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md text-body-md text-on-surface disabled:opacity-70 disabled:bg-surface-container resize-none" rows={4} placeholder="VD: Là một người hòa đồng, vui vẻ. Mong muốn tìm kiếm học sinh ngoan, chăm chỉ..." value={introduction} onChange={e => setIntroduction(e.target.value)} disabled={isReadOnly}></textarea>
+              </div>
             </div>
           </section>
 
-          {/* Status / Help Card */}
-          <aside className="lg:col-span-4 glass border border-primary/30 rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between shadow-md hover:-translate-y-1 transition-all duration-300 animate-slide-up stagger-2 bg-gradient-to-br from-primary/5 to-primary/10">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary rounded-full blur-3xl opacity-20 -mr-10 -mt-10"></div>
-            <div className="relative z-10">
-              <span className="material-symbols-outlined text-primary text-[32px] mb-4">verified_user</span>
-              <h4 className="font-headline-sm text-headline-sm text-primary-dark mb-2">Quy trình duyệt hồ sơ</h4>
-              <p className="font-body-sm text-body-sm text-on-surface-variant mb-4">Hồ sơ của bạn cần được ban quản trị xét duyệt trước khi có thể nhận lớp. Hãy đảm bảo thông tin chính xác và rõ nét.</p>
-              <ul className="space-y-2 font-body-sm text-body-sm text-on-surface-variant">
-                <li className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px] text-primary">check_circle</span> Thời gian duyệt: 24h - 48h</li>
-                <li className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px] text-primary">check_circle</span> Hình ảnh chụp bản gốc, không bị lóa</li>
-              </ul>
-            </div>
-            <button className="mt-6 w-full py-3 bg-surface-container-lowest text-primary font-label-md text-label-md rounded-lg border border-primary hover:bg-surface transition-colors relative z-10 shadow-sm">
-              Lưu bản nháp
-            </button>
-          </aside>
-
-          {/* Section 2: eKYC */}
+          {/* Section 3: eKYC */}
           <section className="lg:col-span-12 glass border border-white/20 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 mt-2 animate-slide-up stagger-3">
             <div className="flex items-center gap-3 mb-6 border-b border-outline-variant pb-4">
               <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
                 <span className="material-symbols-outlined">id_card</span>
               </div>
               <div>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface">2. Xác thực eKYC</h3>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface">3. Xác thực eKYC</h3>
                 <p className="font-body-sm text-body-sm text-on-surface-variant">Tải lên hình ảnh Căn cước công dân và ảnh chân dung chụp cùng CCCD.</p>
               </div>
             </div>
@@ -354,12 +484,12 @@ const TutorSettings: React.FC = () => {
               <div className="flex flex-col gap-2">
                 <span className="font-label-md text-label-md text-on-surface text-center">Ảnh chân dung <span className="text-error">*</span></span>
                 <div className="upload-dashed h-48 flex flex-col items-center justify-center cursor-pointer bg-surface hover:bg-surface-container-low transition-colors group relative overflow-hidden border-2 border-dashed border-outline-variant rounded-xl">
-                  {avatar ? (
+                  {portrait ? (
                     <>
-                      <img src={avatar} alt="Ảnh chân dung" className="absolute inset-0 w-full h-full object-cover" />
+                      <img src={portrait} alt="Ảnh chân dung" className="absolute inset-0 w-full h-full object-cover" />
                       {!isReadOnly && (
                         <button 
-                          onClick={() => handleRemoveImage(setAvatar, true)}
+                          onClick={() => handleRemoveImage(setPortrait, true)}
                           className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors z-10"
                           title="Xóa ảnh"
                         >
@@ -370,8 +500,8 @@ const TutorSettings: React.FC = () => {
                   ) : (
                     <>
                       <span className="material-symbols-outlined text-outline-variant group-hover:text-primary text-[40px] mb-2 transition-colors">face</span>
-                      <span className="font-body-sm text-body-sm text-outline group-hover:text-primary transition-colors">Kéo thả hoặc nhấn để tải ảnh</span>
-                      {!isReadOnly && <input accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" type="file" onChange={(e) => handleImageChange(e, setAvatar)} />}
+                      <span className="font-body-sm text-body-sm text-outline group-hover:text-primary transition-colors text-center px-4">Ảnh chân dung cầm CCCD rõ nét</span>
+                      {!isReadOnly && <input accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" type="file" capture="user" onChange={(e) => handleImageChange(e, setPortrait)} />}
                     </>
                   )}
                 </div>
@@ -415,29 +545,30 @@ const TutorSettings: React.FC = () => {
                 {!isVerifying && ekycScore !== null && ekycScore < 90 && !ekycError && (
                   <p className="mt-2 text-error font-body-sm text-body-sm flex items-center gap-1">
                     <span className="material-symbols-outlined text-[16px]">warning</span>
-                    Khuôn mặt không đủ độ khớp (dưới 90%). Vui lòng tải lại ảnh.
+                    Khuôn mặt không đủ độ khớp (dưới 90%). Vui lòng tải lại ảnh chân dung rõ nét hơn.
                   </p>
                 )}
                 {!isVerifying && ekycScore !== null && ekycScore >= 90 && !ekycError && (
                   <p className="mt-2 text-primary font-body-sm text-body-sm flex items-center gap-1">
                     <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                    Độ khớp khuôn mặt đạt chuẩn! Bạn có thể gửi hồ sơ.
+                    Độ khớp khuôn mặt đạt chuẩn!
                   </p>
                 )}
               </div>
             )}
+
           </section>
 
-          {/* Section 3 & 4 Container */}
+          {/* Section 4 & 5 Container */}
           <div className="lg:col-span-12 grid grid-cols-1 lg:grid-cols-2 gap-gutter mt-2 animate-slide-up stagger-4">
-            {/* Section 3: Học vấn */}
+            {/* Section 4: Học vấn */}
             <section className="glass border border-white/20 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
               <div className="flex items-center gap-3 mb-6 border-b border-outline-variant pb-4">
                 <div className="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container">
                   <span className="material-symbols-outlined">school</span>
                 </div>
                 <div>
-                  <h3 className="font-headline-sm text-headline-sm text-on-surface">3. Học vấn &amp; Kinh nghiệm</h3>
+                  <h3 className="font-headline-sm text-headline-sm text-on-surface">4. Học vấn &amp; Kinh nghiệm</h3>
                   <p className="font-body-sm text-body-sm text-on-surface-variant">Thông tin trường học và kinh nghiệm giảng dạy.</p>
                 </div>
               </div>
@@ -497,7 +628,7 @@ const TutorSettings: React.FC = () => {
               </div>
             </section>
 
-            {/* Section 4: Chứng chỉ */}
+            {/* Section 5: Chứng chỉ */}
             <section className="glass border border-white/20 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col">
               <div className="flex items-center justify-between mb-6 border-b border-outline-variant pb-4">
                 <div className="flex items-center gap-3">
@@ -505,7 +636,7 @@ const TutorSettings: React.FC = () => {
                     <span className="material-symbols-outlined">workspace_premium</span>
                   </div>
                   <div>
-                    <h3 className="font-headline-sm text-headline-sm text-on-surface">4. Chứng chỉ (Tùy chọn)</h3>
+                    <h3 className="font-headline-sm text-headline-sm text-on-surface">5. Chứng chỉ (Tùy chọn)</h3>
                     <p className="font-body-sm text-body-sm text-on-surface-variant">IELTS, TOEIC, Giải thưởng quốc gia...</p>
                   </div>
                 </div>

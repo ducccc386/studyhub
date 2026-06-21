@@ -21,9 +21,13 @@ export async function apiFetch(
   const token = getToken();
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
+
+  // Only default to application/json if it's not a FormData upload
+  if (!(options.body instanceof FormData) && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -32,10 +36,27 @@ export async function apiFetch(
   // Support both absolute URLs (for non-/api/v1 paths like /api/admin/...)
   const url = path.startsWith('http') ? path : `${BASE_URL}${path}`;
 
-  return fetch(url, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(url, { ...options, headers });
+    
+    // Global error handling for 401 Unauthorized
+    if (response.status === 401) {
+      localStorage.removeItem('sh_token');
+      localStorage.removeItem('sh_user');
+      window.location.href = '/login';
+      return response;
+    }
+    
+    // Global error handling for 500
+    if (response.status >= 500) {
+      console.error('[API] Server Error:', url);
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('[API] Network Error:', error);
+    throw error;
+  }
 }
 
 /**
@@ -54,18 +75,31 @@ export async function apiFetchAdmin(
   const token = getToken();
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
+
+  if (!(options.body instanceof FormData) && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  return fetch(`${BASE_HOST}${path}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(`${BASE_HOST}${path}`, { ...options, headers });
+    
+    if (response.status === 401) {
+      localStorage.removeItem('sh_token');
+      localStorage.removeItem('sh_user');
+      window.location.href = '/login';
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('[API Admin] Network Error:', error);
+    throw error;
+  }
 }
 
 export { BASE_URL, BASE_HOST };

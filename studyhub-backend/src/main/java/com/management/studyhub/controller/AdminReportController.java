@@ -15,6 +15,7 @@ import com.management.studyhub.repository.CourseRepository;
 import com.management.studyhub.repository.ClassSessionRepository;
 import com.management.studyhub.repository.TutorProfileRepository;
 import com.management.studyhub.entity.enums.EkycStatus;
+import com.management.studyhub.service.AdminReportService;
 
 @RestController
 @RequestMapping("/api/v1/admin/reports")
@@ -27,6 +28,8 @@ public class AdminReportController {
     private final CourseRepository courseRepository;
     private final ClassSessionRepository classSessionRepository;
     private final TutorProfileRepository tutorProfileRepository;
+
+    private final AdminReportService adminReportService;
 
     @GetMapping("/revenue")
     public ResponseEntity<Map<String, Object>> getRevenueReport() {
@@ -51,5 +54,25 @@ public class AdminReportController {
         // Có thể mở rộng thêm: doanh thu theo tháng, v.v.
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/kpis")
+    public ResponseEntity<com.management.studyhub.dto.admin.AdminKpiDTO> getKpis() {
+        return ResponseEntity.ok(adminReportService.getKpis());
+    }
+
+    @GetMapping("/growth")
+    public ResponseEntity<java.util.List<com.management.studyhub.dto.admin.AdminGrowthDTO>> getGrowth() {
+        return ResponseEntity.ok(adminReportService.getGrowth());
+    }
+
+    @GetMapping("/tutor-quality")
+    public ResponseEntity<java.util.List<com.management.studyhub.dto.admin.AdminTutorQualityDTO>> getTutorQuality() {
+        return ResponseEntity.ok(adminReportService.getTutorQuality());
+    }
+
+    @GetMapping("/popular-subjects")
+    public ResponseEntity<java.util.List<com.management.studyhub.dto.admin.AdminPopularSubjectDTO>> getPopularSubjects() {
+        return ResponseEntity.ok(adminReportService.getPopularSubjects());
     }
 }

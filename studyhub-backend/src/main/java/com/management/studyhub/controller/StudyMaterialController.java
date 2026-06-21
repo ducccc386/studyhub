@@ -27,11 +27,13 @@ public class StudyMaterialController {
     @PostMapping("/class/{classSessionId}")
     public ResponseEntity<?> uploadMaterial(
             @PathVariable Long classSessionId,
-            @RequestParam("uploaderId") Long uploaderId,
+            @RequestParam(value = "uploaderId", required = false) Long uploaderId,
             @RequestParam("title") String title,
+            @RequestParam(value = "materialType", required = false, defaultValue = "REFERENCE") String materialType,
+            @RequestParam(value = "uploaderRole", required = false, defaultValue = "TUTOR") String uploaderRole,
             @RequestParam("file") MultipartFile file) {
         try {
-            StudyMaterialDTO dto = studyMaterialService.uploadMaterial(classSessionId, uploaderId, title, file);
+            StudyMaterialDTO dto = studyMaterialService.uploadMaterial(classSessionId, uploaderId, title, materialType, uploaderRole, file);
             return ResponseEntity.ok(dto);
         } catch (IOException e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Lỗi xử lý file: " + e.getMessage()));

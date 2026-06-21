@@ -10,4 +10,6 @@ import java.util.Optional;
 @Repository
 public interface TutorProfileRepository extends JpaRepository<TutorProfile, Long>, JpaSpecificationExecutor<TutorProfile> {
     Optional<TutorProfile> findByUserId(Long userId);
+    long countByStatus(com.management.studyhub.entity.enums.TutorStatus status);
+    java.util.List<TutorProfile> findByStatus(com.management.studyhub.entity.enums.TutorStatus status);
 }

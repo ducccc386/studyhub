@@ -1,9 +1,11 @@
 package com.management.studyhub.service;
 
 import com.management.studyhub.dto.LessonLogDTO;
+import com.management.studyhub.dto.ParentConfirmDTO;
 import com.management.studyhub.entity.ClassSession;
 import com.management.studyhub.entity.LessonLog;
 import com.management.studyhub.entity.enums.LessonStatus;
+import com.management.studyhub.entity.enums.ParentApprovalStatus;
 import com.management.studyhub.repository.ClassSessionRepository;
 import com.management.studyhub.repository.LessonLogRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,10 +29,28 @@ public class LessonLogService {
                 .collect(Collectors.toList());
     }
 
+    public List<LessonLogDTO> getPendingLogsForParent(Long userId) {
+        return lessonLogRepository.findByParentUserIdAndApprovalStatus(userId, ParentApprovalStatus.PENDING)
+                .stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<LessonLogDTO> getReviewedLogsForParent(Long userId) {
+        return lessonLogRepository.findReviewedByParentUserId(userId)
+                .stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public LessonLogDTO createLessonLog(Long classSessionId, LessonLogDTO dto) {
         ClassSession session = classSessionRepository.findById(classSessionId)
                 .orElseThrow(() -> new RuntimeException("ClassSession not found"));
+
+        if (com.management.studyhub.entity.enums.ClassSessionStatus.TRIAL.equals(session.getStatus()) && session.getProgress() >= 2) {
+            throw new RuntimeException("Lớp học thử đã đạt giới hạn 2 buổi học. Vui lòng yêu cầu Phụ huynh 'Xác nhận thuê' và hoàn tất thanh toán để tiếp tục.");
+        }
 
         LessonLog log = new LessonLog();
         log.setClassSession(session);
@@ -49,15 +69,39 @@ public class LessonLogService {
         return mapToDTO(saved);
     }
 
+    @Transactional
+    public LessonLogDTO parentConfirmLesson(Long logId, com.management.studyhub.dto.ParentConfirmDTO dto) {
+        LessonLog log = lessonLogRepository.findById(logId)
+                .orElseThrow(() -> new RuntimeException("LessonLog not found"));
+        
+        log.setParentApprovalStatus(dto.getStatus() != null 
+            ? com.management.studyhub.entity.enums.ParentApprovalStatus.valueOf(dto.getStatus()) 
+            : com.management.studyhub.entity.enums.ParentApprovalStatus.PENDING);
+        log.setParentRating(dto.getRating());
+        log.setParentFeedback(dto.getFeedback());
+        log.setParentFeedbackTags(dto.getTags());
+        
+        return mapToDTO(lessonLogRepository.save(log));
+    }
+
     private LessonLogDTO mapToDTO(LessonLog log) {
         LessonLogDTO dto = new LessonLogDTO();
         dto.setId(log.getId());
-        dto.setClassSessionId(log.getClassSession() != null ? log.getClassSession().getId() : null);
+        if (log.getClassSession() != null) {
+            dto.setClassSessionId(log.getClassSession().getId());
+            dto.setClassName(log.getClassSession().getClassName());
+            dto.setTutorName(log.getClassSession().getTutorName());
+            dto.setTutorAvatar(log.getClassSession().getTutorAvatar());
+        }
         dto.setTitle(log.getTitle());
         dto.setContent(log.getContent());
         dto.setTutorFeedback(log.getTutorFeedback());
         dto.setScheduledDate(log.getScheduledDate());
         dto.setStatus(log.getStatus() != null ? log.getStatus().name() : null);
+        dto.setParentApprovalStatus(log.getParentApprovalStatus() != null ? log.getParentApprovalStatus().name() : null);
+        dto.setParentRating(log.getParentRating());
+        dto.setParentFeedback(log.getParentFeedback());
+        dto.setParentFeedbackTags(log.getParentFeedbackTags());
         return dto;
     }
 }

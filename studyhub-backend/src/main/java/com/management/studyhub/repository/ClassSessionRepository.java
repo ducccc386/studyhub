@@ -12,4 +12,7 @@ public interface ClassSessionRepository extends JpaRepository<ClassSession, Long
     List<ClassSession> findByStatus(ClassSessionStatus status);
     List<ClassSession> findByParentId(Long parentId);
     List<ClassSession> findByTutorProfileId(Long tutorProfileId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT c.subject, COUNT(c) FROM ClassSession c GROUP BY c.subject ORDER BY COUNT(c) DESC")
+    List<Object[]> findPopularSubjects();
 }

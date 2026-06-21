@@ -174,7 +174,7 @@ const Messages: React.FC = () => {
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="relative shrink-0">
-                  <img src={conv.partnerAvatar || 'https://via.placeholder.com/150'} alt={conv.partnerName} className="w-12 h-12 rounded-full object-cover border border-outline-variant" />
+                  <img src={conv.partnerAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.partnerName || 'User')}&background=random`} alt={conv.partnerName} className="w-12 h-12 rounded-full object-cover border border-outline-variant" />
                   {conv.online && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -203,7 +203,7 @@ const Messages: React.FC = () => {
             {/* Chat Header */}
             <div className="h-[72px] border-b border-outline-variant px-6 flex items-center justify-between bg-surface-container/30">
               <div className="flex items-center gap-3">
-                <img src={activeConv.partnerAvatar || 'https://via.placeholder.com/150'} alt={activeConv.partnerName} className="w-10 h-10 rounded-full object-cover border border-outline-variant" />
+                <img src={activeConv.partnerAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeConv.partnerName || 'User')}&background=random`} alt={activeConv.partnerName} className="w-10 h-10 rounded-full object-cover border border-outline-variant" />
                 <div>
                   <h3 className="font-label-lg text-label-lg text-on-surface">{activeConv.partnerName}</h3>
                   <p className="font-body-sm text-body-sm text-[12px] text-on-surface-variant flex items-center gap-1">

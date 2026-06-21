@@ -239,7 +239,7 @@ const PostManagement: React.FC = () => {
             bookings.map(booking => (
               <div key={booking.id} className="bg-surface rounded-2xl border border-outline-variant p-6 shadow-sm flex flex-col hover:border-primary/30 transition-colors">
                 <div className="flex items-start gap-4 mb-4">
-                  <img src={booking.tutorAvatarUrl || 'https://via.placeholder.com/150'} alt="Tutor" className="w-12 h-12 rounded-full object-cover border border-outline-variant" />
+                  <img src={booking.tutorAvatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(booking.tutorName || 'User')}&background=random`} alt="Tutor" className="w-12 h-12 rounded-full object-cover border border-outline-variant" />
                   <div>
                     <h3 className="font-bold text-on-surface cursor-pointer hover:text-primary" onClick={() => setSelectedTutorId(booking.tutorId)}>{booking.tutorName}</h3>
                     <p className="text-xs text-on-surface-variant">{new Date(booking.createdAt).toLocaleDateString('vi-VN')}</p>
@@ -361,7 +361,7 @@ const PostManagement: React.FC = () => {
                           <div className="absolute top-0 right-0 bg-green-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg">
                             ĐÃ CHỌN LÀM GIA SƯ
                           </div>
-                          <img src={acceptedApplicant.tutorAvatar || 'https://via.placeholder.com/150'} alt="avatar" className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-sm shrink-0" />
+                          <img src={acceptedApplicant.tutorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(acceptedApplicant.tutorName || 'User')}&background=random`} alt="avatar" className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-sm shrink-0" />
                           <div className="flex-1">
                             <h5 className="font-bold text-lg text-on-surface mb-1">{acceptedApplicant.tutorName}</h5>
                             <div className="flex items-center gap-1 mb-2">
@@ -381,7 +381,7 @@ const PostManagement: React.FC = () => {
                       {pendingApplicants.map(app => (
                         <div key={app.id} className="border border-outline-variant bg-surface rounded-2xl p-5 flex flex-col gap-4 hover:shadow-md transition-shadow">
                           <div className="flex gap-4">
-                            <img src={app.tutorAvatar || 'https://via.placeholder.com/150'} alt="avatar" className="w-16 h-16 rounded-full object-cover border-2 border-surface-container-high shadow-sm shrink-0" />
+                            <img src={app.tutorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(app.tutorName || 'User')}&background=random`} alt="avatar" className="w-16 h-16 rounded-full object-cover border-2 border-surface-container-high shadow-sm shrink-0" />
                             <div className="flex-1">
                               <h5 className="font-bold text-lg text-on-surface">{app.tutorName}</h5>
                               <div className="flex items-center gap-1 mb-1">
@@ -452,7 +452,7 @@ const PostManagement: React.FC = () => {
                       {/* Ứng viên bị từ chối */}
                       {post.applicants?.filter(a => a.status === 'REJECTED').map(app => (
                         <div key={app.id} className="border border-outline-variant/30 bg-surface/50 rounded-2xl p-5 flex flex-row gap-4 opacity-60">
-                          <img src={app.tutorAvatar || 'https://via.placeholder.com/150'} alt="avatar" className="w-12 h-12 rounded-full object-cover border border-outline-variant shrink-0" />
+                          <img src={app.tutorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(app.tutorName || 'User')}&background=random`} alt="avatar" className="w-12 h-12 rounded-full object-cover border border-outline-variant shrink-0" />
                           <div>
                             <h5 className="font-semibold text-on-surface">{app.tutorName}</h5>
                             <p className="text-xs text-on-surface-variant">Đã từ chối</p>

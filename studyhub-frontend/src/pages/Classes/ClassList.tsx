@@ -292,7 +292,7 @@ const ClassList: React.FC = () => {
 
                   {/* Tutor row */}
                   <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl mb-4 border border-slate-100">
-                    <img alt="Tutor" className="w-8 h-8 rounded-full object-cover ring-2 ring-white" src={cls.tutorAvatar} />
+                    <img alt="Tutor" className="w-8 h-8 rounded-full object-cover ring-2 ring-white" src={cls.tutorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(cls.tutorName || 'T')}&background=003d9b&color=fff`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-[#0f172a] truncate">{cls.tutorName}</p>
                       {cls.tutorAddress ? (
@@ -324,21 +324,11 @@ const ClassList: React.FC = () => {
           </div>
 
           {/* Pagination */}
+          {/* Pagination is hidden as we fetch all for now
           <div className="mt-12 flex justify-center items-center gap-2">
-            <button className="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 disabled:opacity-30 hover:border-primary hover:text-primary transition-colors shadow-sm" disabled>
-              <span className="material-symbols-outlined text-[18px]">chevron_left</span>
-            </button>
-            {[1, 2, 3].map(n => (
-              <button key={n} className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${n === 1 ? 'bg-primary text-white shadow-md shadow-primary/30' : 'border border-slate-200 bg-white text-slate-500 hover:border-primary hover:text-primary shadow-sm'}`}>
-                {n}
-              </button>
-            ))}
-            <span className="px-2 text-slate-300">...</span>
-            <button className="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-500 hover:border-primary hover:text-primary transition-colors shadow-sm">12</button>
-            <button className="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 hover:border-primary hover:text-primary transition-colors shadow-sm">
-              <span className="material-symbols-outlined text-[18px]">chevron_right</span>
-            </button>
+           ...
           </div>
+          */}
         </div>
       </div>
     </div>
