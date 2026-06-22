@@ -9,7 +9,9 @@ import com.management.studyhub.repository.SubjectRepository;
 import com.management.studyhub.repository.TutorProfileRepository;
 import com.management.studyhub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,6 +24,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+// Chỉ chạy trong môi trường dev — KHÔNG bao giờ deploy controller này lên production
+@Profile("dev")
 @RestController
 @RequestMapping("/api/v1/mock")
 @RequiredArgsConstructor
@@ -32,6 +36,7 @@ public class MockDataController {
     private final SubjectRepository subjectRepository;
     private final com.management.studyhub.repository.ClassSessionRepository classSessionRepository;
     private final com.management.studyhub.repository.ParentRepository parentRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @GetMapping("/make-all-trial")
     @Transactional
@@ -110,7 +115,7 @@ public class MockDataController {
 
         User user = new User();
         user.setEmail(email);
-        user.setPassword("password123");
+        user.setPassword(passwordEncoder.encode("password123"));
         user.setRole(UserRole.TUTOR);
         user = userRepository.save(user);
 

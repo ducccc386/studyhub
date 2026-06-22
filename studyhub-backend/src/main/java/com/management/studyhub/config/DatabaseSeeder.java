@@ -1,20 +1,38 @@
 package com.management.studyhub.config;
 
+import Applicant;
+import ClassSession;
 import com.management.studyhub.entity.Course;
+import DirectBooking;
+import JobPosting;
+import Parent;
+import Subject;
+import com.management.studyhub.entity.Testimonial;
 import com.management.studyhub.entity.TutorProfile;
 import com.management.studyhub.entity.User;
+import ClassSessionStatus;
+import EkycStatus;
+import TutorStatus;
 import com.management.studyhub.entity.enums.UserRole;
+import ApplicantRepository;
+import ClassSessionRepository;
 import com.management.studyhub.repository.CourseRepository;
-import com.management.studyhub.repository.TutorProfileRepository;
-import com.management.studyhub.entity.Testimonial;
+import DirectBookingRepository;
+import JobPostingRepository;
+import ParentRepository;
+import SubjectRepository;
 import com.management.studyhub.repository.TestimonialRepository;
+import com.management.studyhub.repository.TutorProfileRepository;
 import com.management.studyhub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import BigDecimal;
+import LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -23,14 +41,14 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final TutorProfileRepository tutorProfileRepository;
     private final CourseRepository courseRepository;
     private final TestimonialRepository testimonialRepository;
-    private final com.management.studyhub.repository.SubjectRepository subjectRepository;
+    private final SubjectRepository subjectRepository;
     private final UserRepository userRepository;
-    private final com.management.studyhub.repository.ParentRepository parentRepository;
-    private final com.management.studyhub.repository.JobPostingRepository jobPostingRepository;
+    private final ParentRepository parentRepository;
+    private final JobPostingRepository jobPostingRepository;
     private final PasswordEncoder passwordEncoder;
-    private final com.management.studyhub.repository.ClassSessionRepository classSessionRepository;
-    private final com.management.studyhub.repository.DirectBookingRepository directBookingRepository;
-    private final com.management.studyhub.repository.ApplicantRepository applicantRepository;
+    private final ClassSessionRepository classSessionRepository;
+    private final DirectBookingRepository directBookingRepository;
+    private final ApplicantRepository applicantRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -64,13 +82,13 @@ public class DatabaseSeeder implements CommandLineRunner {
         TutorProfile tutor1 = tutorProfileRepository.findAll().stream().filter(t -> t.getFullName().contains("Nguyễn Hoàng Nam")).findFirst().orElse(null);
         
         if (parent != null && tutor1 != null) {
-            com.management.studyhub.entity.DirectBooking b1 = new com.management.studyhub.entity.DirectBooking();
+            DirectBooking b1 = new DirectBooking();
             b1.setParent(parent);
             b1.setTutor(tutor1);
             b1.setSubject("Toán 12 - Luyện thi Đại học");
             b1.setSchedule("Tối thứ 2, 4, 6 từ 19h30 - 21h30");
             b1.setLearningMode("ONLINE");
-            b1.setPricePerSession(new java.math.BigDecimal("350000"));
+            b1.setPricePerSession(new BigDecimal("350000"));
             b1.setParentMessage("Cháu nhà học khá nhưng hay ẩu, thầy rèn giúp cháu. Xin cảm ơn.");
             b1.setStatus("PENDING");
             directBookingRepository.save(b1);
@@ -79,9 +97,9 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     private void seedJobPostings() {
         User parentUser = userRepository.findByEmail("parent@gmail.com").orElse(null);
-        com.management.studyhub.entity.Parent parent = parentUser != null ? parentRepository.findByUserId(parentUser.getId()).orElse(null) : null;
+        Parent parent = parentUser != null ? parentRepository.findByUserId(parentUser.getId()).orElse(null) : null;
         if (parent != null) {
-            com.management.studyhub.entity.JobPosting jp = new com.management.studyhub.entity.JobPosting();
+            JobPosting jp = new JobPosting();
             jp.setParent(parent);
             jp.setTitle("Tìm gia sư Tiếng Anh IELTS 6.5+ cho con");
             jp.setSubject("Tiếng Anh");
@@ -99,14 +117,14 @@ public class DatabaseSeeder implements CommandLineRunner {
     }
 
     private void seedApplicants() {
-        com.management.studyhub.entity.JobPosting jp = jobPostingRepository.findAll().stream()
+        JobPosting jp = jobPostingRepository.findAll().stream()
                 .filter(p -> p.getTitle().contains("IELTS 6.5+"))
                 .findFirst().orElse(null);
         TutorProfile tutor2 = tutorProfileRepository.findAll().stream()
                 .filter(t -> t.getFullName().contains("Trần Thị B")).findFirst().orElse(null);
         
         if (jp != null && tutor2 != null) {
-            com.management.studyhub.entity.Applicant applicant = new com.management.studyhub.entity.Applicant();
+            Applicant applicant = new Applicant();
             applicant.setJobPosting(jp);
             applicant.setTutorId(tutor2.getUser().getId().toString());
             applicant.setTutorName(tutor2.getFullName());
@@ -119,12 +137,12 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     private void seedClassSessions() {
         User parentUser = userRepository.findByEmail("parent@gmail.com").orElse(null);
-        com.management.studyhub.entity.Parent parent = parentUser != null ? parentRepository.findByUserId(parentUser.getId()).orElse(null) : null;
+        Parent parent = parentUser != null ? parentRepository.findByUserId(parentUser.getId()).orElse(null) : null;
         User tutor3User = userRepository.findByEmail("tutor3@gmail.com").orElse(null);
         TutorProfile tutor3 = tutor3User != null ? tutorProfileRepository.findAll().stream().filter(t -> t.getUser().getId().equals(tutor3User.getId())).findFirst().orElse(null) : null;
         
         if (parent != null && tutor3 != null) {
-            com.management.studyhub.entity.ClassSession session = new com.management.studyhub.entity.ClassSession();
+            ClassSession session = new ClassSession();
             session.setParent(parent);
             session.setTutorProfileId(tutor3.getId());
             session.setTutorName(tutor3.getFullName());
@@ -134,7 +152,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             session.setSchedule("Tối Thứ 3, Thứ 5 (20h-21h30)");
             session.setPricePerSession(400000.0);
             session.setLearningMode("ONLINE");
-            session.setStatus(com.management.studyhub.entity.enums.ClassSessionStatus.CONFIRMED);
+            session.setStatus(ClassSessionStatus.CONFIRMED);
             
             // Generate mock meet link
             session.setMeetingLink("https://meet.google.com/abc-defg-hij");
@@ -146,19 +164,19 @@ public class DatabaseSeeder implements CommandLineRunner {
     private void seedSubjects() {
         String[] subjectNames = {"Toán học", "Vật lý", "Hóa học", "Tiếng Anh", "Tin học", "Ngữ văn", "Sinh học", "Lịch sử", "Địa lý"};
         for (String name : subjectNames) {
-            com.management.studyhub.entity.Subject subject = new com.management.studyhub.entity.Subject();
+            Subject subject = new Subject();
             subject.setName(name);
             subjectRepository.save(subject);
         }
     }
 
     private void fixCourseSubjects() {
-        List<com.management.studyhub.entity.Subject> subjects = subjectRepository.findAll();
-        com.management.studyhub.entity.Subject mathSubject = subjects.stream().filter(s -> s.getName().equals("Toán học")).findFirst().orElse(null);
-        com.management.studyhub.entity.Subject physicsSubject = subjects.stream().filter(s -> s.getName().equals("Vật lý") || s.getName().equals("Vật lí")).findFirst().orElse(null);
-        com.management.studyhub.entity.Subject chemistrySubject = subjects.stream().filter(s -> s.getName().equals("Hóa học") || s.getName().equals("Hoá học")).findFirst().orElse(null);
-        com.management.studyhub.entity.Subject englishSubject = subjects.stream().filter(s -> s.getName().equals("Tiếng Anh")).findFirst().orElse(null);
-        com.management.studyhub.entity.Subject itSubject = subjects.stream().filter(s -> s.getName().equals("Tin học")).findFirst().orElse(null);
+        List<Subject> subjects = subjectRepository.findAll();
+        Subject mathSubject = subjects.stream().filter(s -> s.getName().equals("Toán học")).findFirst().orElse(null);
+        Subject physicsSubject = subjects.stream().filter(s -> s.getName().equals("Vật lý") || s.getName().equals("Vật lí")).findFirst().orElse(null);
+        Subject chemistrySubject = subjects.stream().filter(s -> s.getName().equals("Hóa học") || s.getName().equals("Hoá học")).findFirst().orElse(null);
+        Subject englishSubject = subjects.stream().filter(s -> s.getName().equals("Tiếng Anh")).findFirst().orElse(null);
+        Subject itSubject = subjects.stream().filter(s -> s.getName().equals("Tin học")).findFirst().orElse(null);
 
         List<Course> courses = courseRepository.findAll();
         for (Course c : courses) {
@@ -229,7 +247,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         if (parentRepository.count() == 0) {
             User parentUser = userRepository.findByEmail("parent@gmail.com").orElse(null);
             if (parentUser != null) {
-                com.management.studyhub.entity.Parent parent = new com.management.studyhub.entity.Parent();
+                Parent parent = new Parent();
                 parent.setUser(parentUser);
                 parent.setName(parentUser.getFullName());
                 parent.setEmail(parentUser.getEmail());
@@ -239,17 +257,17 @@ public class DatabaseSeeder implements CommandLineRunner {
             }
         }
 
-        List<com.management.studyhub.entity.Subject> subjects = subjectRepository.findAll();
+        List<Subject> subjects = subjectRepository.findAll();
         
-        com.management.studyhub.entity.Subject mathSubject = subjects.stream().filter(s -> s.getName().equals("Toán học")).findFirst().orElse(null);
-        com.management.studyhub.entity.Subject physicsSubject = subjects.stream().filter(s -> s.getName().equals("Vật lý")).findFirst().orElse(null);
-        com.management.studyhub.entity.Subject chemistrySubject = subjects.stream().filter(s -> s.getName().equals("Hóa học")).findFirst().orElse(null);
-        com.management.studyhub.entity.Subject englishSubject = subjects.stream().filter(s -> s.getName().equals("Tiếng Anh")).findFirst().orElse(null);
-        com.management.studyhub.entity.Subject itSubject = subjects.stream().filter(s -> s.getName().equals("Tin học")).findFirst().orElse(null);
-        com.management.studyhub.entity.Subject literatureSubject = subjects.stream().filter(s -> s.getName().equals("Ngữ văn")).findFirst().orElse(null);
-        com.management.studyhub.entity.Subject biologySubject = subjects.stream().filter(s -> s.getName().equals("Sinh học")).findFirst().orElse(null);
-        com.management.studyhub.entity.Subject historySubject = subjects.stream().filter(s -> s.getName().equals("Lịch sử")).findFirst().orElse(null);
-        com.management.studyhub.entity.Subject geographySubject = subjects.stream().filter(s -> s.getName().equals("Địa lý")).findFirst().orElse(null);
+        Subject mathSubject = subjects.stream().filter(s -> s.getName().equals("Toán học")).findFirst().orElse(null);
+        Subject physicsSubject = subjects.stream().filter(s -> s.getName().equals("Vật lý")).findFirst().orElse(null);
+        Subject chemistrySubject = subjects.stream().filter(s -> s.getName().equals("Hóa học")).findFirst().orElse(null);
+        Subject englishSubject = subjects.stream().filter(s -> s.getName().equals("Tiếng Anh")).findFirst().orElse(null);
+        Subject itSubject = subjects.stream().filter(s -> s.getName().equals("Tin học")).findFirst().orElse(null);
+        Subject literatureSubject = subjects.stream().filter(s -> s.getName().equals("Ngữ văn")).findFirst().orElse(null);
+        Subject biologySubject = subjects.stream().filter(s -> s.getName().equals("Sinh học")).findFirst().orElse(null);
+        Subject historySubject = subjects.stream().filter(s -> s.getName().equals("Lịch sử")).findFirst().orElse(null);
+        Subject geographySubject = subjects.stream().filter(s -> s.getName().equals("Địa lý")).findFirst().orElse(null);
 
         // Tutor 1
         TutorProfile t1 = new TutorProfile();
@@ -257,24 +275,24 @@ public class DatabaseSeeder implements CommandLineRunner {
         t1.setFullName("Thầy Nguyễn Hoàng Nam");
         t1.setIntroduction("Thạc sĩ Toán học - ĐH Sư Phạm HN. Nhiều năm kinh nghiệm giảng dạy và luyện thi đại học môn Toán.");
         t1.setAvatarUrl("https://ui-avatars.com/api/?name=Nguyen+Hoang+Nam&background=random");
-        t1.setStatus(com.management.studyhub.entity.enums.TutorStatus.APPROVED);
-        t1.setEkycStatus(com.management.studyhub.entity.enums.EkycStatus.SUCCESS);
-        t1.setSimilarityScore(new java.math.BigDecimal("98.5"));
+        t1.setStatus(TutorStatus.APPROVED);
+        t1.setEkycStatus(EkycStatus.SUCCESS);
+        t1.setSimilarityScore(new BigDecimal("98.5"));
         t1.setIdCardFrontUrl("https://placehold.co/600x400?text=ID+Front");
         t1.setIdCardBackUrl("https://placehold.co/600x400?text=ID+Back");
-        t1.setBirthDate(java.time.LocalDate.of(1990, 5, 15));
+        t1.setBirthDate(LocalDate.of(1990, 5, 15));
         t1.setAddress("Cầu Giấy, Hà Nội");
         t1.setPhoneNumber("0987654321");
         t1.setUniversityName("Đại học Sư phạm Hà Nội");
         t1.setMajor("Sư phạm Toán học");
         t1.setExperienceYears(5);
         t1.setDegreeImageUrl("https://placehold.co/600x400?text=Degree");
-        t1.setCertificates(java.util.List.of("https://placehold.co/400x300?text=IELTS", "https://placehold.co/400x300?text=Certificate"));
+        t1.setCertificates(List.of("https://placehold.co/400x300?text=IELTS", "https://placehold.co/400x300?text=Certificate"));
         t1.setPrice(350000.0);
         t1.setTeachingMethod("ONLINE");
         t1.setAverageRating(4.9);
         t1.setTotalReviews(120);
-        if (mathSubject != null) t1.setSubjects(java.util.Set.of(mathSubject));
+        if (mathSubject != null) t1.setSubjects(Set.of(mathSubject));
         tutorProfileRepository.save(t1);
 
         Course c1 = new Course();
@@ -297,12 +315,12 @@ public class DatabaseSeeder implements CommandLineRunner {
         t2.setFullName("Cô Trần Thị B");
         t2.setIntroduction("Thạc sĩ Vật Lý. Giảng dạy tận tâm, dễ hiểu.");
         t2.setAvatarUrl("https://ui-avatars.com/api/?name=Tran+Thi+B&background=random");
-        t2.setStatus(com.management.studyhub.entity.enums.TutorStatus.APPROVED);
-        t2.setEkycStatus(com.management.studyhub.entity.enums.EkycStatus.SUCCESS);
-        t2.setSimilarityScore(new java.math.BigDecimal("95.2"));
+        t2.setStatus(TutorStatus.APPROVED);
+        t2.setEkycStatus(EkycStatus.SUCCESS);
+        t2.setSimilarityScore(new BigDecimal("95.2"));
         t2.setIdCardFrontUrl("https://placehold.co/600x400?text=ID+Front");
         t2.setIdCardBackUrl("https://placehold.co/600x400?text=ID+Back");
-        t2.setBirthDate(java.time.LocalDate.of(1992, 8, 22));
+        t2.setBirthDate(LocalDate.of(1992, 8, 22));
         t2.setAddress("Quận 1, TP.HCM");
         t2.setPhoneNumber("0912345678");
         t2.setUniversityName("Đại học Sư phạm TP.HCM");
@@ -313,7 +331,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         t2.setTeachingMethod("ONLINE");
         t2.setAverageRating(4.8);
         t2.setTotalReviews(85);
-        if (physicsSubject != null) t2.setSubjects(java.util.Set.of(physicsSubject));
+        if (physicsSubject != null) t2.setSubjects(Set.of(physicsSubject));
         tutorProfileRepository.save(t2);
 
         Course c2 = new Course();
@@ -336,24 +354,24 @@ public class DatabaseSeeder implements CommandLineRunner {
         t3.setFullName("Mr. David Smith");
         t3.setIntroduction("Bản ngữ (USA), IELTS 9.0. Phương pháp giảng dạy hiện đại, hiệu quả.");
         t3.setAvatarUrl("https://ui-avatars.com/api/?name=David+Smith&background=random");
-        t3.setStatus(com.management.studyhub.entity.enums.TutorStatus.APPROVED);
-        t3.setEkycStatus(com.management.studyhub.entity.enums.EkycStatus.SUCCESS);
-        t3.setSimilarityScore(new java.math.BigDecimal("99.1"));
+        t3.setStatus(TutorStatus.APPROVED);
+        t3.setEkycStatus(EkycStatus.SUCCESS);
+        t3.setSimilarityScore(new BigDecimal("99.1"));
         t3.setIdCardFrontUrl("https://placehold.co/600x400?text=ID+Front");
         t3.setIdCardBackUrl("https://placehold.co/600x400?text=ID+Back");
-        t3.setBirthDate(java.time.LocalDate.of(1985, 3, 10));
+        t3.setBirthDate(LocalDate.of(1985, 3, 10));
         t3.setAddress("Bình Thạnh, TP.HCM");
         t3.setPhoneNumber("0988776655");
         t3.setUniversityName("University of California, Berkeley");
         t3.setMajor("English Literature");
         t3.setExperienceYears(8);
         t3.setDegreeImageUrl("https://placehold.co/600x400?text=Degree");
-        t3.setCertificates(java.util.List.of("https://placehold.co/400x300?text=TESOL", "https://placehold.co/400x300?text=CELTA"));
+        t3.setCertificates(List.of("https://placehold.co/400x300?text=TESOL", "https://placehold.co/400x300?text=CELTA"));
         t3.setPrice(450000.0);
         t3.setTeachingMethod("OFFLINE");
         t3.setAverageRating(5.0);
         t3.setTotalReviews(200);
-        if (englishSubject != null) t3.setSubjects(java.util.Set.of(englishSubject));
+        if (englishSubject != null) t3.setSubjects(Set.of(englishSubject));
         tutorProfileRepository.save(t3);
 
         Course c3 = new Course();
@@ -376,12 +394,12 @@ public class DatabaseSeeder implements CommandLineRunner {
         t4.setFullName("Lê Minh C");
         t4.setIntroduction("Software Engineer at FPT. Hướng dẫn tận tình dự án thực tế.");
         t4.setAvatarUrl("https://ui-avatars.com/api/?name=Le+Minh+C&background=random");
-        t4.setStatus(com.management.studyhub.entity.enums.TutorStatus.APPROVED);
-        t4.setEkycStatus(com.management.studyhub.entity.enums.EkycStatus.SUCCESS);
-        t4.setSimilarityScore(new java.math.BigDecimal("91.8"));
+        t4.setStatus(TutorStatus.APPROVED);
+        t4.setEkycStatus(EkycStatus.SUCCESS);
+        t4.setSimilarityScore(new BigDecimal("91.8"));
         t4.setIdCardFrontUrl("https://placehold.co/600x400?text=ID+Front");
         t4.setIdCardBackUrl("https://placehold.co/600x400?text=ID+Back");
-        t4.setBirthDate(java.time.LocalDate.of(1998, 11, 5));
+        t4.setBirthDate(LocalDate.of(1998, 11, 5));
         t4.setAddress("Quận 9, TP.HCM");
         t4.setPhoneNumber("0909090909");
         t4.setUniversityName("Đại học Bách Khoa TP.HCM");
@@ -392,7 +410,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         t4.setTeachingMethod("ONLINE");
         t4.setAverageRating(4.7);
         t4.setTotalReviews(50);
-        if (itSubject != null) t4.setSubjects(java.util.Set.of(itSubject));
+        if (itSubject != null) t4.setSubjects(Set.of(itSubject));
         tutorProfileRepository.save(t4);
 
         Course c4 = new Course();
@@ -415,12 +433,12 @@ public class DatabaseSeeder implements CommandLineRunner {
         tPending.setFullName("Vũ Đức Phát");
         tPending.setIntroduction("Cử nhân Sinh học - ĐH Khoa học Tự nhiên");
         tPending.setAvatarUrl("https://ui-avatars.com/api/?name=Vu+Duc+Phat&background=random");
-        tPending.setStatus(com.management.studyhub.entity.enums.TutorStatus.PENDING);
-        tPending.setEkycStatus(com.management.studyhub.entity.enums.EkycStatus.PROCESSING);
+        tPending.setStatus(TutorStatus.PENDING);
+        tPending.setEkycStatus(EkycStatus.PROCESSING);
         tPending.setIdCardFrontUrl("https://example.com/cccd_front.jpg");
-        tPending.setSimilarityScore(java.math.BigDecimal.valueOf(95.5));
+        tPending.setSimilarityScore(BigDecimal.valueOf(95.5));
         tPending.setDegreeImageUrl("https://example.com/degree.jpg");
-        if (biologySubject != null) tPending.setSubjects(java.util.Set.of(biologySubject));
+        if (biologySubject != null) tPending.setSubjects(Set.of(biologySubject));
         tutorProfileRepository.save(tPending);
 
         // Pending Tutor 2
@@ -429,12 +447,12 @@ public class DatabaseSeeder implements CommandLineRunner {
         tPending2.setFullName("Lê Trọng Nghĩa");
         tPending2.setIntroduction("Kỹ sư phần mềm - 3 năm kinh nghiệm");
         tPending2.setAvatarUrl("https://ui-avatars.com/api/?name=Le+Trong+Nghia&background=random");
-        tPending2.setStatus(com.management.studyhub.entity.enums.TutorStatus.PENDING);
-        tPending2.setEkycStatus(com.management.studyhub.entity.enums.EkycStatus.PROCESSING);
+        tPending2.setStatus(TutorStatus.PENDING);
+        tPending2.setEkycStatus(EkycStatus.PROCESSING);
         tPending2.setIdCardFrontUrl("https://example.com/cccd_front.jpg");
-        tPending2.setSimilarityScore(java.math.BigDecimal.valueOf(89.2));
+        tPending2.setSimilarityScore(BigDecimal.valueOf(89.2));
         tPending2.setDegreeImageUrl("https://example.com/degree.jpg");
-        if (itSubject != null) tPending2.setSubjects(java.util.Set.of(itSubject));
+        if (itSubject != null) tPending2.setSubjects(Set.of(itSubject));
         tutorProfileRepository.save(tPending2);
 
         // Pending Tutor 3
@@ -443,12 +461,12 @@ public class DatabaseSeeder implements CommandLineRunner {
         tPending3.setFullName("Hoàng Mai Ngọc");
         tPending3.setIntroduction("IELTS 8.0 - Cử nhân Sư phạm Tiếng Anh");
         tPending3.setAvatarUrl("https://ui-avatars.com/api/?name=Hoang+Mai+Ngoc&background=random");
-        tPending3.setStatus(com.management.studyhub.entity.enums.TutorStatus.PENDING);
-        tPending3.setEkycStatus(com.management.studyhub.entity.enums.EkycStatus.PROCESSING);
+        tPending3.setStatus(TutorStatus.PENDING);
+        tPending3.setEkycStatus(EkycStatus.PROCESSING);
         tPending3.setIdCardFrontUrl("https://example.com/cccd_front.jpg");
-        tPending3.setSimilarityScore(java.math.BigDecimal.valueOf(98.1));
+        tPending3.setSimilarityScore(BigDecimal.valueOf(98.1));
         tPending3.setDegreeImageUrl("https://example.com/degree.jpg");
-        if (englishSubject != null) tPending3.setSubjects(java.util.Set.of(englishSubject));
+        if (englishSubject != null) tPending3.setSubjects(Set.of(englishSubject));
         tutorProfileRepository.save(tPending3);
 
         // Pending Tutor 4
@@ -457,12 +475,12 @@ public class DatabaseSeeder implements CommandLineRunner {
         tPending4.setFullName("Đỗ Văn Hùng");
         tPending4.setIntroduction("Sinh viên xuất sắc ĐH Bách Khoa");
         tPending4.setAvatarUrl("https://ui-avatars.com/api/?name=Do+Van+Hung&background=random");
-        tPending4.setStatus(com.management.studyhub.entity.enums.TutorStatus.PENDING);
-        tPending4.setEkycStatus(com.management.studyhub.entity.enums.EkycStatus.PROCESSING);
+        tPending4.setStatus(TutorStatus.PENDING);
+        tPending4.setEkycStatus(EkycStatus.PROCESSING);
         tPending4.setIdCardFrontUrl("https://example.com/cccd_front.jpg");
-        tPending4.setSimilarityScore(java.math.BigDecimal.valueOf(72.4));
+        tPending4.setSimilarityScore(BigDecimal.valueOf(72.4));
         tPending4.setDegreeImageUrl("https://example.com/degree.jpg");
-        if (mathSubject != null) tPending4.setSubjects(java.util.Set.of(mathSubject));
+        if (mathSubject != null) tPending4.setSubjects(Set.of(mathSubject));
         tutorProfileRepository.save(tPending4);
 
         // Tutor for testing new eKYC feature
@@ -471,9 +489,9 @@ public class DatabaseSeeder implements CommandLineRunner {
         tTestEkyc.setFullName("Gia sư Test eKYC");
         tTestEkyc.setIntroduction("Tài khoản này dùng để test chức năng upload ảnh và eKYC");
         tTestEkyc.setAvatarUrl("https://ui-avatars.com/api/?name=Test+eKYC&background=random");
-        tTestEkyc.setStatus(com.management.studyhub.entity.enums.TutorStatus.DRAFT);
-        tTestEkyc.setEkycStatus(com.management.studyhub.entity.enums.EkycStatus.NOT_STARTED);
-        if (itSubject != null) tTestEkyc.setSubjects(java.util.Set.of(itSubject));
+        tTestEkyc.setStatus(TutorStatus.DRAFT);
+        tTestEkyc.setEkycStatus(EkycStatus.NOT_STARTED);
+        if (itSubject != null) tTestEkyc.setSubjects(Set.of(itSubject));
         tutorProfileRepository.save(tTestEkyc);
 
         // Course 5
@@ -512,12 +530,12 @@ public class DatabaseSeeder implements CommandLineRunner {
         t5.setFullName("Cô Lê Hà");
         t5.setIntroduction("Giáo viên chuyên Văn 10 năm kinh nghiệm");
         t5.setAvatarUrl("https://ui-avatars.com/api/?name=Le+Ha&background=random");
-        t5.setStatus(com.management.studyhub.entity.enums.TutorStatus.APPROVED);
+        t5.setStatus(TutorStatus.APPROVED);
         t5.setPrice(200000.0);
         t5.setTeachingMethod("ONLINE");
         t5.setAverageRating(4.9);
         t5.setTotalReviews(150);
-        if (literatureSubject != null) t5.setSubjects(java.util.Set.of(literatureSubject));
+        if (literatureSubject != null) t5.setSubjects(Set.of(literatureSubject));
         tutorProfileRepository.save(t5);
 
         Course c7 = new Course();
@@ -540,12 +558,12 @@ public class DatabaseSeeder implements CommandLineRunner {
         t6.setFullName("Thầy Vũ Dũng");
         t6.setIntroduction("Sinh viên Y Dược loại giỏi");
         t6.setAvatarUrl("https://ui-avatars.com/api/?name=Vu+Dung&background=random");
-        t6.setStatus(com.management.studyhub.entity.enums.TutorStatus.APPROVED);
+        t6.setStatus(TutorStatus.APPROVED);
         t6.setPrice(150000.0);
         t6.setTeachingMethod("OFFLINE");
         t6.setAverageRating(4.8);
         t6.setTotalReviews(90);
-        if (biologySubject != null) t6.setSubjects(java.util.Set.of(biologySubject));
+        if (biologySubject != null) t6.setSubjects(Set.of(biologySubject));
         tutorProfileRepository.save(t6);
 
         Course c8 = new Course();
@@ -568,12 +586,12 @@ public class DatabaseSeeder implements CommandLineRunner {
         t7.setFullName("Cô Đinh Hương");
         t7.setIntroduction("Thạc sĩ Sử học");
         t7.setAvatarUrl("https://ui-avatars.com/api/?name=Dinh+Huong&background=random");
-        t7.setStatus(com.management.studyhub.entity.enums.TutorStatus.APPROVED);
+        t7.setStatus(TutorStatus.APPROVED);
         t7.setPrice(250000.0);
         t7.setTeachingMethod("ONLINE");
         t7.setAverageRating(4.7);
         t7.setTotalReviews(60);
-        if (historySubject != null) t7.setSubjects(java.util.Set.of(historySubject));
+        if (historySubject != null) t7.setSubjects(Set.of(historySubject));
         tutorProfileRepository.save(t7);
 
         Course c9 = new Course();
@@ -596,12 +614,12 @@ public class DatabaseSeeder implements CommandLineRunner {
         t8.setFullName("Thầy Phan Bách");
         t8.setIntroduction("Chuyên gia luyện thi Địa Lý");
         t8.setAvatarUrl("https://ui-avatars.com/api/?name=Phan+Bach&background=random");
-        t8.setStatus(com.management.studyhub.entity.enums.TutorStatus.APPROVED);
+        t8.setStatus(TutorStatus.APPROVED);
         t8.setPrice(220000.0);
         t8.setTeachingMethod("ONLINE");
         t8.setAverageRating(4.8);
         t8.setTotalReviews(80);
-        if (geographySubject != null) t8.setSubjects(java.util.Set.of(geographySubject));
+        if (geographySubject != null) t8.setSubjects(Set.of(geographySubject));
         tutorProfileRepository.save(t8);
 
         Course c10 = new Course();

@@ -18,13 +18,16 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class GeminiAiService {
+
+    // Reuse a single HttpClient instance (thread-safe, manages connection pool)
+    private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
     @Value("${gemini.api.key}")
     private String apiKey;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    // Injected by Spring — uses the auto-configured ObjectMapper (timezone, date format, etc.)
+    private final ObjectMapper objectMapper;
 
     public CvParsedResultDTO parseCv(MultipartFile file) throws Exception {
         String base64Data = Base64.getEncoder().encodeToString(file.getBytes());
@@ -60,14 +63,13 @@ public class GeminiAiService {
 
         String jsonBody = objectMapper.writeValueAsString(requestBody);
 
-        HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey.trim()))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 200) {
             throw new RuntimeException("Lỗi từ Gemini API: " + response.body());
