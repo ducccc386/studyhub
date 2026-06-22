@@ -27,8 +27,8 @@ public class GeminiAiService {
     @Value("${gemini.api.key}")
     private String apiKey;
 
-    // Injected by Spring — uses the auto-configured ObjectMapper (timezone, date format, etc.)
-    private final ObjectMapper objectMapper;
+    // Create a local ObjectMapper instance
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public CvParsedResultDTO parseCv(MultipartFile file) throws Exception {
         String base64Data = Base64.getEncoder().encodeToString(file.getBytes());
