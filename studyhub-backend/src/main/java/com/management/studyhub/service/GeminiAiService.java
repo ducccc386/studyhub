@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class GeminiAiService {
 
     // Reuse a single HttpClient instance (thread-safe, manages connection pool)
