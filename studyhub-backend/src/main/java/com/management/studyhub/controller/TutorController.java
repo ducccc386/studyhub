@@ -15,7 +15,6 @@ import com.management.studyhub.dto.TutorEkycRequestDTO;
 @RestController
 @RequestMapping("/api/v1/tutors")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // Allow frontend to access
 public class TutorController {
 
     private final TutorService tutorService;

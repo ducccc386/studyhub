@@ -11,7 +11,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/lesson-logs")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class LessonLogController {
 
     private final LessonLogService lessonLogService;

@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/reviews")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class ReviewController {
 
     private final ClassSessionRepository classSessionRepository;

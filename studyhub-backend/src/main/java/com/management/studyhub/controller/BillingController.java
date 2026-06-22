@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/billing")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class BillingController {
 
     private final ClassSessionRepository classSessionRepository;

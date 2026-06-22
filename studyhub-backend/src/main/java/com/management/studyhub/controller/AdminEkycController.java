@@ -18,7 +18,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/admin/ekyc")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class AdminEkycController {
 
     private final TutorProfileRepository tutorProfileRepository;

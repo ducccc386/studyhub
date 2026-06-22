@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/admin/users")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class AdminUserController {
 
     private final UserRepository userRepository;

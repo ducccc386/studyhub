@@ -11,7 +11,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/bookings")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class DirectBookingController {
     private final DirectBookingService bookingService;
 

@@ -20,7 +20,6 @@ import com.management.studyhub.service.AdminReportService;
 @RestController
 @RequestMapping("/api/v1/admin/reports")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class AdminReportController {
 
     private final CommissionRecordRepository commissionRecordRepository;

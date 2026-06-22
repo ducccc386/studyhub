@@ -13,7 +13,6 @@ const TutorList = lazy(() => import('../pages/Tutor/TutorList'));
 const TutorDetail = lazy(() => import('../pages/Tutor/TutorDetail'));
 const Login = lazy(() => import('../pages/Login'));
 const Register = lazy(() => import('../pages/Register'));
-const TestPayment = lazy(() => import('../pages/TestPayment'));
 const PublicDocumentList = lazy(() => import('../pages/Documents/PublicDocumentList'));
 const AboutUs = lazy(() => import('../pages/Shared/AboutUs'));
 
@@ -69,7 +68,6 @@ const AppRouter: React.FC = () => {
         <Route path="tutors/:id" element={<TutorDetail />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
-        <Route path="test-payment" element={<TestPayment />} />
         <Route path="documents" element={<PublicDocumentList />} />
         <Route path="about-us" element={<AboutUs />} />
       </Route>
@@ -78,7 +76,6 @@ const AppRouter: React.FC = () => {
       <Route path="/parent" element={<ParentLayout />}>
         {/* Index → Redirect to Posts */}
         <Route index element={<Navigate to="/parent/posts" replace />} />
-        <Route path="post-management" element={<PostManagement />} />
         <Route path="posts" element={<PostManagement />} />
         <Route path="posts/:postId/applicants" element={<ApplicantReview />} />
         <Route path="posts/create" element={<CreatePost />} />

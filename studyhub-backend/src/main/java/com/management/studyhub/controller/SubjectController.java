@@ -14,7 +14,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/subjects")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class SubjectController {
 
     private final SubjectService subjectService;

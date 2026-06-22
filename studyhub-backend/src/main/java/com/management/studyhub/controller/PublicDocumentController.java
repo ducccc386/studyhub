@@ -14,7 +14,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/public-documents")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class PublicDocumentController {
 
     private final PublicDocumentService publicDocumentService;
