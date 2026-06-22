@@ -4,11 +4,9 @@ import com.management.studyhub.entity.LessonLog;
 import com.management.studyhub.entity.enums.ParentApprovalStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Repository
 public interface LessonLogRepository extends JpaRepository<LessonLog, Long> {
     List<LessonLog> findByClassSessionIdOrderByScheduledDateDesc(Long classSessionId);
 
