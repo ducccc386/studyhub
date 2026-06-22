@@ -17,9 +17,13 @@ public class JobPostingController {
 
     private final JobPostingService jobPostingService;
     @PostMapping
-    public ResponseEntity<JobPostingDTO> createPost(@RequestParam Long userId, @RequestBody JobPostingDTO dto) {
-        JobPostingDTO createdPost = jobPostingService.createPost(userId, dto);
-        return ResponseEntity.ok(createdPost);
+    public ResponseEntity<?> createPost(@RequestParam Long userId, @RequestBody JobPostingDTO dto) {
+        try {
+            JobPostingDTO createdPost = jobPostingService.createPost(userId, dto);
+            return ResponseEntity.ok(createdPost);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @GetMapping

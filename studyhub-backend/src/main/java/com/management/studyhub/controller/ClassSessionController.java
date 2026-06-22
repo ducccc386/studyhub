@@ -41,8 +41,12 @@ public class ClassSessionController {
      * GET /api/v1/class-sessions/parent/{parentId}
      */
     @GetMapping("/parent/{userId}")
-    public ResponseEntity<List<ClassSessionDTO>> getSessionsByParent(@PathVariable Long userId) {
-        return ResponseEntity.ok(classSessionService.getSessionsByParent(userId));
+    public ResponseEntity<?> getSessionsByParent(@PathVariable Long userId) {
+        try {
+            return ResponseEntity.ok(classSessionService.getSessionsByParent(userId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+        }
     }
 
     /**

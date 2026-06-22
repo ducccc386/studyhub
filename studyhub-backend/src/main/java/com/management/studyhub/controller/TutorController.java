@@ -11,10 +11,12 @@ import java.util.List;
 import java.util.Map;
 
 import com.management.studyhub.dto.TutorEkycRequestDTO;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/v1/tutors")
 @RequiredArgsConstructor
+@Slf4j
 public class TutorController {
 
     private final TutorService tutorService;
@@ -99,7 +101,7 @@ public class TutorController {
             com.management.studyhub.dto.CvParsedResultDTO result = geminiAiService.parseCv(file);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Lỗi parse CV: ", e);
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
                 "message", "Server đang có vấn đề, vui lòng thử lại sau."
