@@ -103,7 +103,7 @@ public class TutorController {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
-                "message", "Lỗi khi phân tích CV: " + e.getMessage()
+                "message", "Server đang có vấn đề, vui lòng thử lại sau."
             ));
         }
     }
