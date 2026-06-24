@@ -34,6 +34,12 @@ const navGroups = [
         icon: 'chat',
         label: 'Tin nhắn',
       },
+      {
+        to: '/parent/transactions',
+        icon: 'receipt_long',
+        label: 'Lịch sử giao dịch',
+        sublabel: 'Giao dịch chuyển khoản',
+      },
     ],
   },
 ];

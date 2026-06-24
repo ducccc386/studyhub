@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     Optional<Transaction> findByTransactionCode(String transactionCode);
     Optional<Transaction> findByClassSessionIdAndStatus(Long classSessionId, com.management.studyhub.entity.enums.TransactionStatus status);
+    java.util.List<Transaction> findByClassSession_Parent_Id(Long parentId);
 }

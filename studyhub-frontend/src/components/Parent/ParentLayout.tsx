@@ -7,8 +7,11 @@ const ParentLayout: React.FC = () => {
   const { role, isLoggedIn } = useAuth();
   const location = useLocation();
 
-  if (!isLoggedIn || role !== 'parent') {
+  if (!isLoggedIn) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  if (role !== 'parent') {
+    return <Navigate to="/" replace />;
   }
 
   return (

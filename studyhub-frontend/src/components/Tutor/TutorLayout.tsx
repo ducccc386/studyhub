@@ -9,8 +9,11 @@ const TutorLayout: React.FC = () => {
   const { role, isLoggedIn } = useAuth();
   const location = useLocation();
 
-  if (!isLoggedIn || role !== 'tutor') {
+  if (!isLoggedIn) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  if (role !== 'tutor') {
+    return <Navigate to="/" replace />;
   }
 
   const hideSidebar = location.pathname.includes('/tutor/search-classes');

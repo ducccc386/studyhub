@@ -182,4 +182,29 @@ public class PaymentService {
         classSessionRepository.save(classSession);
         log.info("Disbursed payment for class: {}", classId);
     }
+
+    public List<Map<String, Object>> getTransactionsByParent(Long parentId) {
+        return transactionRepository.findByClassSession_Parent_Id(parentId).stream()
+            .map(this::mapTransactionToDto)
+            .toList();
+    }
+
+    public List<Map<String, Object>> getAllTransactions() {
+        return transactionRepository.findAll().stream()
+            .map(this::mapTransactionToDto)
+            .toList();
+    }
+
+    private Map<String, Object> mapTransactionToDto(Transaction t) {
+        return Map.of(
+            "id", t.getId(),
+            "transactionCode", t.getTransactionCode() != null ? t.getTransactionCode() : "",
+            "amount", t.getAmount() != null ? t.getAmount() : 0.0,
+            "status", t.getStatus() != null ? t.getStatus().name() : "",
+            "createdAt", t.getCreatedAt() != null ? t.getCreatedAt().toString() : "",
+            "className", t.getClassSession() != null && t.getClassSession().getClassName() != null ? t.getClassSession().getClassName() : "",
+            "parentName", t.getClassSession() != null && t.getClassSession().getParentName() != null ? t.getClassSession().getParentName() : "",
+            "classId", t.getClassSession() != null ? t.getClassSession().getId() : 0
+        );
+    }
 }

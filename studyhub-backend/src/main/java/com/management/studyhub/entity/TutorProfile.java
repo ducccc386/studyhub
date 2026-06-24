@@ -44,6 +44,9 @@ public class TutorProfile {
     @Column(columnDefinition = "LONGTEXT")
     private String degreeImageUrl;
     
+    @Column(columnDefinition = "LONGTEXT")
+    private String cvUrl;
+    
     private int experienceYears;
 
     @ElementCollection

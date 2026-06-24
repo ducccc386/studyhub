@@ -30,8 +30,10 @@ const TutorSettings: React.FC = () => {
 
   // Thêm state cho phần Bằng cấp và Chứng chỉ
   const [degreeFile, setDegreeFile] = useState<File | null>(null);
+  const [cvPdfFile, setCvPdfFile] = useState<File | null>(null);
   const [certificates, setCertificates] = useState<File[]>([]);
   const [degreeFileUrl, setDegreeFileUrl] = useState<string | null>(null);
+  const [cvPdfFileUrl, setCvPdfFileUrl] = useState<string | null>(null);
   const [certificateUrls, setCertificateUrls] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -62,6 +64,9 @@ const TutorSettings: React.FC = () => {
           }
           if (data.degreeImageUrl) {
             setDegreeFileUrl(data.degreeImageUrl);
+          }
+          if (data.cvUrl) {
+            setCvPdfFileUrl(data.cvUrl);
           }
           if (data.introduction) {
             setIntroduction(data.introduction);
@@ -126,6 +131,7 @@ const TutorSettings: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setCvPdfFile(file);
     setIsParsingCv(true);
     const formData = new FormData();
     formData.append('file', file);
@@ -238,6 +244,11 @@ const TutorSettings: React.FC = () => {
         degreeImageUrl = await toBase64(degreeFile);
       }
       
+      let cvUrl = cvPdfFileUrl;
+      if (cvPdfFile) {
+        cvUrl = await toBase64(cvPdfFile);
+      }
+      
       const combinedCertificates = [...certificateUrls];
       for (const file of certificates) {
         combinedCertificates.push(await toBase64(file));
@@ -259,6 +270,7 @@ const TutorSettings: React.FC = () => {
           experienceYears,
           introduction,
           degreeImageUrl,
+          cvUrl,
           certificates: combinedCertificates,
           price: price ? Number(price) : null
         })
@@ -620,6 +632,37 @@ const TutorSettings: React.FC = () => {
                         <label className="px-3 py-1.5 border border-outline-variant rounded hover:bg-surface-container-high transition-colors font-label-sm text-label-sm text-on-surface-variant cursor-pointer">
                           {(degreeFile || degreeFileUrl) ? 'Đổi tệp' : 'Tải lên'}
                           <input type="file" className="hidden" accept=".jpg,.jpeg,.png,.pdf" onChange={handleDegreeChange} />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="font-label-md text-label-md text-on-surface">CV / Sơ yếu lý lịch (Tùy chọn)</label>
+                  <div className="border border-outline-variant rounded-lg p-4 bg-surface flex items-center justify-between">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="w-10 h-10 rounded bg-surface-container flex shrink-0 items-center justify-center text-outline">
+                        <span className="material-symbols-outlined">{(cvPdfFile || cvPdfFileUrl) ? 'description' : 'note_add'}</span>
+                      </div>
+                      <div className="truncate pr-4">
+                        <p className="font-label-sm text-label-sm text-on-surface truncate">
+                          {cvPdfFile ? cvPdfFile.name : cvPdfFileUrl ? 'Đã tải lên CV' : 'Chưa tải lên CV nào'}
+                        </p>
+                        <p className="font-body-sm text-body-sm text-on-surface-variant text-[11px]">
+                          {cvPdfFile ? `${(cvPdfFile.size / 1024 / 1024).toFixed(2)} MB` : cvPdfFileUrl ? 'Đã lưu' : 'Định dạng PDF, PNG, JPG (Tối đa 5MB)'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      {(cvPdfFile || cvPdfFileUrl) && !isReadOnly && (
+                        <button onClick={() => { setCvPdfFile(null); setCvPdfFileUrl(null); }} className="px-3 py-1.5 border border-error text-error rounded hover:bg-error-container transition-colors font-label-sm text-label-sm">Xóa</button>
+                      )}
+                      {!isReadOnly && (
+                        <label className="px-3 py-1.5 border border-outline-variant rounded hover:bg-surface-container-high transition-colors font-label-sm text-label-sm text-on-surface-variant cursor-pointer">
+                          {(cvPdfFile || cvPdfFileUrl) ? 'Đổi tệp' : 'Tải lên'}
+                          <input type="file" className="hidden" accept="application/pdf,image/png,image/jpeg,image/jpg" onChange={(e) => {
+                            if (e.target.files?.[0]) setCvPdfFile(e.target.files[0]);
+                          }} />
                         </label>
                       )}
                     </div>

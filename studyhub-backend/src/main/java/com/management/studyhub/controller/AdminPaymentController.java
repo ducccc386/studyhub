@@ -16,6 +16,13 @@ import java.util.Map;
 public class AdminPaymentController {
 
     private final PaymentService paymentService;
+    private final com.management.studyhub.repository.CommissionRecordRepository commissionRecordRepository;
+
+    @DeleteMapping("/reset-commissions")
+    public ResponseEntity<?> resetCommissions() {
+        commissionRecordRepository.deleteAll();
+        return ResponseEntity.ok(Map.of("success", true, "message", "Commissions reset"));
+    }
 
     @GetMapping("/completed-classes")
     public ResponseEntity<List<ClassSession>> getCompletedClasses() {

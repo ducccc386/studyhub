@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../utils/api';
+import toast from 'react-hot-toast';
+import { toastConfirm } from '../../utils/toastConfirm';
 
 interface ClassSessionDTO {
   id: number;
@@ -63,6 +65,22 @@ const TutorClasses: React.FC = () => {
         setLoading(false);
       });
   }, [tutorId]);
+
+  const updateStatus = async (sessionId: number, newStatus: string) => {
+    try {
+      const res = await apiFetch(`/class-sessions/${sessionId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error('Cập nhật thất bại');
+      const updated: ClassSessionDTO = await res.json();
+      setClasses(prev => prev.map(s => s.id === sessionId ? updated : s));
+      toast.success('Báo cáo hoàn thành thành công. Chờ phụ huynh thanh toán nốt 75%.');
+    } catch (err: any) {
+      toast.error('Lỗi: ' + err.message);
+    }
+  };
 
   const activeClasses    = classes.filter(c => ['TRIAL', 'PENDING_PAYMENT', 'CONFIRMED'].includes(c.status));
   const completedClasses = classes.filter(c => ['COMPLETED', 'DISBURSED'].includes(c.status));
@@ -229,8 +247,19 @@ const TutorClasses: React.FC = () => {
                       : 'border border-primary text-primary hover:bg-primary/10'
                   }`}>
                     <span className="material-symbols-outlined text-[18px]">play_lesson</span>
-                    Không gian Lớp học
+                    Vào không gian lớp
                   </Link>
+                  
+                  {cls.status === 'CONFIRMED' && (
+                    <button 
+                      onClick={() => {
+                        toastConfirm('Xác nhận đã dạy xong khóa học này để phụ huynh thanh toán nốt?', () => updateStatus(cls.id, 'PENDING_FINAL_PAYMENT'));
+                      }}
+                      className="flex-1 text-sm font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700 transition-all active:scale-[0.98]">
+                      <span className="material-symbols-outlined text-[18px]">task_alt</span>
+                      Báo cáo xong
+                    </button>
+                  )}
 
                   <div className="relative group/menu">
                     <button className="w-10 h-10 border border-outline-variant rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors">

@@ -163,6 +163,21 @@ public class ClassSessionService {
         return mapToDTO(classSessionRepository.save(session));
     }
 
+    @Transactional
+    public ClassSessionDTO trialDecision(Long sessionId, boolean isAccepted) {
+        ClassSession session = classSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("ClassSession not found: " + sessionId));
+        if (session.getStatus() != ClassSessionStatus.TRIAL) {
+            throw new RuntimeException("Chỉ được quyết định khi lớp học đang ở trạng thái học thử (TRIAL).");
+        }
+        if (isAccepted) {
+            session.setStatus(ClassSessionStatus.PENDING_PAYMENT);
+        } else {
+            session.setStatus(ClassSessionStatus.CANCELLED);
+        }
+        return mapToDTO(classSessionRepository.save(session));
+    }
+
     /**
      * Phụ huynh từ chối 1 ứng viên cụ thể
      */

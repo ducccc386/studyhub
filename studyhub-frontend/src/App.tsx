@@ -24,19 +24,23 @@ function App() {
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ScrollToTop />
         <Toaster 
-          position="top-right" 
+          position="top-center" 
           toastOptions={{
             duration: 4000,
             style: {
-              background: '#333',
-              color: '#fff',
-              padding: '16px',
-              borderRadius: '10px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              background: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(10px)',
+              color: '#1f2937',
+              padding: '16px 24px',
+              borderRadius: '100px',
+              boxShadow: '0 10px 40px -10px rgba(0,0,0,0.15)',
+              border: '1px solid rgba(229, 231, 235, 0.5)',
+              fontWeight: 600,
+              fontSize: '15px'
             },
             success: {
               iconTheme: {
-                primary: '#4ade80',
+                primary: '#10b981',
                 secondary: '#fff',
               },
             },

@@ -77,6 +77,7 @@ public class TutorService {
                 .universityName(tutor.getUniversityName())
                 .major(tutor.getMajor())
                 .introduction(tutor.getIntroduction())
+                .cvUrl(tutor.getCvUrl())
                 .price(tutor.getPrice())
                 .teachingMethod(tutor.getTeachingMethod())
                 .averageRating(tutor.getAverageRating())
@@ -146,6 +147,7 @@ public class TutorService {
             }
         }
         if (request.getDegreeImageUrl() != null) tutor.setDegreeImageUrl(request.getDegreeImageUrl());
+        if (request.getCvUrl() != null) tutor.setCvUrl(request.getCvUrl());
         if (request.getCertificates() != null) tutor.setCertificates(request.getCertificates());
         if (request.getPrice() != null) tutor.setPrice(request.getPrice());
         if (request.getIntroduction() != null) tutor.setIntroduction(request.getIntroduction());

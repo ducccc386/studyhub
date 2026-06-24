@@ -15,6 +15,7 @@ const Login = lazy(() => import('../pages/Login'));
 const Register = lazy(() => import('../pages/Register'));
 const PublicDocumentList = lazy(() => import('../pages/Documents/PublicDocumentList'));
 const AboutUs = lazy(() => import('../pages/Shared/AboutUs'));
+const Guidelines = lazy(() => import('../pages/Guidelines'));
 
 
 const PostManagement = lazy(() => import('../pages/Parent/PostManagement'));
@@ -24,6 +25,7 @@ const ClassManagement = lazy(() => import('../pages/Parent/ClassManagement'));
 const FeedbackList = lazy(() => import('../pages/Parent/FeedbackList'));
 const CreateFeedback = lazy(() => import('../pages/Parent/CreateFeedback'));
 const Settings = lazy(() => import('../pages/Parent/Settings'));
+const ParentTransactionHistory = lazy(() => import('../pages/ParentPortal/ParentTransactionHistory'));
 
 const TutorDashboard = lazy(() => import('../pages/TutorPortal/TutorDashboard'));
 const TutorSearchClasses = lazy(() => import('../pages/TutorPortal/TutorSearchClasses'));
@@ -47,6 +49,7 @@ const AdminUsers = lazy(() => import('../pages/AdminPortal/AdminUsers'));
 const AdminContent = lazy(() => import('../pages/AdminPortal/AdminContent'));
 const AdminReports = lazy(() => import('../pages/AdminPortal/AdminReports'));
 const AdminPayouts = lazy(() => import('../pages/AdminPortal/AdminPayouts'));
+const AdminTransactionHistory = lazy(() => import('../pages/AdminPortal/AdminTransactionHistory'));
 const DocumentManagement = lazy(() => import('../pages/Admin/DocumentManagement'));
 
 const SuspenseFallback = () => (
@@ -70,6 +73,7 @@ const AppRouter: React.FC = () => {
         <Route path="register" element={<Register />} />
         <Route path="documents" element={<PublicDocumentList />} />
         <Route path="about-us" element={<AboutUs />} />
+        <Route path="guidelines" element={<Guidelines />} />
       </Route>
 
       {/* ── Parent Dashboard Routes (shared Navbar + SideNavBar + Footer via ParentLayout) ── */}
@@ -85,6 +89,7 @@ const AppRouter: React.FC = () => {
         <Route path="feedback/create" element={<CreateFeedback />} />
         <Route path="settings" element={<Settings />} />
         <Route path="messages" element={<Messages />} />
+        <Route path="transactions" element={<ParentTransactionHistory />} />
         {/* Catch-all redirect within /parent */}
         <Route path="*" element={<Navigate to="/parent" replace />} />
       </Route>
@@ -120,6 +125,7 @@ const AppRouter: React.FC = () => {
         <Route path="content" element={<AdminContent />} />
         <Route path="reports" element={<AdminReports />} />
         <Route path="payouts" element={<AdminPayouts />} />
+        <Route path="transactions" element={<AdminTransactionHistory />} />
         <Route path="documents" element={<DocumentManagement />} />
         <Route path="classes" element={<AdminClasses />} />
         <Route path="classes/:id/workspace" element={<ClassWorkspace />} />

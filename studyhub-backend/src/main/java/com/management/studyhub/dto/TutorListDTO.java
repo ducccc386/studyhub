@@ -18,6 +18,7 @@ public class TutorListDTO {
     private String universityName;
     private String major;
     private String introduction;
+    private String cvUrl;
     private Double price;
     private String teachingMethod;
     private Double averageRating;

@@ -66,4 +66,22 @@ public class PaymentController {
         
         return ResponseEntity.ok(Map.of("success", true));
     }
+
+    @GetMapping("/history/parent/{parentId}")
+    public ResponseEntity<?> getTransactionsByParent(@PathVariable Long parentId) {
+        try {
+            return ResponseEntity.ok(paymentService.getTransactionsByParent(parentId));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/admin/history")
+    public ResponseEntity<?> getAllTransactions() {
+        try {
+            return ResponseEntity.ok(paymentService.getAllTransactions());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../utils/api';
+import toast from 'react-hot-toast';
+import { toastConfirm } from '../../utils/toastConfirm';
 
 interface ClassSessionDTO {
   id: number;
@@ -74,7 +76,49 @@ const ClassManagement: React.FC = () => {
     }
   };
 
-  const activeSessions    = sessions.filter(s => ['TRIAL', 'PENDING_PAYMENT', 'CONFIRMED'].includes(s.status));
+  const handleTrialDecision = async (sessionId: number, isAccepted: boolean) => {
+    setUpdatingId(sessionId);
+    try {
+      const res = await apiFetch(`/class-sessions/${sessionId}/trial-decision`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isAccepted }),
+      });
+      if (!res.ok) throw new Error('Cập nhật thất bại');
+      const updated: ClassSessionDTO = await res.json();
+      setSessions(prev => prev.map(s => s.id === sessionId ? updated : s));
+      toast.success(isAccepted ? 'Đã xác nhận học tiếp. Vui lòng thanh toán cọc!' : 'Đã hủy lớp học thử thành công.');
+    } catch (err: any) {
+      toast.error('Lỗi: ' + err.message);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handlePayment = async (sessionId: number, type: 'deposit' | 'final') => {
+    setUpdatingId(sessionId);
+    try {
+      const res = await apiFetch(`/transactions/${type}/${sessionId}`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.error || 'Thanh toán thất bại');
+      }
+      const data = await res.json();
+      toast.success(data.message);
+      // Reload danh sách để cập nhật status mới nhất (hoặc update local status tuỳ ý, ở đây reload cho lẹ)
+      const resSession = await apiFetch(`/class-sessions/${sessionId}`);
+      const updated = await resSession.json();
+      setSessions(prev => prev.map(s => s.id === sessionId ? updated : s));
+    } catch (err: any) {
+      toast.error('Lỗi: ' + err.message);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const activeSessions    = sessions.filter(s => ['TRIAL', 'PENDING_PAYMENT', 'CONFIRMED', 'PENDING_FINAL_PAYMENT'].includes(s.status));
   const completedSessions = sessions.filter(s => ['COMPLETED', 'DISBURSED'].includes(s.status));
   const cancelledSessions = sessions.filter(s => s.status === 'CANCELLED');
 
@@ -230,7 +274,9 @@ const ClassManagement: React.FC = () => {
                     {session.status === 'TRIAL' && (
                       <div className="mt-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700 flex items-center gap-2">
                         <span className="material-symbols-outlined text-[16px]">info</span>
-                        Gia sư đã được chọn. Đang chờ sắp xếp buổi học thử.
+                        {session.progress === 0 
+                          ? 'Giai đoạn học thử (0/2 buổi). Đang chờ gia sư lên lịch và dạy thử.' 
+                          : `Đang học thử (${session.progress}/2 buổi). Sau khi hoàn tất 2 buổi học thử, vui lòng Xác nhận học tiếp hoặc Hủy lớp.`}
                       </div>
                     )}
                     {session.status === 'PENDING_PAYMENT' && (
@@ -243,6 +289,12 @@ const ClassManagement: React.FC = () => {
                       <div className="mt-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 flex items-center gap-2">
                         <span className="material-symbols-outlined text-[16px]">check_circle</span>
                         Lớp học đang tiến hành. Liên hệ gia sư nếu cần thay đổi lịch.
+                      </div>
+                    )}
+                    {session.status === 'PENDING_FINAL_PAYMENT' && (
+                      <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[16px]">info</span>
+                        Gia sư đã xác nhận hoàn thành khóa học. Vui lòng thanh toán nốt 75% học phí.
                       </div>
                     )}
                   </div>
@@ -259,16 +311,15 @@ const ClassManagement: React.FC = () => {
 
                     {session.status === 'TRIAL' && (
                       <>
-                        <Link
-                          to={`/parent/classes/${session.id}/workspace?tab=BILLING`}
+                        <button
+                          onClick={() => handleTrialDecision(session.id, true)}
+                          disabled={updatingId === session.id}
                           className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity whitespace-nowrap"
                         >
-                          ✓ Xác nhận tiếp tục
-                        </Link>
+                          ✓ Xác nhận học tiếp
+                        </button>
                         <button
-                          onClick={() => {
-                            if (window.confirm('Bạn có chắc muốn hủy lớp học này?')) updateStatus(session.id, 'CANCELLED');
-                          }}
+                          onClick={() => toastConfirm('Bạn có chắc muốn hủy lớp học này?', () => handleTrialDecision(session.id, false))}
                           disabled={updatingId === session.id}
                           className="px-4 py-2 border border-error text-error rounded-lg text-sm font-semibold hover:bg-error/5 transition-colors disabled:opacity-60 whitespace-nowrap"
                         >
@@ -277,23 +328,23 @@ const ClassManagement: React.FC = () => {
                       </>
                     )}
                     {session.status === 'PENDING_PAYMENT' && (
-                      <Link
-                        to={`/parent/classes/${session.id}/workspace?tab=BILLING`}
-                        className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-semibold hover:bg-orange-600 transition-opacity whitespace-nowrap flex items-center gap-2"
+                      <button
+                        onClick={() => handlePayment(session.id, 'deposit')}
+                        disabled={updatingId === session.id}
+                        className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-semibold hover:bg-orange-600 transition-opacity whitespace-nowrap flex items-center justify-center gap-2"
                       >
                         <span className="material-symbols-outlined text-[18px]">payments</span>
-                        Tiếp tục thanh toán
-                      </Link>
+                        Thanh toán cọc (25%)
+                      </button>
                     )}
-                    {session.status === 'CONFIRMED' && (
+                    {session.status === 'PENDING_FINAL_PAYMENT' && (
                       <button
-                        onClick={() => {
-                          if (window.confirm('Đánh dấu lớp học này đã hoàn tất quá trình giảng dạy?')) updateStatus(session.id, 'COMPLETED');
-                        }}
+                        onClick={() => handlePayment(session.id, 'final')}
                         disabled={updatingId === session.id}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 whitespace-nowrap"
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-60 whitespace-nowrap flex items-center justify-center gap-2 shadow-sm"
                       >
-                        Kết thúc khóa học
+                        <span className="material-symbols-outlined text-[18px]">payments</span>
+                        Thanh toán nốt (75%)
                       </button>
                     )}
                   </div>

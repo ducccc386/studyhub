@@ -52,6 +52,12 @@ const navGroups = [
         label: 'Giải ngân & Lương',
         sublabel: 'Thanh toán gia sư',
       },
+      {
+        to: '/admin/transactions',
+        icon: 'receipt_long',
+        label: 'Lịch sử giao dịch',
+        sublabel: 'Toàn hệ thống',
+      },
     ],
   },
 ];

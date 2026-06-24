@@ -113,6 +113,19 @@ public class ClassSessionController {
         }
     }
 
+    @PostMapping("/{id}/trial-decision")
+    public ResponseEntity<?> trialDecision(@PathVariable Long id, @RequestBody Map<String, Boolean> payload) {
+        try {
+            Boolean isAccepted = payload.get("isAccepted");
+            if (isAccepted == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "isAccepted is required"));
+            }
+            return ResponseEntity.ok(classSessionService.trialDecision(id, isAccepted));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/{id}/syllabus")
     public ResponseEntity<?> getSyllabus(@PathVariable Long id) {
         try {

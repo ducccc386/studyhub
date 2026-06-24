@@ -7,8 +7,11 @@ const AdminLayout: React.FC = () => {
   const { role, isLoggedIn } = useAuth();
   const location = useLocation();
 
-  if (!isLoggedIn || role !== 'admin') {
+  if (!isLoggedIn) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  if (role !== 'admin') {
+    return <Navigate to="/" replace />;
   }
 
   return (

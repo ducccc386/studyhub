@@ -1,6 +1,7 @@
 package com.management.studyhub.entity;
 
 import com.management.studyhub.entity.enums.TransactionStatus;
+import com.management.studyhub.entity.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -24,6 +25,10 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private TransactionStatus status;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private TransactionType type;
     
     private LocalDateTime createdAt;
     

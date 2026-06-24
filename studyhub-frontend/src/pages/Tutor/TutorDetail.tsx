@@ -22,6 +22,7 @@ interface TutorProfile {
   address: string;
   phoneNumber: string;
   degreeImageUrl: string;
+  cvUrl?: string;
   certificates: string[];
 }
 
@@ -42,7 +43,12 @@ const TutorDetail: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  interface SelectedFile {
+    url: string;
+    title: string;
+    type: 'image' | 'pdf';
+  }
+  const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -183,7 +189,7 @@ const TutorDetail: React.FC = () => {
           <div className="flex-grow space-y-12">
 
             {/* Education */}
-            {(tutor.universityName || tutor.degreeImageUrl) && (
+            {(tutor.universityName || tutor.degreeImageUrl || tutor.cvUrl) && (
               <section>
                 <h2 className="font-headline-md text-headline-md text-on-surface mb-6 flex items-center gap-3">
                   <span className="material-symbols-outlined text-primary">school</span>
@@ -199,17 +205,28 @@ const TutorDetail: React.FC = () => {
                           navigate('/login');
                           return;
                         }
-                        setSelectedImage(tutor.degreeImageUrl);
+                        setSelectedFile({ url: tutor.degreeImageUrl, title: 'Bằng cấp / Thẻ sinh viên minh chứng', type: 'image' });
                       }}
-                      className={`bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex gap-4 text-left w-full ${tutor.degreeImageUrl ? 'hover:shadow-md transition-shadow cursor-pointer' : 'cursor-default'}`}>
-                      <div className="w-12 h-12 bg-primary-fixed rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span className="material-symbols-outlined text-on-primary-fixed-variant">history_edu</span>
+                      className={`group bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex items-center justify-between gap-4 text-left w-full transition-all duration-300 ${tutor.degreeImageUrl ? 'hover:shadow-lg hover:-translate-y-1 hover:border-primary/30 cursor-pointer' : 'cursor-default'}`}>
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-primary-fixed rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+                          <span className="material-symbols-outlined text-on-primary-fixed-variant">history_edu</span>
+                        </div>
+                        <div>
+                          <h3 className="font-label-md text-label-md text-on-surface group-hover:text-primary transition-colors">{tutor.major || 'Sinh viên đại học'}</h3>
+                          <p className="text-body-sm text-on-surface-variant mb-1">{tutor.universityName}</p>
+                          {tutor.degreeImageUrl && (
+                            <p className="text-label-sm font-label-sm text-primary flex items-center gap-1 opacity-80 group-hover:opacity-100">
+                              Xem minh chứng <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-label-md text-label-md text-on-surface">{tutor.major || 'Sinh viên đại học'}</h3>
-                        <p className="text-body-sm text-on-surface-variant">{tutor.universityName}</p>
-                        {tutor.degreeImageUrl && <p className="text-body-sm text-primary hover:underline mt-1">Xem bằng cấp / thẻ sinh viên</p>}
-                      </div>
+                      {tutor.degreeImageUrl && (
+                        <div className="w-8 h-8 rounded-full bg-primary/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="material-symbols-outlined text-primary text-[20px]">visibility</span>
+                        </div>
+                      )}
                     </button>
                   )}
                   {tutor.certificates?.map((cert, i) => (
@@ -219,18 +236,52 @@ const TutorDetail: React.FC = () => {
                           navigate('/login');
                           return;
                         }
-                        setSelectedImage(cert);
+                        setSelectedFile({ url: cert, title: `Chứng chỉ #${i + 1}`, type: 'image' });
                       }}
-                      className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex gap-4 hover:shadow-md transition-shadow text-left w-full">
-                      <div className="w-12 h-12 bg-primary-fixed rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span className="material-symbols-outlined text-on-primary-fixed-variant">verified</span>
+                      className="group bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex items-center justify-between gap-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/30 text-left w-full">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-primary-fixed rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+                          <span className="material-symbols-outlined text-on-primary-fixed-variant">verified</span>
+                        </div>
+                        <div>
+                          <h3 className="font-label-md text-label-md text-on-surface group-hover:text-primary transition-colors">Chứng chỉ #{i + 1}</h3>
+                          <p className="text-label-sm font-label-sm text-primary mt-1 flex items-center gap-1 opacity-80 group-hover:opacity-100">
+                            Xem chứng chỉ <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-label-md text-label-md text-on-surface">Chứng chỉ #{i + 1}</h3>
-                        <p className="text-body-sm text-primary hover:underline">Xem chứng chỉ</p>
+                      <div className="w-8 h-8 rounded-full bg-primary/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="material-symbols-outlined text-primary text-[20px]">visibility</span>
                       </div>
                     </button>
                   ))}
+                  {tutor.cvUrl && (
+                    <button onClick={() => {
+                        if (!isLoggedIn) {
+                          alert('Vui lòng đăng nhập để xem CV của gia sư.');
+                          navigate('/login');
+                          return;
+                        }
+                        const isPdf = tutor.cvUrl?.includes('application/pdf') || tutor.cvUrl?.toLowerCase().endsWith('.pdf');
+                        setSelectedFile({ url: tutor.cvUrl as string, title: 'CV / Sơ yếu lý lịch', type: isPdf ? 'pdf' : 'image' });
+                      }}
+                      className="group bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex items-center justify-between gap-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-tertiary/30 text-left w-full">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-tertiary-fixed rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+                          <span className="material-symbols-outlined text-on-tertiary-fixed-variant">description</span>
+                        </div>
+                        <div>
+                          <h3 className="font-label-md text-label-md text-on-surface group-hover:text-tertiary transition-colors">CV / Sơ yếu lý lịch</h3>
+                          <p className="text-label-sm font-label-sm text-tertiary mt-1 flex items-center gap-1 opacity-80 group-hover:opacity-100">
+                            Xem tài liệu <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-tertiary/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="material-symbols-outlined text-tertiary text-[20px]">visibility</span>
+                      </div>
+                    </button>
+                  )}
                 </div>
               </section>
             )}
@@ -341,13 +392,112 @@ const TutorDetail: React.FC = () => {
         </div>
       </main>
 
-      {/* Image Viewer Popup */}
-      {selectedImage && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onClick={() => setSelectedImage(null)}>
-          <button className="absolute top-4 right-4 text-white hover:text-gray-300 p-2" onClick={() => setSelectedImage(null)}>
-            <span className="material-symbols-outlined text-4xl">close</span>
+      {/* File Viewer Popup */}
+      {selectedFile && (
+        <FileViewerPopup file={selectedFile} onClose={() => setSelectedFile(null)} />
+      )}
+    </div>
+  );
+};
+
+const FileViewerPopup: React.FC<{ file: { url: string, title: string, type: 'image' | 'pdf' }, onClose: () => void }> = ({ file, onClose }) => {
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  const handleZoomIn = () => setScale(prev => Math.min(prev + 0.5, 4));
+  const handleZoomOut = () => setScale(prev => Math.max(prev - 0.5, 0.5));
+  const handleReset = () => { setScale(1); setPosition({ x: 0, y: 0 }); };
+
+  const handleDoubleClick = () => {
+    if (scale > 1) {
+      handleReset();
+    } else {
+      setScale(2);
+    }
+  };
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (scale <= 1) return;
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+  };
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || scale <= 1) return;
+    setPosition({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+  };
+  const onMouseUp = () => setIsDragging(false);
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-200" onClick={onClose}>
+      {/* Contextual Header */}
+      <div className="absolute top-0 left-0 w-full p-4 md:px-8 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent z-50" onClick={e => e.stopPropagation()}>
+        <div className="text-white font-headline-sm text-headline-sm flex items-center gap-3">
+          <span className="material-symbols-outlined text-primary-container text-3xl">{file.type === 'pdf' ? 'picture_as_pdf' : 'image'}</span>
+          {file.title}
+        </div>
+        <div className="flex items-center gap-2 md:gap-4">
+          <a href={file.url} download="document" className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg flex items-center gap-2 transition-all font-label-md">
+            <span className="material-symbols-outlined text-[20px]">download</span> <span className="hidden md:inline">Tải xuống</span>
+          </a>
+          <button className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all hover:scale-110" onClick={onClose}>
+            <span className="material-symbols-outlined text-2xl">close</span>
           </button>
-          <img src={selectedImage} alt="Phóng to" className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" onClick={e => e.stopPropagation()} />
+        </div>
+      </div>
+
+      {file.type === 'pdf' ? (
+        <div className="w-full max-w-5xl h-[85vh] mt-12 bg-surface rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+           <iframe src={file.url} className="w-full flex-1" title="PDF Viewer" />
+        </div>
+      ) : (
+        <div 
+          className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden" 
+          onClick={e => e.stopPropagation()}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+          onMouseLeave={onMouseUp}
+        >
+          {/* Zoom & Pan Toolbar */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur-md rounded-full px-4 py-2 z-50 border border-white/10">
+             <button onClick={handleZoomOut} className="text-white p-2 hover:bg-white/20 rounded-full transition-colors"><span className="material-symbols-outlined">zoom_out</span></button>
+             <span className="text-white font-label-md w-14 text-center">{Math.round(scale * 100)}%</span>
+             <button onClick={handleZoomIn} className="text-white p-2 hover:bg-white/20 rounded-full transition-colors"><span className="material-symbols-outlined">zoom_in</span></button>
+             <div className="w-px h-6 bg-white/20 mx-2"></div>
+             <button onClick={handleReset} className="text-white p-2 hover:bg-white/20 rounded-full transition-colors" title="Khôi phục gốc"><span className="material-symbols-outlined">restart_alt</span></button>
+          </div>
+
+          {/* Image Container with Spinner */}
+          <div className="relative flex items-center justify-center w-full h-full" onMouseDown={onMouseDown} onDoubleClick={handleDoubleClick}>
+            {!isLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center z-0">
+                <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
+              </div>
+            )}
+            <img 
+              src={file.url} 
+              alt={file.title}
+              onLoad={() => setIsLoaded(true)}
+              style={{
+                transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                transition: isDragging ? 'none' : 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)',
+                cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
+                opacity: isLoaded ? 1 : 0
+              }}
+              draggable={false}
+              className="max-w-[90vw] max-h-[85vh] object-contain rounded-xl shadow-2xl ring-1 ring-white/10 relative z-10" 
+            />
+          </div>
         </div>
       )}
     </div>
