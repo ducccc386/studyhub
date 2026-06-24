@@ -1,5 +1,3 @@
-import React from 'react';
-
 const Guidelines = () => {
   return (
     <div className="max-w-[1000px] mx-auto p-6 animate-fade-in">

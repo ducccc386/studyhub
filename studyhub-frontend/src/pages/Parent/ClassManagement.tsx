@@ -58,24 +58,6 @@ const ClassManagement: React.FC = () => {
       });
   }, [userId]);
 
-  const updateStatus = async (sessionId: number, newStatus: string) => {
-    setUpdatingId(sessionId);
-    try {
-      const res = await apiFetch(`/class-sessions/${sessionId}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (!res.ok) throw new Error('Cập nhật thất bại');
-      const updated: ClassSessionDTO = await res.json();
-      setSessions(prev => prev.map(s => s.id === sessionId ? updated : s));
-    } catch (err: any) {
-      alert('Lỗi: ' + err.message);
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
   const handleTrialDecision = async (sessionId: number, isAccepted: boolean) => {
     setUpdatingId(sessionId);
     try {
