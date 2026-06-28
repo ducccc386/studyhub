@@ -1,8 +1,20 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { apiFetch } from '../../utils/api';
 
 const navGroups = [
+  {
+    label: 'Tổng quan',
+    items: [
+      {
+        to: '/parent/dashboard',
+        icon: 'dashboard',
+        label: 'Dashboard',
+        sublabel: 'Thống kê chung',
+      },
+    ],
+  },
   {
     label: 'Tuyển gia sư',
     items: [
@@ -45,7 +57,16 @@ const navGroups = [
 ];
 
 const SideNavBar: React.FC = () => {
-  const {  } = useAuth();
+  const { userId } = useAuth();
+  const [pendingLogsCount, setPendingLogsCount] = useState(0);
+
+  useEffect(() => {
+    if (!userId) return;
+    apiFetch(`/lesson-logs/parent/${userId}/pending`)
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setPendingLogsCount(Array.isArray(data) ? data.length : 0))
+      .catch(err => console.error('Failed to fetch pending logs', err));
+  }, [userId]);
 
   return (
     <aside className="fixed left-0 top-[68px] bottom-0 w-[260px] flex flex-col bg-white border-r border-slate-100 z-30 shadow-[2px_0_20px_rgba(0,0,0,0.04)]">
@@ -85,12 +106,17 @@ const SideNavBar: React.FC = () => {
                       </span>
                     </div>
                     <div className="overflow-hidden">
-                      <p className={`text-sm font-semibold leading-tight truncate ${isActive ? 'text-white' : ''}`}>
+                      <p className={`text-sm font-semibold leading-tight truncate flex items-center gap-2 ${isActive ? 'text-white' : ''}`}>
                         {label}
+                        {to === '/parent/feedback' && pendingLogsCount > 0 && (
+                          <span className="bg-error text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                            {pendingLogsCount}
+                          </span>
+                        )}
                       </p>
                       {sublabel && (
                         <p className={`text-[10px] leading-tight truncate mt-0.5 ${isActive ? 'text-white/70' : 'text-slate-400'}`}>
-                          {sublabel}
+                          {to === '/parent/feedback' && pendingLogsCount > 0 ? `${pendingLogsCount} buổi học chờ duyệt` : sublabel}
                         </p>
                       )}
                     </div>

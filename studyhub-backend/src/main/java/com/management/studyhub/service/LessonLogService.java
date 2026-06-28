@@ -11,6 +11,8 @@ import com.management.studyhub.repository.LessonLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.management.studyhub.repository.TutorProfileRepository;
+import com.management.studyhub.entity.TutorProfile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,6 +23,7 @@ public class LessonLogService {
 
     private final LessonLogRepository lessonLogRepository;
     private final ClassSessionRepository classSessionRepository;
+    private final TutorProfileRepository tutorProfileRepository;
 
     public List<LessonLogDTO> getLessonLogsByClassSessionId(Long classSessionId) {
         return lessonLogRepository.findByClassSessionIdOrderByScheduledDateDesc(classSessionId)
@@ -81,7 +84,23 @@ public class LessonLogService {
         log.setParentFeedback(dto.getFeedback());
         log.setParentFeedbackTags(dto.getTags());
         
-        return mapToDTO(lessonLogRepository.save(log));
+        LessonLog savedLog = lessonLogRepository.save(log);
+
+        // Update TutorProfile average rating
+        if (log.getClassSession() != null && log.getClassSession().getTutorProfileId() != null) {
+            Long tutorId = log.getClassSession().getTutorProfileId();
+            TutorProfile tutorProfile = tutorProfileRepository.findById(tutorId).orElse(null);
+            if (tutorProfile != null) {
+                Double avgRating = lessonLogRepository.getAverageRatingByTutorProfileId(tutorId);
+                Integer totalReviews = lessonLogRepository.countReviewsByTutorProfileId(tutorId);
+                
+                tutorProfile.setAverageRating(avgRating != null ? avgRating : 0.0);
+                tutorProfile.setTotalReviews(totalReviews != null ? totalReviews : 0);
+                tutorProfileRepository.save(tutorProfile);
+            }
+        }
+        
+        return mapToDTO(savedLog);
     }
 
     private LessonLogDTO mapToDTO(LessonLog log) {

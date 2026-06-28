@@ -26,6 +26,7 @@ const FeedbackList = lazy(() => import('../pages/Parent/FeedbackList'));
 const CreateFeedback = lazy(() => import('../pages/Parent/CreateFeedback'));
 const Settings = lazy(() => import('../pages/Parent/Settings'));
 const ParentTransactionHistory = lazy(() => import('../pages/ParentPortal/ParentTransactionHistory'));
+const ParentDashboard = lazy(() => import('../pages/Parent/ParentDashboard'));
 
 const TutorDashboard = lazy(() => import('../pages/TutorPortal/TutorDashboard'));
 const TutorSearchClasses = lazy(() => import('../pages/TutorPortal/TutorSearchClasses'));
@@ -78,8 +79,9 @@ const AppRouter: React.FC = () => {
 
       {/* ── Parent Dashboard Routes (shared Navbar + SideNavBar + Footer via ParentLayout) ── */}
       <Route path="/parent" element={<ParentLayout />}>
-        {/* Index → Redirect to Posts */}
-        <Route index element={<Navigate to="/parent/posts" replace />} />
+        {/* Index → Redirect to Dashboard */}
+        <Route index element={<Navigate to="/parent/dashboard" replace />} />
+        <Route path="dashboard" element={<ParentDashboard />} />
         <Route path="posts" element={<PostManagement />} />
         <Route path="posts/:postId/applicants" element={<ApplicantReview />} />
         <Route path="posts/create" element={<CreatePost />} />
