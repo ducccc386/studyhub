@@ -4,6 +4,7 @@ import com.management.studyhub.entity.ClassSession;
 import com.management.studyhub.entity.Transaction;
 import com.management.studyhub.entity.enums.ClassSessionStatus;
 import com.management.studyhub.entity.enums.TransactionStatus;
+import com.management.studyhub.entity.enums.TransactionType;
 import com.management.studyhub.repository.ClassSessionRepository;
 import com.management.studyhub.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +25,9 @@ public class PaymentService {
     private final com.management.studyhub.repository.CommissionRecordRepository commissionRecordRepository;
 
     // Thay bằng số tài khoản thật của StudyHub
-    private static final String BANK_BIN = "MB"; // MB Bank
-    private static final String ACCOUNT_NUMBER = "9704229206661626271";
-    private static final String ACCOUNT_NAME = "Giang Hong Son";
+    private static final String BANK_BIN = "970415"; // Techcombank
+    private static final String ACCOUNT_NUMBER = "2516032004";
+    private static final String ACCOUNT_NAME = "NGUYEN ANH DUC";
 
     @Transactional
     public Map<String, String> generatePaymentQR(Long classId) {
@@ -71,8 +72,9 @@ public class PaymentService {
 
         // Tạo VietQR link
         long amountStr = transaction.getAmount() != null ? transaction.getAmount().longValue() : 0L;
+        String accountNameUrl = ACCOUNT_NAME.replace(" ", "%20");
         String qrUrl = String.format("https://img.vietqr.io/image/%s-%s-compact2.png?amount=%d&addInfo=%s&accountName=%s",
-                BANK_BIN, ACCOUNT_NUMBER, amountStr, transactionCode, ACCOUNT_NAME);
+                BANK_BIN, ACCOUNT_NUMBER, amountStr, transactionCode, accountNameUrl);
         
         return Map.of(
             "qrUrl", qrUrl,
@@ -93,7 +95,11 @@ public class PaymentService {
         transactionRepository.save(transaction);
 
         ClassSession classSession = transaction.getClassSession();
-        classSession.setStatus(ClassSessionStatus.CONFIRMED);
+        if (transaction.getType() == TransactionType.FINAL_PAYMENT) {
+            classSession.setStatus(ClassSessionStatus.COMPLETED);
+        } else {
+            classSession.setStatus(ClassSessionStatus.CONFIRMED);
+        }
         classSessionRepository.save(classSession);
 
         // Tạo CommissionRecord (Hoa hồng 20%)
@@ -141,7 +147,11 @@ public class PaymentService {
                                     transactionRepository.save(t);
                                     
                                     ClassSession classSession = t.getClassSession();
-                                    classSession.setStatus(ClassSessionStatus.CONFIRMED);
+                                    if (t.getType() == TransactionType.FINAL_PAYMENT) {
+                                        classSession.setStatus(ClassSessionStatus.COMPLETED);
+                                    } else {
+                                        classSession.setStatus(ClassSessionStatus.CONFIRMED);
+                                    }
                                     classSessionRepository.save(classSession);
                                     
                                     // Tạo CommissionRecord (Hoa hồng 20%)

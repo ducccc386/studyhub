@@ -3,6 +3,7 @@ import AppRouter from './routes/AppRouter';
 import ScrollToTop from './components/Shared/ScrollToTop';
 import { Toaster, toast } from 'react-hot-toast';
 import ErrorBoundary from './components/ErrorBoundary';
+import ChatWidget from './components/Shared/ChatWidget';
 
 // Ghi đè hàm alert mặc định của trình duyệt để sử dụng giao diện toast xịn xò
 window.alert = (message?: any) => {
@@ -53,6 +54,7 @@ function App() {
           }}
         />
         <AppRouter />
+        <ChatWidget />
       </BrowserRouter>
     </ErrorBoundary>
   );

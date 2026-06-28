@@ -44,6 +44,14 @@ const ClassManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('active');
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
+  // QR Payment states
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [qrUrl, setQrUrl] = useState('');
+  const [transactionCode, setTransactionCode] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [paymentType, setPaymentType] = useState<'deposit' | 'final' | ''>('');
+
   useEffect(() => {
     if (!userId) { setLoading(false); return; }
     apiFetch(`/class-sessions/parent/${userId}`)
@@ -57,6 +65,30 @@ const ClassManagement: React.FC = () => {
         setLoading(false);
       });
   }, [userId]);
+
+  // Polling for payment status
+  useEffect(() => {
+    if (!showPaymentModal || !transactionCode || paymentStatus === 'SUCCESS') return;
+
+    const interval = setInterval(() => {
+      apiFetch(`/payment/status/${transactionCode}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'SUCCESS') {
+            setPaymentStatus('SUCCESS');
+            // Reload list
+            if (userId) {
+              apiFetch(`/class-sessions/parent/${userId}`)
+                .then(res => res.json())
+                .then(list => setSessions(Array.isArray(list) ? list : []));
+            }
+          }
+        })
+        .catch(err => console.error('Error polling status:', err));
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [showPaymentModal, transactionCode, paymentStatus, userId]);
 
   const handleTrialDecision = async (sessionId: number, isAccepted: boolean) => {
     setUpdatingId(sessionId);
@@ -85,14 +117,15 @@ const ClassManagement: React.FC = () => {
       });
       if (!res.ok) {
         const errorData = await res.json().catch(() => null);
-        throw new Error(errorData?.error || 'Thanh toán thất bại');
+        throw new Error(errorData?.error || 'Tạo mã thanh toán thất bại');
       }
       const data = await res.json();
-      toast.success(data.message);
-      // Reload danh sách để cập nhật status mới nhất (hoặc update local status tuỳ ý, ở đây reload cho lẹ)
-      const resSession = await apiFetch(`/class-sessions/${sessionId}`);
-      const updated = await resSession.json();
-      setSessions(prev => prev.map(s => s.id === sessionId ? updated : s));
+      setQrUrl(data.qrUrl);
+      setTransactionCode(data.transactionCode);
+      setPaymentAmount(data.amount || 0);
+      setPaymentStatus('PENDING');
+      setPaymentType(type);
+      setShowPaymentModal(true);
     } catch (err: any) {
       toast.error('Lỗi: ' + err.message);
     } finally {
@@ -335,6 +368,77 @@ const ClassManagement: React.FC = () => {
             })}
           </div>
         </>
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-surface w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
+              <h3 className="text-xl font-bold text-on-surface">
+                {paymentType === 'deposit' ? 'Thanh toán cọc (25%)' : 'Thanh toán nốt (75%)'}
+              </h3>
+              <button onClick={() => setShowPaymentModal(false)} className="text-on-surface-variant hover:text-error transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div className="p-8 flex flex-col items-center">
+              {paymentStatus === 'SUCCESS' ? (
+                <div className="text-center space-y-4 py-8">
+                  <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span className="material-symbols-outlined text-4xl">check_circle</span>
+                  </div>
+                  <h4 className="text-2xl font-black text-on-surface">Thanh toán thành công!</h4>
+                  <p className="text-on-surface-variant">Lớp học đã được cập nhật trạng thái mới.</p>
+                  <button 
+                    onClick={() => setShowPaymentModal(false)}
+                    className="mt-6 px-8 py-3 bg-primary text-white rounded-xl font-bold shadow hover:bg-primary/90 w-full"
+                  >
+                    Đóng cửa sổ
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="text-center mb-6">
+                    <p className="text-on-surface-variant text-sm mb-1">Mở App ngân hàng quét mã QR để thanh toán</p>
+                    <p className="text-primary font-black text-2xl">{paymentAmount.toLocaleString('vi-VN')}đ</p>
+                  </div>
+                  
+                  <div className="bg-white p-4 rounded-2xl shadow-inner border border-outline-variant mb-6 relative">
+                    <img src={qrUrl} alt="VietQR" className="w-64 h-64 object-contain" />
+                    <div className="absolute inset-0 bg-primary/5 flex items-center justify-center pointer-events-none rounded-2xl opacity-0 transition-opacity"></div>
+                  </div>
+                  
+                  <div className="w-full bg-surface-container-lowest p-4 rounded-xl border border-outline-variant space-y-2 text-sm text-left mb-6">
+                    <div className="flex justify-between">
+                      <span className="text-on-surface-variant">Mã giao dịch:</span>
+                      <span className="font-mono font-bold text-on-surface">{transactionCode}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-on-surface-variant">Trạng thái:</span>
+                      <span className="font-bold text-orange-600 flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></div>
+                        Đang chờ thanh toán...
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Mock Payment Button for Testing */}
+                  <button
+                    onClick={async () => {
+                      const res = await apiFetch(`/payment/mock-pay/${transactionCode}`, { method: 'POST' });
+                      if (res.ok) toast.success("Đã mô phỏng thanh toán thành công!");
+                    }}
+                    className="text-xs text-primary underline opacity-60 hover:opacity-100 mt-2"
+                  >
+                    Mô phỏng chuyển khoản thành công (Test)
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

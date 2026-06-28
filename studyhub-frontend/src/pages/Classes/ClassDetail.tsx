@@ -4,6 +4,12 @@ import { useAuth } from '../../context/AuthContext';
 import { ClassDto } from '../../types/class';
 import TutorProfileModal from '../../components/Shared/TutorProfileModal';
 
+const CLASS_LEVELS = [
+  { group: 'Tiểu học', options: ['Lớp 1', 'Lớp 2', 'Lớp 3', 'Lớp 4', 'Lớp 5'] },
+  { group: 'Trung học cơ sở', options: ['Lớp 6', 'Lớp 7', 'Lớp 8', 'Lớp 9'] },
+  { group: 'Trung học phổ thông', options: ['Lớp 10', 'Lớp 11', 'Lớp 12'] },
+];
+
 const ClassDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -30,6 +36,7 @@ const ClassDetail: React.FC = () => {
     studentLevel: '',
     notes: ''
   });
+  const [formErrors, setFormErrors] = useState<{ studentName?: string; studentGrade?: string }>({});
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +44,21 @@ const ClassDetail: React.FC = () => {
       alert('Không tìm thấy thông tin phụ huynh. Vui lòng đăng nhập lại.');
       return;
     }
+
+    const errors: { studentName?: string; studentGrade?: string } = {};
+    if (!registerForm.studentName.trim()) {
+      errors.studentName = 'Vui lòng nhập họ tên học sinh';
+    }
+    if (!registerForm.studentGrade.trim()) {
+      errors.studentGrade = 'Vui lòng chọn lớp học';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
+
     
     try {
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'}/enrollments?parentId=${userId}`, {
@@ -291,13 +313,22 @@ const ClassDetail: React.FC = () => {
             </p>
             <form onSubmit={handleRegisterSubmit} className="space-y-4">
               <div>
-                <label className="block text-label-md font-medium text-on-surface mb-1">Họ tên học sinh <span className="text-red-500">*</span></label>
-                <input required type="text" className="w-full px-4 py-3 border border-outline-variant rounded-lg focus:outline-none focus:border-primary" placeholder="Ví dụ: Nguyễn Văn A" value={registerForm.studentName} onChange={e => setRegisterForm({...registerForm, studentName: e.target.value})} />
+                <label className="block text-label-md font-medium text-on-surface mb-1">Họ tên học sinh <span className="text-error">*</span></label>
+                <input required type="text" className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-primary ${formErrors.studentName ? 'border-error' : 'border-outline-variant'}`} placeholder="Ví dụ: Nguyễn Văn A" value={registerForm.studentName} onChange={e => { setRegisterForm({...registerForm, studentName: e.target.value}); setFormErrors({...formErrors, studentName: undefined}); }} />
+                {formErrors.studentName && <p className="text-error text-xs mt-1">{formErrors.studentName}</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-label-md font-medium text-on-surface mb-1">Học sinh lớp <span className="text-red-500">*</span></label>
-                  <input required type="text" className="w-full px-4 py-3 border border-outline-variant rounded-lg focus:outline-none focus:border-primary" placeholder="Ví dụ: Lớp 10" value={registerForm.studentGrade} onChange={e => setRegisterForm({...registerForm, studentGrade: e.target.value})} />
+                  <label className="block text-label-md font-medium text-on-surface mb-1">Học sinh lớp <span className="text-error">*</span></label>
+                  <select required className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-primary bg-surface ${formErrors.studentGrade ? 'border-error' : 'border-outline-variant'}`} value={registerForm.studentGrade} onChange={e => { setRegisterForm({...registerForm, studentGrade: e.target.value}); setFormErrors({...formErrors, studentGrade: undefined}); }}>
+                    <option value="" disabled>Chọn lớp</option>
+                    {CLASS_LEVELS.map(g => (
+                      <optgroup key={g.group} label={g.group}>
+                        {g.options.map(o => <option key={o} value={o}>{o}</option>)}
+                      </optgroup>
+                    ))}
+                  </select>
+                  {formErrors.studentGrade && <p className="text-error text-xs mt-1">{formErrors.studentGrade}</p>}
                 </div>
                 <div>
                   <label className="block text-label-md font-medium text-on-surface mb-1">Lực học hiện tại</label>

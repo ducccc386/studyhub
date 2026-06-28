@@ -25,8 +25,19 @@ public class AdminPaymentController {
     }
 
     @GetMapping("/completed-classes")
-    public ResponseEntity<List<ClassSession>> getCompletedClasses() {
-        return ResponseEntity.ok(paymentService.getCompletedClasses());
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public ResponseEntity<?> getCompletedClasses() {
+        List<ClassSession> classes = paymentService.getCompletedClasses();
+        List<Map<String, Object>> response = classes.stream().map(c -> {
+            return Map.<String, Object>of(
+                "id", c.getId(),
+                "className", c.getClassName() != null ? c.getClassName() : "Không tên",
+                "tutorName", c.getTutorName() != null ? c.getTutorName() : "Chưa có",
+                "price", c.getPrice() != null ? c.getPrice() : 0.0,
+                "status", c.getStatus().name()
+            );
+        }).toList();
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/disburse/{classId}")

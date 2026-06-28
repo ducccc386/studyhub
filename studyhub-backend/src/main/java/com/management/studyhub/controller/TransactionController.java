@@ -36,6 +36,13 @@ public class TransactionController {
         return pricePer * sessionsCount;
     }
 
+    private String generateVietQR(double amount, String transactionCode) {
+        long amountStr = (long) amount;
+        String accountNameUrl = "NGUYEN%20ANH%20DUC";
+        return String.format("https://img.vietqr.io/image/970415-2516032004-compact2.png?amount=%d&addInfo=%s&accountName=%s",
+                amountStr, transactionCode, accountNameUrl);
+    }
+
     @PostMapping("/deposit/{classSessionId}")
     @Transactional
     public ResponseEntity<?> payDeposit(@PathVariable Long classSessionId) {
@@ -49,28 +56,23 @@ public class TransactionController {
         double totalPrice = calculateTotalPrice(session);
         if (session.getPrice() == null) {
             session.setPrice(totalPrice);
+            classSessionRepository.save(session);
         }
 
-        Transaction tx = new Transaction();
-        tx.setClassSession(session);
-        tx.setType(TransactionType.DEPOSIT);
-        tx.setStatus(TransactionStatus.SUCCESS);
-        tx.setTransactionCode("MOCK_DEP_" + UUID.randomUUID().toString().substring(0, 8));
-        tx.setAmount(totalPrice * 0.25);
-        transactionRepository.save(tx);
+        Transaction tx = transactionRepository.findByClassSessionIdAndStatus(classSessionId, TransactionStatus.PENDING)
+                .orElse(new Transaction());
+        
+        if (tx.getId() == null) {
+            tx.setClassSession(session);
+            tx.setType(TransactionType.DEPOSIT);
+            tx.setStatus(TransactionStatus.PENDING);
+            tx.setTransactionCode("SHDEP" + classSessionId + (System.currentTimeMillis() % 10000));
+            tx.setAmount(totalPrice * 0.25);
+            transactionRepository.save(tx);
+        }
 
-        // Tạo CommissionRecord cho đợt cọc
-        CommissionRecord commission = new CommissionRecord();
-        commission.setTransaction(tx);
-        commission.setTotalAmount(tx.getAmount());
-        commission.setPlatformFee(tx.getAmount() * 0.20); // Ghi nhận 20% doanh thu trên số tiền cọc
-        commission.setTutorPayout(tx.getAmount() * 0.80); // Phần còn lại sẽ được cộng dồn để trả cho gia sư sau
-        commissionRecordRepository.save(commission);
-
-        session.setStatus(ClassSessionStatus.CONFIRMED);
-        classSessionRepository.save(session);
-
-        return ResponseEntity.ok(Map.of("message", "Thanh toán cọc 25% thành công", "transaction", tx));
+        String qrUrl = generateVietQR(tx.getAmount(), tx.getTransactionCode());
+        return ResponseEntity.ok(Map.of("qrUrl", qrUrl, "transactionCode", tx.getTransactionCode(), "amount", tx.getAmount()));
     }
 
     @PostMapping("/final/{classSessionId}")
@@ -85,26 +87,19 @@ public class TransactionController {
 
         double totalPrice = calculateTotalPrice(session);
 
-        Transaction tx = new Transaction();
-        tx.setClassSession(session);
-        tx.setType(TransactionType.FINAL_PAYMENT);
-        tx.setStatus(TransactionStatus.SUCCESS);
-        tx.setTransactionCode("MOCK_FIN_" + UUID.randomUUID().toString().substring(0, 8));
-        tx.setAmount(totalPrice * 0.75);
-        transactionRepository.save(tx);
+        Transaction tx = transactionRepository.findByClassSessionIdAndStatus(classSessionId, TransactionStatus.PENDING)
+                .orElse(new Transaction());
+        
+        if (tx.getId() == null) {
+            tx.setClassSession(session);
+            tx.setType(TransactionType.FINAL_PAYMENT);
+            tx.setStatus(TransactionStatus.PENDING);
+            tx.setTransactionCode("SHFIN" + classSessionId + (System.currentTimeMillis() % 10000));
+            tx.setAmount(totalPrice * 0.75);
+            transactionRepository.save(tx);
+        }
 
-        // Tạo CommissionRecord cho đợt thanh toán nốt
-        CommissionRecord commission = new CommissionRecord();
-        commission.setTransaction(tx);
-        commission.setTotalAmount(tx.getAmount());
-        commission.setPlatformFee(tx.getAmount() * 0.20); // Ghi nhận 20% doanh thu trên số tiền thanh toán nốt
-        commission.setTutorPayout(tx.getAmount() * 0.80);
-        commissionRecordRepository.save(commission);
-
-        // Chuyển sang trạng thái COMPLETED để chờ Admin xác nhận giải ngân
-        session.setStatus(ClassSessionStatus.COMPLETED);
-        classSessionRepository.save(session);
-
-        return ResponseEntity.ok(Map.of("message", "Thanh toán nốt 75% thành công", "transaction", tx));
+        String qrUrl = generateVietQR(tx.getAmount(), tx.getTransactionCode());
+        return ResponseEntity.ok(Map.of("qrUrl", qrUrl, "transactionCode", tx.getTransactionCode(), "amount", tx.getAmount()));
     }
 }
