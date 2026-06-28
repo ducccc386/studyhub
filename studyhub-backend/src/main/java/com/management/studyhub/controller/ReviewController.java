@@ -1,8 +1,10 @@
 package com.management.studyhub.controller;
 
 import com.management.studyhub.entity.ClassSession;
+import com.management.studyhub.entity.LessonLog;
 import com.management.studyhub.repository.ClassSessionRepository;
 import com.management.studyhub.repository.TutorProfileRepository;
+import com.management.studyhub.repository.LessonLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +26,7 @@ public class ReviewController {
 
     private final ClassSessionRepository classSessionRepository;
     private final TutorProfileRepository tutorProfileRepository;
+    private final LessonLogRepository lessonLogRepository;
 
     /**
      * Lấy danh sách đánh giá của một gia sư
@@ -32,9 +35,17 @@ public class ReviewController {
     @GetMapping("/tutor/{tutorId}")
     public ResponseEntity<?> getReviewsByTutor(@PathVariable Long tutorId) {
         try {
-            // Trả danh sách rỗng nếu chưa có review thực sự
-            // Frontend sẽ hiển thị "Chưa có đánh giá nào"
-            return ResponseEntity.ok(List.of());
+            List<LessonLog> logs = lessonLogRepository.findReviewsByTutorProfileId(tutorId);
+            List<Map<String, Object>> response = logs.stream().map(log -> Map.<String, Object>of(
+                "id", log.getId(),
+                "parentName", log.getClassSession() != null && log.getClassSession().getParent() != null && log.getClassSession().getParent().getUser() != null ? log.getClassSession().getParent().getUser().getFullName() : "Phụ huynh",
+                "parentAvatar", log.getClassSession() != null && log.getClassSession().getParent() != null && log.getClassSession().getParent().getUser() != null ? (log.getClassSession().getParent().getUser().getAvatarUrl() != null ? log.getClassSession().getParent().getUser().getAvatarUrl() : "") : "",
+                "rating", log.getParentRating(),
+                "comment", log.getParentFeedback() != null ? log.getParentFeedback() : "",
+                "createdAt", log.getScheduledDate() != null ? log.getScheduledDate().toString() : LocalDateTime.now().toString(),
+                "className", log.getClassSession() != null ? log.getClassSession().getClassName() : ""
+            )).collect(Collectors.toList());
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.ok(List.of());
         }

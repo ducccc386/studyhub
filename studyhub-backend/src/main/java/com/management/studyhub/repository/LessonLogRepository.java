@@ -29,4 +29,7 @@ public interface LessonLogRepository extends JpaRepository<LessonLog, Long> {
 
     @Query("SELECT COUNT(l) FROM LessonLog l WHERE l.classSession.tutorProfileId = :tutorId AND l.parentRating IS NOT NULL")
     Integer countReviewsByTutorProfileId(@org.springframework.data.repository.query.Param("tutorId") Long tutorId);
+
+    @Query("SELECT l FROM LessonLog l WHERE l.classSession.tutorProfileId = :tutorId AND l.parentRating IS NOT NULL ORDER BY l.scheduledDate DESC")
+    List<LessonLog> findReviewsByTutorProfileId(@org.springframework.data.repository.query.Param("tutorId") Long tutorId);
 }
