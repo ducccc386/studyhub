@@ -23,6 +23,10 @@ public class TutorSpecification {
             predicates.add(criteriaBuilder.equal(root.get("isDeleted"), false));
             predicates.add(criteriaBuilder.equal(root.get("status"), TutorStatus.APPROVED));
 
+            // Check if the user is ACTIVE (not locked)
+            Join<TutorProfile, com.management.studyhub.entity.User> userJoin = root.join("user");
+            predicates.add(criteriaBuilder.equal(userJoin.get("status"), "ACTIVE"));
+
             if (keyword != null && !keyword.trim().isEmpty()) {
                 String likeKeyword = "%" + keyword.trim().toLowerCase() + "%";
                 predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("fullName")), likeKeyword));

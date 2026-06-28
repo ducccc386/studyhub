@@ -48,7 +48,7 @@ public class JobPostingService {
     }
 
     public List<JobPostingDTO> getAllRecruitingPosts() {
-        return jobPostingRepository.findByStatus("RECRUITING")
+        return jobPostingRepository.findActiveByStatus("RECRUITING")
                 .stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
