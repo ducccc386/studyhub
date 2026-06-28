@@ -39,6 +39,8 @@ const AdminClasses: React.FC = () => {
     if (s === 'TRIAL') return { text: 'Đang học thử', cls: 'bg-amber-100 text-amber-800 border-amber-200' };
     if (s === 'CONFIRMED') return { text: 'Chính thức', cls: 'bg-green-100 text-green-800 border-green-200' };
     if (s === 'PENDING_PAYMENT') return { text: 'Chờ thanh toán', cls: 'bg-blue-100 text-blue-800 border-blue-200' };
+    if (s === 'PENDING_CANCELLATION') return { text: 'Chờ duyệt hủy', cls: 'bg-red-100 text-red-800 border-red-200' };
+    if (s === 'CANCELLED') return { text: 'Đã hủy', cls: 'bg-slate-100 text-slate-600 border-slate-200' };
     return { text: s, cls: 'bg-slate-100 text-slate-600 border-slate-200' };
   };
 
@@ -109,6 +111,11 @@ const AdminClasses: React.FC = () => {
                         <div>
                           <p className="font-bold text-slate-800">{cls.className || `Lớp #${cls.id}`}</p>
                           <p className="text-xs text-slate-400 mt-0.5">{cls.schedule || '—'}</p>
+                          {(cls.status === 'PENDING_CANCELLATION' || cls.status === 'CANCELLED') && cls.cancelReason && (
+                            <p className="text-xs text-red-600 mt-1 font-medium bg-red-50 p-1.5 rounded inline-block">
+                              Lý do hủy: {cls.cancelReason}
+                            </p>
+                          )}
                         </div>
                       </td>
                       <td className="px-5 py-4">
@@ -127,14 +134,40 @@ const AdminClasses: React.FC = () => {
                           {st.text}
                         </span>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-4 flex gap-2">
                         <button
                           onClick={() => navigate(`/admin/classes/${cls.id}/workspace`)}
                           className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
                         >
                           <span className="material-symbols-outlined text-[15px]">open_in_new</span>
-                          Vào Workspace
+                          Workspace
                         </button>
+                        {cls.status === 'PENDING_CANCELLATION' && (
+                          <button
+                            onClick={async () => {
+                              if (window.confirm(`Xác nhận đã hoàn tiền cọc cho phụ huynh và chính thức hủy lớp này? Lý do hủy: ${cls.cancelReason || 'Không có'}`)) {
+                                try {
+                                  const res = await apiFetch(`/class-sessions/${cls.id}/status`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ status: 'CANCELLED' })
+                                  });
+                                  if (res.ok) {
+                                    loadClasses();
+                                  } else {
+                                    alert('Có lỗi xảy ra khi duyệt hủy lớp');
+                                  }
+                                } catch (e) {
+                                  console.error(e);
+                                }
+                              }
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors shadow-sm"
+                          >
+                            <span className="material-symbols-outlined text-[15px]">check_circle</span>
+                            Duyệt Hủy
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );

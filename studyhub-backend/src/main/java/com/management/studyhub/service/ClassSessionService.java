@@ -211,6 +211,8 @@ public class ClassSessionService {
         dto.setSyllabusStatus(s.getSyllabusStatus());
         dto.setCreatedAt(s.getCreatedAt());
         dto.setNextSessionDate(s.getNextSessionDate());
+        dto.setCancelReason(s.getCancelReason());
+        dto.setCancelledBy(s.getCancelledBy());
 
         if (s.getParent() != null) {
             dto.setParentId(s.getParent().getId());
@@ -279,6 +281,35 @@ public class ClassSessionService {
         session.setSyllabusStatus("APPROVED");
         classSessionRepository.save(session);
         return getSyllabus(classSessionId);
+    }
+
+    @Transactional
+    public ClassSessionDTO tutorCancelClass(Long classSessionId, String reason, Long tutorProfileId) {
+        ClassSession session = classSessionRepository.findById(classSessionId)
+                .orElseThrow(() -> new RuntimeException("Lớp học không tồn tại"));
+        
+        if (session.getTutorProfileId() == null || !session.getTutorProfileId().equals(tutorProfileId)) {
+            throw new RuntimeException("Bạn không phải gia sư của lớp này");
+        }
+        
+        ClassSessionStatus status = session.getStatus();
+        if (status != ClassSessionStatus.TRIAL && status != ClassSessionStatus.PENDING_PAYMENT && status != ClassSessionStatus.CONFIRMED) {
+            throw new RuntimeException("Không thể hủy lớp ở trạng thái hiện tại");
+        }
+        
+        session.setCancelReason(reason);
+        session.setCancelledBy("TUTOR");
+        
+        if (status == ClassSessionStatus.CONFIRMED) {
+            session.setStatus(ClassSessionStatus.PENDING_CANCELLATION);
+            // TODO: Notify admin about refund and parent about cancellation
+        } else {
+            session.setStatus(ClassSessionStatus.CANCELLED);
+            // TODO: Notify parent about cancellation
+        }
+        
+        ClassSession saved = classSessionRepository.save(session);
+        return mapToDTO(saved);
     }
 
     private SyllabusSessionDTO mapToSyllabusSessionDTO(SyllabusSession s) {

@@ -25,4 +25,6 @@ public class ClassSessionDTO {
     private String syllabusStatus;
     private LocalDateTime createdAt;
     private LocalDateTime nextSessionDate;
+    private String cancelReason;
+    private String cancelledBy;
 }

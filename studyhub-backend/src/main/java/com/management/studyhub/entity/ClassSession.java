@@ -60,6 +60,12 @@ public class ClassSession {
     private LocalDateTime nextSessionDate;
 
     private Integer progress;
+    
+    @Column(name = "cancel_reason", columnDefinition = "TEXT")
+    private String cancelReason;
+    
+    @Column(name = "cancelled_by", length = 50)
+    private String cancelledBy; // "TUTOR" or "PARENT" or "ADMIN"
 
     @OneToMany(mappedBy = "classSession", cascade = CascadeType.ALL)
     private java.util.List<StudyMaterial> studyMaterials;

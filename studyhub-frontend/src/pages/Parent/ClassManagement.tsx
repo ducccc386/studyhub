@@ -34,6 +34,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: str
   CONFIRMED:       { label: 'Đang học',        color: 'text-green-700',   bgColor: 'bg-green-100 border-green-200',   icon: 'check_circle' },
   COMPLETED:       { label: 'Hoàn thành',      color: 'text-blue-700',    bgColor: 'bg-blue-100 border-blue-200',     icon: 'task_alt' },
   CANCELLED:       { label: 'Đã hủy',          color: 'text-red-700',     bgColor: 'bg-red-100 border-red-200',       icon: 'cancel' },
+  PENDING_CANCELLATION: { label: 'Chờ xử lý hủy',   color: 'text-red-700',     bgColor: 'bg-red-100 border-red-200',       icon: 'pending_actions' },
   DISBURSED:       { label: 'Đã giải ngân',    color: 'text-purple-700',  bgColor: 'bg-purple-100 border-purple-200', icon: 'payments' },
 };
 
@@ -135,7 +136,7 @@ const ClassManagement: React.FC = () => {
 
   const activeSessions    = sessions.filter(s => ['TRIAL', 'PENDING_PAYMENT', 'CONFIRMED', 'PENDING_FINAL_PAYMENT'].includes(s.status));
   const completedSessions = sessions.filter(s => ['COMPLETED', 'DISBURSED'].includes(s.status));
-  const cancelledSessions = sessions.filter(s => s.status === 'CANCELLED');
+  const cancelledSessions = sessions.filter(s => ['CANCELLED', 'PENDING_CANCELLATION'].includes(s.status));
 
   const displaySessions =
     activeTab === 'active'    ? activeSessions :
@@ -310,6 +311,19 @@ const ClassManagement: React.FC = () => {
                       <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 flex items-center gap-2">
                         <span className="material-symbols-outlined text-[16px]">info</span>
                         Gia sư đã xác nhận hoàn thành khóa học. Vui lòng thanh toán nốt 75% học phí.
+                      </div>
+                    )}
+                    {(session.status === 'CANCELLED' || session.status === 'PENDING_CANCELLATION') && (session as any).cancelReason && (
+                      <div className="mt-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-start gap-2">
+                        <span className="material-symbols-outlined text-[16px] mt-0.5">error</span>
+                        <div>
+                          <strong>Lý do hủy:</strong> {(session as any).cancelReason}
+                          {session.status === 'PENDING_CANCELLATION' && (
+                            <span className="block text-xs mt-1 italic">
+                              Hệ thống đang xử lý hoàn trả tiền cọc cho bạn. Vui lòng đợi thông báo từ Admin.
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>

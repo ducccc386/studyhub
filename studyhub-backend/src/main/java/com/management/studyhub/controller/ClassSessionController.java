@@ -163,4 +163,25 @@ public class ClassSessionController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @PostMapping("/{id}/tutor-cancel")
+    public ResponseEntity<?> tutorCancelClass(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> payload) {
+        try {
+            String reason = (String) payload.get("reason");
+            Number tutorProfileIdNum = (Number) payload.get("tutorProfileId");
+            if (reason == null || reason.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Vui lòng nhập lý do hủy lớp"));
+            }
+            if (tutorProfileIdNum == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Thiếu tutorProfileId"));
+            }
+            Long tutorProfileId = tutorProfileIdNum.longValue();
+            
+            return ResponseEntity.ok(classSessionService.tutorCancelClass(id, reason, tutorProfileId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

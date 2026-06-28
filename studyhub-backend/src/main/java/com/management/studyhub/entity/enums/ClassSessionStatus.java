@@ -7,5 +7,6 @@ public enum ClassSessionStatus {
     PENDING_FINAL_PAYMENT,
     COMPLETED,
     DISBURSED,
-    CANCELLED
+    CANCELLED,
+    PENDING_CANCELLATION
 }

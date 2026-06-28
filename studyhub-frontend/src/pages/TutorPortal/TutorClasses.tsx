@@ -51,6 +51,10 @@ const TutorClasses: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('active');
   const [search, setSearch] = useState('');
+  
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [classToCancel, setClassToCancel] = useState<number | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
 
   useEffect(() => {
     if (!tutorId) { setLoading(false); return; }
@@ -77,6 +81,32 @@ const TutorClasses: React.FC = () => {
       const updated: ClassSessionDTO = await res.json();
       setClasses(prev => prev.map(s => s.id === sessionId ? updated : s));
       toast.success('Báo cáo hoàn thành thành công. Chờ phụ huynh thanh toán nốt 75%.');
+    } catch (err: any) {
+      toast.error('Lỗi: ' + err.message);
+    }
+  };
+
+  const handleCancelClass = async () => {
+    if (!classToCancel || !cancelReason.trim()) {
+      toast.error('Vui lòng nhập lý do hủy lớp');
+      return;
+    }
+    try {
+      const res = await apiFetch(`/class-sessions/${classToCancel}/tutor-cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: cancelReason, tutorProfileId: tutorId }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Hủy lớp thất bại');
+      }
+      const updated: ClassSessionDTO = await res.json();
+      setClasses(prev => prev.map(s => s.id === classToCancel ? updated : s));
+      toast.success('Hủy lớp thành công');
+      setCancelModalVisible(false);
+      setClassToCancel(null);
+      setCancelReason('');
     } catch (err: any) {
       toast.error('Lỗi: ' + err.message);
     }
@@ -270,10 +300,17 @@ const TutorClasses: React.FC = () => {
                         <span className="material-symbols-outlined text-[18px]">calendar_add_on</span>
                         Xin đổi lịch
                       </button>
-                      <button className="text-left px-4 py-2 hover:bg-error-container hover:text-error rounded-lg text-sm flex items-center gap-2 text-error transition-colors mt-1">
-                        <span className="material-symbols-outlined text-[18px]">cancel</span>
-                        Báo hủy lớp
-                      </button>
+                      {(cls.status === 'TRIAL' || cls.status === 'PENDING_PAYMENT' || cls.status === 'CONFIRMED') && (
+                        <button 
+                          onClick={() => {
+                            setClassToCancel(cls.id);
+                            setCancelModalVisible(true);
+                          }}
+                          className="text-left px-4 py-2 hover:bg-error-container hover:text-error rounded-lg text-sm flex items-center gap-2 text-error transition-colors mt-1">
+                          <span className="material-symbols-outlined text-[18px]">cancel</span>
+                          Báo hủy lớp
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -281,6 +318,51 @@ const TutorClasses: React.FC = () => {
             ))}
           </div>
         </>
+      )}
+
+      {/* Cancel Class Modal */}
+      {cancelModalVisible && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 animate-fade-in">
+          <div className="bg-surface w-full max-w-md rounded-2xl p-6 shadow-xl animate-slide-up">
+            <h3 className="font-headline-sm text-headline-sm text-on-surface mb-2">Hủy nhận lớp</h3>
+            <p className="text-body-md text-on-surface-variant mb-6">
+              Bạn có chắc chắn muốn hủy nhận lớp này? Việc tự ý hủy lớp có thể ảnh hưởng đến điểm uy tín của bạn. Vui lòng nhập lý do bên dưới.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-label-md font-medium text-on-surface mb-1">Lý do hủy lớp <span className="text-error">*</span></label>
+                <textarea 
+                  rows={3} 
+                  required
+                  className="w-full px-4 py-3 border border-outline-variant rounded-lg focus:outline-none focus:border-error bg-surface text-on-surface" 
+                  placeholder="Ví dụ: Bận lịch đột xuất, vấn đề sức khỏe..." 
+                  value={cancelReason} 
+                  onChange={e => setCancelReason(e.target.value)}
+                ></textarea>
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setCancelModalVisible(false);
+                    setClassToCancel(null);
+                    setCancelReason('');
+                  }} 
+                  className="flex-1 py-3 border border-outline text-on-surface rounded-xl hover:bg-surface-variant font-label-md transition-colors"
+                >
+                  Đóng
+                </button>
+                <button 
+                  type="button" 
+                  onClick={handleCancelClass}
+                  className="flex-1 py-3 bg-error text-on-error rounded-xl hover:bg-error/90 font-label-md transition-colors"
+                >
+                  Xác nhận hủy
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
