@@ -28,6 +28,7 @@ public class CourseServiceImpl implements CourseService {
         
         return courses.stream()
                 .filter(c -> c.getStatus() == null || "ACTIVE".equals(c.getStatus()))
+                .filter(c -> c.getTutor() != null && c.getTutor().getUser() != null && "ACTIVE".equals(c.getTutor().getUser().getStatus()))
                 .map(this::mapToDto).collect(Collectors.toList());
     }
 
@@ -42,6 +43,7 @@ public class CourseServiceImpl implements CourseService {
 
         return courses.stream()
             .filter(c -> c.getStatus() == null || "ACTIVE".equals(c.getStatus()))
+            .filter(c -> c.getTutor() != null && c.getTutor().getUser() != null && "ACTIVE".equals(c.getTutor().getUser().getStatus()))
             .filter(c -> {
                 if (maxPrice != null) {
                     String priceStr = c.getPrice() != null ? c.getPrice().replaceAll("[^0-9]", "") : "";
