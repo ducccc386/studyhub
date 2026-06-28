@@ -40,7 +40,7 @@ public class PaymentService {
         }
 
         // Tìm transaction PENDING cũ
-        Transaction transaction = transactionRepository.findByClassSessionIdAndStatus(classId, TransactionStatus.PENDING)
+        Transaction transaction = transactionRepository.findFirstByClassSessionIdAndStatusOrderByIdDesc(classId, TransactionStatus.PENDING)
                 .orElse(null);
 
         String transactionCode;

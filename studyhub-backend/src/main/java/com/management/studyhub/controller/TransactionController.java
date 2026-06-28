@@ -59,7 +59,7 @@ public class TransactionController {
             classSessionRepository.save(session);
         }
 
-        Transaction tx = transactionRepository.findByClassSessionIdAndStatus(classSessionId, TransactionStatus.PENDING)
+        Transaction tx = transactionRepository.findFirstByClassSessionIdAndStatusAndTypeOrderByIdDesc(classSessionId, TransactionStatus.PENDING, TransactionType.DEPOSIT)
                 .orElse(new Transaction());
         
         if (tx.getId() == null) {
@@ -87,7 +87,7 @@ public class TransactionController {
 
         double totalPrice = calculateTotalPrice(session);
 
-        Transaction tx = transactionRepository.findByClassSessionIdAndStatus(classSessionId, TransactionStatus.PENDING)
+        Transaction tx = transactionRepository.findFirstByClassSessionIdAndStatusAndTypeOrderByIdDesc(classSessionId, TransactionStatus.PENDING, TransactionType.FINAL_PAYMENT)
                 .orElse(new Transaction());
         
         if (tx.getId() == null) {
