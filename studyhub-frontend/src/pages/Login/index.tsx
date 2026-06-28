@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import StudyHubLogo from '../../components/StudyHubLogo';
 import { authApi } from '../../services/authApi';
+import { GoogleLogin } from '@react-oauth/google';
 
 const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -34,6 +35,33 @@ const Login: React.FC = () => {
       }
     }
   }, [isLoggedIn, role, navigate, location]);
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    if (credentialResponse.credential) {
+      try {
+        setIsSubmitting(true);
+        const response = await authApi.googleLogin(credentialResponse.credential);
+        login(
+          response.token,
+          response.role.toLowerCase() as any,
+          response.name || 'Người dùng',
+          response.email,
+          response.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+          response.tutorId || null,
+          response.userId || null
+        );
+      } catch (error: any) {
+        const errorMsg = error.response?.data || '';
+        if (errorMsg.includes('NEW_GOOGLE_USER')) {
+          setErrorMsg('Tài khoản chưa tồn tại. Vui lòng sang trang Đăng ký để tạo tài khoản.');
+        } else {
+          setErrorMsg(errorMsg || 'Đăng nhập Google thất bại.');
+        }
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -252,29 +280,15 @@ const Login: React.FC = () => {
             </div>
 
             {/* Social */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              {[
-                { label: 'Google', icon: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA9bixpw1lySmzeg5opeYCkeOcxGPo8X6A1lI6pl7dlSsyCLfpJFP9XVtUrN1J_PVFG1hM2dhqgrNuvxeXh_djlKHTg5nyY2zCq-ouEC7uIgpwc0bpO5a90spkRYnPFb5dqnP56moMSiptvm-Y4fm0ZwgwFXGBnYUYcVfumRb9RVr_TVZc41xBteCwLj7ajaAJdEp3x7y8K9j1WcSARftUmIVkAJz3E-5Aqx1I7fGiaAh7DnEoHeakI_N1snQkbN2H70K0SHbP_SOtb', isImg: true },
-                { label: 'Facebook', icon: 'face_nod', color: '#1877F2', isImg: false },
-              ].map(s => (
-                <button key={s.label} type="button" style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                  padding: '11px',
-                  border: '2px solid #e2e8f0', borderRadius: '10px',
-                  background: 'white', fontSize: '13px', fontWeight: 600, color: '#374151',
-                  cursor: 'pointer', transition: 'all 0.2s ease',
-                }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f8fafc'; (e.currentTarget as HTMLElement).style.borderColor = '#c7d2fe'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'white'; (e.currentTarget as HTMLElement).style.borderColor = '#e2e8f0'; }}
-                >
-                  {s.isImg ? (
-                    <img src={s.icon as string} alt={s.label} style={{ width: '18px', height: '18px' }} />
-                  ) : (
-                    <span className="material-symbols-outlined" style={{ fontSize: '20px', color: s.color, fontVariationSettings: "'FILL' 1" }}>{s.icon}</span>
-                  )}
-                  {s.label}
-                </button>
-              ))}
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setErrorMsg('Đăng nhập Google thất bại')}
+                theme="outline"
+                size="large"
+                text="signin_with"
+                shape="rectangular"
+              />
             </div>
           </form>
 

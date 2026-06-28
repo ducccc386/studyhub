@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import StudyHubLogo from '../../components/StudyHubLogo';
 import { authApi } from '../../services/authApi';
+import { GoogleLogin } from '@react-oauth/google';
 
 const Register: React.FC = () => {
   const [roleSelect, setRoleSelect] = useState<'student' | 'tutor'>('student');
@@ -17,7 +18,7 @@ const Register: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const { isLoggedIn, role: currentRole } = useAuth();
+  const { login, isLoggedIn, role: currentRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -38,6 +39,29 @@ const Register: React.FC = () => {
       }
     }
   }, [isLoggedIn, currentRole, navigate, location]);
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    if (credentialResponse.credential) {
+      try {
+        setIsSubmitting(true);
+        const apiRole = roleSelect === 'student' ? 'PARENT' : 'TUTOR';
+        const response = await authApi.googleLogin(credentialResponse.credential, apiRole);
+        login(
+          response.token,
+          response.role.toLowerCase() as any,
+          response.name || 'Người dùng',
+          response.email,
+          response.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+          response.tutorId || null,
+          response.userId || null
+        );
+      } catch (error: any) {
+        setErrorMsg(error.response?.data || 'Đăng nhập Google thất bại.');
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -341,6 +365,25 @@ const Register: React.FC = () => {
                 </>
               )}
             </button>
+
+            {/* Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '16px 0' }}>
+              <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+              <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500 }}>Hoặc đăng ký nhanh bằng</span>
+              <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+            </div>
+
+            {/* Social */}
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setErrorMsg('Đăng nhập Google thất bại')}
+                theme="outline"
+                size="large"
+                text="signup_with"
+                shape="rectangular"
+              />
+            </div>
           </form>
 
           {/* Footer */}

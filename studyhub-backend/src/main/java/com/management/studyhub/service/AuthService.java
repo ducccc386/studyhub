@@ -16,7 +16,14 @@ import com.management.studyhub.repository.TutorProfileRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-
+import java.util.Collections;
+import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import com.management.studyhub.dto.GoogleLoginRequestDTO;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -25,6 +32,73 @@ public class AuthService {
     private final TutorProfileRepository tutorProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+
+    @Value("${google.client.id}")
+    private String googleClientId;
+
+    public AuthResponseDTO googleLogin(GoogleLoginRequestDTO request) {
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                    .setAudience(Collections.singletonList(googleClientId))
+                    .build();
+
+            GoogleIdToken idToken = verifier.verify(request.getCredential());
+            if (idToken != null) {
+                GoogleIdToken.Payload payload = idToken.getPayload();
+                String email = payload.getEmail();
+                String name = (String) payload.get("name");
+                String pictureUrl = (String) payload.get("picture");
+
+                Optional<User> userOpt = userRepository.findByEmail(email);
+                User user;
+                Long tutorId = null;
+
+                if (userOpt.isPresent()) {
+                    user = userOpt.get();
+                    if (user.getRole() == UserRole.TUTOR) {
+                        tutorId = tutorProfileRepository.findByUserId(user.getId())
+                                .map(TutorProfile::getId).orElse(null);
+                    }
+                } else {
+                    if (request.getRole() == null || request.getRole().isEmpty()) {
+                        throw new RuntimeException("NEW_GOOGLE_USER");
+                    }
+                    UserRole selectedRole;
+                    try {
+                        selectedRole = UserRole.valueOf(request.getRole().toUpperCase());
+                    } catch (Exception e) {
+                        selectedRole = UserRole.PARENT;
+                    }
+
+                    user = new User();
+                    user.setEmail(email);
+                    user.setFullName(name);
+                    user.setAvatarUrl(pictureUrl);
+                    user.setRole(selectedRole);
+                    user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+                    user = userRepository.save(user);
+
+                    if (selectedRole == UserRole.TUTOR) {
+                        TutorProfile tutorProfile = new TutorProfile();
+                        tutorProfile.setUser(user);
+                        tutorProfile.setFullName(user.getFullName());
+                        tutorProfile.setEkycStatus(EkycStatus.NOT_STARTED);
+                        tutorProfile.setStatus(TutorStatus.PENDING);
+                        tutorProfileRepository.save(tutorProfile);
+                        tutorId = tutorProfile.getId();
+                    }
+                }
+
+                String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+                return new AuthResponseDTO(token, user.getRole(), user.getEmail(), user.getFullName(), user.getAvatarUrl(), tutorId, user.getId());
+
+            } else {
+                throw new RuntimeException("Invalid ID token.");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Google login failed: " + e.getMessage());
+        }
+    }
 
     public AuthResponseDTO login(AuthRequestDTO request) {
         User user = userRepository.findByEmail(request.getEmail())
