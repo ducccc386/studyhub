@@ -27,8 +27,6 @@ public class CourseServiceImpl implements CourseService {
         List<Course> courses = courseRepository.findFeaturedCourses(PageRequest.of(0, 6));
         
         return courses.stream()
-                .filter(c -> c.getStatus() == null || "ACTIVE".equals(c.getStatus()))
-                .filter(c -> c.getTutor() != null && c.getTutor().getUser() != null && "ACTIVE".equals(c.getTutor().getUser().getStatus()))
                 .map(this::mapToDto).collect(Collectors.toList());
     }
 
@@ -38,12 +36,11 @@ public class CourseServiceImpl implements CourseService {
         if (subjectIds != null && !subjectIds.isEmpty()) {
             courses = courseRepository.findBySubjectIdIn(subjectIds);
         } else {
-            courses = courseRepository.findAll();
+            courses = courseRepository.findAllActiveCourses();
         }
 
         return courses.stream()
             .filter(c -> c.getStatus() == null || "ACTIVE".equals(c.getStatus()))
-            .filter(c -> c.getTutor() != null && c.getTutor().getUser() != null && "ACTIVE".equals(c.getTutor().getUser().getStatus()))
             .filter(c -> {
                 if (maxPrice != null) {
                     String priceStr = c.getPrice() != null ? c.getPrice().replaceAll("[^0-9]", "") : "";
