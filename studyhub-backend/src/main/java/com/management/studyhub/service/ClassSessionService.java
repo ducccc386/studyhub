@@ -6,13 +6,17 @@ import com.management.studyhub.dto.SyllabusSessionDTO;
 import com.management.studyhub.entity.Applicant;
 import com.management.studyhub.entity.ClassSession;
 import com.management.studyhub.entity.JobPosting;
+import com.management.studyhub.entity.Parent;
 import com.management.studyhub.entity.SyllabusSession;
+import com.management.studyhub.entity.User;
 import com.management.studyhub.entity.enums.ClassSessionStatus;
 import com.management.studyhub.repository.ApplicantRepository;
 import com.management.studyhub.repository.ClassSessionRepository;
 import com.management.studyhub.repository.JobPostingRepository;
 import com.management.studyhub.repository.ParentRepository;
 import com.management.studyhub.repository.SyllabusSessionRepository;
+import com.management.studyhub.repository.TutorProfileRepository;
+import com.management.studyhub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +33,23 @@ public class ClassSessionService {
     private final JobPostingRepository jobPostingRepository;
     private final ParentRepository parentRepository;
     private final SyllabusSessionRepository syllabusSessionRepository;
+    private final TutorProfileRepository tutorProfileRepository;
+    private final UserRepository userRepository;
+
+    private Parent getOrCreateParent(Long userId) {
+        return parentRepository.findByUserId(userId).orElseGet(() -> {
+            User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+            Parent newParent = new Parent();
+            newParent.setUser(user);
+            newParent.setName(user.getFullName());
+            newParent.setEmail(user.getEmail());
+            newParent.setAvatar(user.getAvatarUrl());
+            newParent.setBudgetSpentThisMonth(0.0);
+            newParent.setClassesWaiting(0);
+            return parentRepository.save(newParent);
+        });
+    }
 
     /**
      * Phụ huynh chấp nhận 1 ứng viên:
@@ -99,8 +120,7 @@ public class ClassSessionService {
      * Lấy danh sách lớp học của phụ huynh
      */
     public List<ClassSessionDTO> getSessionsByParent(Long userId) {
-        com.management.studyhub.entity.Parent parent = parentRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Parent not found for user: " + userId));
+        Parent parent = getOrCreateParent(userId);
 
         return classSessionRepository.findByParentId(parent.getId())
                 .stream()

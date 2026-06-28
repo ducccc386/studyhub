@@ -13,6 +13,8 @@ import com.management.studyhub.entity.TutorProfile;
 import com.management.studyhub.entity.enums.EkycStatus;
 import com.management.studyhub.entity.enums.TutorStatus;
 import com.management.studyhub.repository.TutorProfileRepository;
+import com.management.studyhub.entity.Parent;
+import com.management.studyhub.repository.ParentRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -30,6 +32,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final TutorProfileRepository tutorProfileRepository;
+    private final ParentRepository parentRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -86,6 +89,15 @@ public class AuthService {
                         tutorProfile.setStatus(TutorStatus.PENDING);
                         tutorProfileRepository.save(tutorProfile);
                         tutorId = tutorProfile.getId();
+                    } else if (selectedRole == UserRole.PARENT) {
+                        Parent parent = new Parent();
+                        parent.setUser(user);
+                        parent.setName(user.getFullName());
+                        parent.setEmail(user.getEmail());
+                        parent.setAvatar(user.getAvatarUrl());
+                        parent.setBudgetSpentThisMonth(0.0);
+                        parent.setClassesWaiting(0);
+                        parentRepository.save(parent);
                     }
                 }
 
@@ -149,6 +161,15 @@ public class AuthService {
             tutorProfile.setStatus(TutorStatus.PENDING);
             tutorProfileRepository.save(tutorProfile);
             tutorId = tutorProfile.getId();
+        } else if (role == UserRole.PARENT) {
+            Parent parent = new Parent();
+            parent.setUser(user);
+            parent.setName(user.getFullName());
+            parent.setEmail(user.getEmail());
+            parent.setAvatar(user.getAvatarUrl());
+            parent.setBudgetSpentThisMonth(0.0);
+            parent.setClassesWaiting(0);
+            parentRepository.save(parent);
         }
 
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());

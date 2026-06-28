@@ -30,11 +30,25 @@ public class ChatService {
     private final TutorProfileRepository tutorProfileRepository;
     private final UserRepository userRepository;
 
+    private Parent getOrCreateParent(Long userId) {
+        return parentRepository.findByUserId(userId).orElseGet(() -> {
+            User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+            Parent newParent = new Parent();
+            newParent.setUser(user);
+            newParent.setName(user.getFullName());
+            newParent.setEmail(user.getEmail());
+            newParent.setAvatar(user.getAvatarUrl());
+            newParent.setBudgetSpentThisMonth(0.0);
+            newParent.setClassesWaiting(0);
+            return parentRepository.save(newParent);
+        });
+    }
+
     public List<ConversationDTO> getConversations(Long userId, String role) {
         List<ClassSession> sessions;
         if ("PARENT".equalsIgnoreCase(role)) {
-            Parent parent = parentRepository.findByUserId(userId)
-                    .orElseThrow(() -> new RuntimeException("Parent not found"));
+            Parent parent = getOrCreateParent(userId);
             sessions = classSessionRepository.findByParentId(parent.getId());
         } else if ("TUTOR".equalsIgnoreCase(role)) {
             TutorProfile tutor = tutorProfileRepository.findByUserId(userId)

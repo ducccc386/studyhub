@@ -8,6 +8,8 @@ import com.management.studyhub.entity.Parent;
 import com.management.studyhub.repository.ApplicantRepository;
 import com.management.studyhub.repository.JobPostingRepository;
 import com.management.studyhub.repository.ParentRepository;
+import com.management.studyhub.repository.UserRepository;
+import com.management.studyhub.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,10 +24,25 @@ public class JobPostingService {
     private final JobPostingRepository jobPostingRepository;
     private final ParentRepository parentRepository;
     private final ApplicantRepository applicantRepository;
+    private final UserRepository userRepository;
+
+    private Parent getOrCreateParent(Long userId) {
+        return parentRepository.findByUserId(userId).orElseGet(() -> {
+            User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+            Parent newParent = new Parent();
+            newParent.setUser(user);
+            newParent.setName(user.getFullName());
+            newParent.setEmail(user.getEmail());
+            newParent.setAvatar(user.getAvatarUrl());
+            newParent.setBudgetSpentThisMonth(0.0);
+            newParent.setClassesWaiting(0);
+            return parentRepository.save(newParent);
+        });
+    }
 
     public JobPostingDTO createPost(Long userId, JobPostingDTO dto) {
-        Parent parent = parentRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Parent not found for user: " + userId));
+        Parent parent = getOrCreateParent(userId);
 
         JobPosting job = new JobPosting();
         job.setParent(parent);
@@ -55,8 +72,7 @@ public class JobPostingService {
     }
 
     public List<JobPostingDTO> getPostsByParent(Long userId) {
-        Parent parent = parentRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Parent not found for user: " + userId));
+        Parent parent = getOrCreateParent(userId);
 
         return jobPostingRepository.findByParentId(parent.getId())
                 .stream()
