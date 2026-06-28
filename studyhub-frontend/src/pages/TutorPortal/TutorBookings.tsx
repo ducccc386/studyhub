@@ -107,7 +107,7 @@ const TutorBookings: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px] text-primary">payments</span>
-                  <span className="font-semibold text-primary">{booking.pricePerSession.toLocaleString('vi-VN')}đ / buổi</span>
+                  <span className="font-semibold text-primary">{(booking.pricePerSession || 0).toLocaleString('vi-VN')}đ / buổi</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="material-symbols-outlined text-[18px] text-primary mt-0.5">{booking.learningMode === 'ONLINE' ? 'laptop_mac' : 'location_on'}</span>
