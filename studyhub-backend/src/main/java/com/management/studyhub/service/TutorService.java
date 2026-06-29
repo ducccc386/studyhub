@@ -23,12 +23,15 @@ import com.management.studyhub.dto.TutorEkycRequestDTO;
 import com.management.studyhub.entity.enums.EkycStatus;
 import com.management.studyhub.entity.enums.TutorStatus;
 
+import com.management.studyhub.repository.SubjectRepository;
+
 @Service
 @RequiredArgsConstructor
 public class TutorService {
 
     private final TutorProfileRepository tutorProfileRepository;
     private final EkycApiService ekycApiService;
+    private final SubjectRepository subjectRepository;
 
     public PageResponseDTO<TutorListDTO> searchTutors(
             String keyword, List<Integer> subjectIds, Double minPrice, Double maxPrice,
@@ -151,6 +154,13 @@ public class TutorService {
         if (request.getCertificates() != null) tutor.setCertificates(request.getCertificates());
         if (request.getPrice() != null) tutor.setPrice(request.getPrice());
         if (request.getIntroduction() != null) tutor.setIntroduction(request.getIntroduction());
+
+        if (request.getSubjectIds() != null && !request.getSubjectIds().isEmpty()) {
+            List<com.management.studyhub.entity.Subject> subjects = subjectRepository.findAllById(request.getSubjectIds());
+            tutor.setSubjects(new java.util.HashSet<>(subjects));
+        } else if (request.getSubjectIds() != null && request.getSubjectIds().isEmpty()) {
+            tutor.setSubjects(new java.util.HashSet<>());
+        }
 
         tutorProfileRepository.save(tutor);
         return Map.of(

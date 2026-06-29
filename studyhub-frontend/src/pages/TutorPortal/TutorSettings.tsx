@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../utils/api';
+import { tutorApi, Subject } from '../../services/tutorApi';
 
 const TutorSettings: React.FC = () => {
   const { tutorId: authTutorId, updateProfile } = useAuth();
@@ -36,6 +37,8 @@ const TutorSettings: React.FC = () => {
   const [cvPdfFileUrl, setCvPdfFileUrl] = useState<string | null>(null);
   const [certificateUrls, setCertificateUrls] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [subjectsList, setSubjectsList] = useState<Subject[]>([]);
+  const [selectedSubjectIds, setSelectedSubjectIds] = useState<number[]>([]);
 
   const isReadOnly = profileStatus === 'PROCESSING' || (profileStatus === 'SUCCESS' && !isEditing);
 
@@ -77,6 +80,9 @@ const TutorSettings: React.FC = () => {
           if (data.certificates && data.certificates.length > 0) {
             setCertificateUrls(data.certificates);
           }
+          if (data.subjects && data.subjects.length > 0) {
+            setSelectedSubjectIds(data.subjects.map((s: any) => s.id));
+          }
 
           // Always sync Navbar with latest profile data from DB
           if (data.fullName || data.avatarUrl) {
@@ -87,7 +93,18 @@ const TutorSettings: React.FC = () => {
         console.error("Lỗi lấy thông tin gia sư:", error);
       }
     };
+    
+    const loadSubjects = async () => {
+      try {
+        const subs = await tutorApi.getSubjects();
+        setSubjectsList(subs);
+      } catch (error) {
+        console.error("Lỗi lấy danh sách môn học:", error);
+      }
+    };
+
     fetchProfile();
+    loadSubjects();
   }, [tutorId]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string | null>>) => {
@@ -301,7 +318,8 @@ const TutorSettings: React.FC = () => {
           degreeImageUrl,
           cvUrl,
           certificates: combinedCertificates,
-          price: price ? Number(price) : null
+          price: price ? Number(price) : null,
+          subjectIds: selectedSubjectIds
         })
       });
 
@@ -617,6 +635,29 @@ const TutorSettings: React.FC = () => {
                 <div className="space-y-2">
                   <label className="font-label-md text-label-md text-on-surface">Trường Đại học/Cao đẳng <span className="text-error">*</span></label>
                   <input className="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md text-body-md text-on-surface disabled:opacity-70 disabled:bg-surface-container" placeholder="VD: Đại học Sư phạm Hà Nội" type="text" value={universityName} onChange={e => setUniversityName(e.target.value)} disabled={isReadOnly} />
+                </div>
+                <div className="space-y-2">
+                  <label className="font-label-md text-label-md text-on-surface">Môn học giảng dạy <span className="text-error">*</span></label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 rounded-lg border border-outline-variant bg-surface disabled:opacity-70 disabled:bg-surface-container">
+                    {subjectsList.map((subject) => (
+                      <label key={subject.id} className={`flex items-center gap-2 cursor-pointer ${isReadOnly ? 'opacity-70 pointer-events-none' : ''}`}>
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary"
+                          checked={selectedSubjectIds.includes(subject.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedSubjectIds([...selectedSubjectIds, subject.id]);
+                            } else {
+                              setSelectedSubjectIds(selectedSubjectIds.filter(id => id !== subject.id));
+                            }
+                          }}
+                          disabled={isReadOnly}
+                        />
+                        <span className="font-body-sm text-body-sm text-on-surface">{subject.name}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">

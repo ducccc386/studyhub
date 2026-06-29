@@ -27,4 +27,5 @@ public class TutorEkycRequestDTO {
     private String cvUrl;
     private List<String> certificates;
     private Double price;
+    private List<Integer> subjectIds;
 }
