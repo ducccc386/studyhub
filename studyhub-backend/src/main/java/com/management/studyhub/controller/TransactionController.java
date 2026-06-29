@@ -123,6 +123,31 @@ public class TransactionController {
         return ResponseEntity.ok(Map.of("qrUrl", qrUrl, "transactionCode", tx.getTransactionCode(), "amount", tx.getAmount()));
     }
 
+    @org.springframework.web.bind.annotation.GetMapping("/settle-preview/{classSessionId}")
+    public ResponseEntity<?> getSettlePreview(@PathVariable Long classSessionId) {
+        ClassSession session = classSessionRepository.findById(classSessionId)
+                .orElseThrow(() -> new RuntimeException("ClassSession not found"));
+
+        long approvedLessons = lessonLogRepository.countByClassSessionIdAndParentApprovalStatus(classSessionId, ParentApprovalStatus.APPROVED);
+        double pricePerSession = session.getPricePerSession() != null ? session.getPricePerSession() : 0;
+        double actualCost = approvedLessons * pricePerSession;
+        double paidAmount = session.getPrice() != null ? session.getPrice() : 0;
+        double diff = actualCost - paidAmount;
+
+        return ResponseEntity.ok(Map.of(
+            "classId", classSessionId,
+            "className", session.getClassName() != null ? session.getClassName() : "",
+            "tutorName", session.getTutorName() != null ? session.getTutorName() : "",
+            "parentName", session.getParentName() != null ? session.getParentName() : "",
+            "approvedLessons", approvedLessons,
+            "pricePerSession", pricePerSession,
+            "actualCost", actualCost,
+            "paidAmount", paidAmount,
+            "diff", diff,
+            "status", diff > 0 ? "EXTRA" : diff < 0 ? "REFUND" : "EXACT"
+        ));
+    }
+
     @PostMapping("/settle/{classSessionId}")
     @Transactional
     public ResponseEntity<?> settleClassSession(@PathVariable Long classSessionId) {

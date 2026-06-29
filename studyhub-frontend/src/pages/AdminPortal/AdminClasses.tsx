@@ -2,11 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '../../utils/api';
 
+interface SettlePreview {
+  classId: number;
+  className: string;
+  tutorName: string;
+  parentName: string;
+  approvedLessons: number;
+  pricePerSession: number;
+  actualCost: number;
+  paidAmount: number;
+  diff: number;
+  status: 'EXTRA' | 'REFUND' | 'EXACT';
+}
+
 const AdminClasses: React.FC = () => {
   const [classes, setClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+
+  // Settlement modal state
+  const [settlePreview, setSettlePreview] = useState<SettlePreview | null>(null);
+  const [settleLoading, setSettleLoading] = useState(false);
+  const [settleConfirming, setSettleConfirming] = useState(false);
 
   useEffect(() => {
     loadClasses();
@@ -25,6 +43,45 @@ const AdminClasses: React.FC = () => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openSettleModal = async (classId: number) => {
+    setSettleLoading(true);
+    try {
+      const res = await apiFetch(`/transactions/settle-preview/${classId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSettlePreview(data);
+      } else {
+        alert('Không thể tải thông tin quyết toán.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Lỗi kết nối máy chủ.');
+    } finally {
+      setSettleLoading(false);
+    }
+  };
+
+  const confirmSettle = async () => {
+    if (!settlePreview) return;
+    setSettleConfirming(true);
+    try {
+      const res = await apiFetch(`/transactions/settle/${settlePreview.classId}`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setSettlePreview(null);
+        await loadClasses();
+        alert(data.message || 'Quyết toán thành công!');
+      } else {
+        alert('Lỗi: ' + (data.error || 'Không thể quyết toán'));
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Có lỗi xảy ra khi quyết toán');
+    } finally {
+      setSettleConfirming(false);
     }
   };
 
@@ -174,24 +231,9 @@ const AdminClasses: React.FC = () => {
                         )}
                         {cls.status === 'PAID_IN_FULL' && (
                           <button
-                            onClick={async () => {
-                              if (window.confirm('Thực hiện chốt số buổi thực tế đã dạy dựa trên các Báo cáo được Phụ huynh xác nhận? (Nếu thiếu sẽ hoàn tiền, nếu thừa sẽ thu thêm)')) {
-                                try {
-                                  const res = await apiFetch(`/transactions/settle/${cls.id}`, { method: 'POST' });
-                                  const data = await res.json();
-                                  if (res.ok) {
-                                    alert(data.message || 'Yêu cầu thanh toán bổ sung đã được tạo.');
-                                    loadClasses();
-                                  } else {
-                                    alert('Lỗi: ' + (data.error || 'Không thể quyết toán'));
-                                  }
-                                } catch (e) {
-                                  console.error(e);
-                                  alert('Có lỗi xảy ra khi quyết toán');
-                                }
-                              }
-                            }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+                            onClick={() => openSettleModal(cls.id)}
+                            disabled={settleLoading}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-60"
                           >
                             <span className="material-symbols-outlined text-[15px]">calculate</span>
                             Quyết toán
@@ -206,6 +248,85 @@ const AdminClasses: React.FC = () => {
           </div>
           <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 text-xs text-slate-400 font-medium">
             Tổng: {filtered.length} lớp học
+          </div>
+        </div>
+      )}
+
+      {/* Settlement Preview Modal */}
+      {settlePreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <span className="material-symbols-outlined text-indigo-600 text-[28px]">calculate</span>
+              <div>
+                <h3 className="font-bold text-lg text-slate-800">Xác nhận Quyết toán</h3>
+                <p className="text-sm text-slate-500">{settlePreview.className}</p>
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="grid grid-cols-2 gap-3 mb-5 text-sm">
+              <div className="bg-slate-50 rounded-xl p-3">
+                <p className="text-slate-400 text-xs font-medium mb-1">Gia sư</p>
+                <p className="font-semibold text-slate-700">{settlePreview.tutorName}</p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3">
+                <p className="text-slate-400 text-xs font-medium mb-1">Phụ huynh</p>
+                <p className="font-semibold text-slate-700">{settlePreview.parentName}</p>
+              </div>
+            </div>
+
+            {/* Breakdown */}
+            <div className="border border-slate-200 rounded-xl overflow-hidden mb-5">
+              <table className="w-full text-sm">
+                <tbody className="divide-y divide-slate-100">
+                  <tr className="hover:bg-slate-50">
+                    <td className="px-4 py-3 text-slate-600">Số buổi PH đã xác nhận</td>
+                    <td className="px-4 py-3 text-right font-bold text-slate-800">{settlePreview.approvedLessons} buổi</td>
+                  </tr>
+                  <tr className="hover:bg-slate-50">
+                    <td className="px-4 py-3 text-slate-600">Học phí / buổi</td>
+                    <td className="px-4 py-3 text-right font-bold text-slate-800">{settlePreview.pricePerSession.toLocaleString('vi-VN')}đ</td>
+                  </tr>
+                  <tr className="hover:bg-slate-50 bg-indigo-50">
+                    <td className="px-4 py-3 text-indigo-700 font-semibold">Tổng tiền thực tế</td>
+                    <td className="px-4 py-3 text-right font-bold text-indigo-700">{settlePreview.actualCost.toLocaleString('vi-VN')}đ</td>
+                  </tr>
+                  <tr className="hover:bg-slate-50">
+                    <td className="px-4 py-3 text-slate-600">Tổng đã thu</td>
+                    <td className="px-4 py-3 text-right font-bold text-slate-800">{settlePreview.paidAmount.toLocaleString('vi-VN')}đ</td>
+                  </tr>
+                  <tr className={`${settlePreview.diff > 0 ? 'bg-orange-50' : settlePreview.diff < 0 ? 'bg-green-50' : 'bg-emerald-50'}`}>
+                    <td className={`px-4 py-3 font-semibold ${settlePreview.diff > 0 ? 'text-orange-700' : settlePreview.diff < 0 ? 'text-green-700' : 'text-emerald-700'}`}>
+                      {settlePreview.diff > 0 ? '⚠️ Cần thu thêm' : settlePreview.diff < 0 ? '↩️ Cần hoàn tiền' : '✅ Vừa đủ'}
+                    </td>
+                    <td className={`px-4 py-3 text-right font-bold text-lg ${settlePreview.diff > 0 ? 'text-orange-700' : settlePreview.diff < 0 ? 'text-green-700' : 'text-emerald-700'}`}>
+                      {settlePreview.diff !== 0 ? Math.abs(settlePreview.diff).toLocaleString('vi-VN') + 'đ' : '—'}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSettlePreview(null)}
+                className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={confirmSettle}
+                disabled={settleConfirming}
+                className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {settleConfirming ? (
+                  <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Đang xử lý...</>
+                ) : (
+                  <><span className="material-symbols-outlined text-[16px]">check_circle</span> Xác nhận Quyết toán</>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
