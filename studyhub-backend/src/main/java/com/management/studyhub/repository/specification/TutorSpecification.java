@@ -4,6 +4,7 @@ import com.management.studyhub.entity.Subject;
 import com.management.studyhub.entity.TutorProfile;
 import com.management.studyhub.entity.enums.TutorStatus;
 import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -24,7 +25,7 @@ public class TutorSpecification {
             predicates.add(criteriaBuilder.equal(root.get("status"), TutorStatus.APPROVED));
 
             // Check if the user is ACTIVE (not locked), allowing NULL for legacy records
-            Join<TutorProfile, com.management.studyhub.entity.User> userJoin = root.join("user");
+            Join<TutorProfile, com.management.studyhub.entity.User> userJoin = root.join("user", JoinType.LEFT);
             predicates.add(criteriaBuilder.or(
                 criteriaBuilder.isNull(userJoin.get("status")),
                 criteriaBuilder.equal(userJoin.get("status"), "ACTIVE")
