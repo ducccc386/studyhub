@@ -67,6 +67,13 @@ public class EnrollmentServiceImpl implements EnrollmentService {
                 .orElseThrow(() -> new RuntimeException("Enrollment not found"));
         enrollment.setStatus("APPROVED");
         
+        // Cập nhật trạng thái Course thành CLOSED khi đã có phụ huynh kết nối thành công
+        if (enrollment.getCourse() != null) {
+            Course course = enrollment.getCourse();
+            course.setStatus("CLOSED");
+            courseRepository.save(course);
+        }
+        
         // Tạo Lớp học (Class Session) khi gia sư đồng ý
         ClassSession classSession = new ClassSession();
         
