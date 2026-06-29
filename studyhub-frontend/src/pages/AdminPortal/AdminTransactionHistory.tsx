@@ -10,6 +10,7 @@ interface Transaction {
   createdAt: string;
   className: string;
   parentName: string;
+  tutorName?: string;
   classId: number;
 }
 
@@ -47,7 +48,7 @@ const AdminTransactionHistory: React.FC = () => {
     <div className="max-w-[1440px] mx-auto pb-20 animate-fade-in">
       <div className="mb-8">
         <h2 className="font-headline-lg text-headline-lg text-on-background mb-1">Lịch sử giao dịch (Toàn hệ thống)</h2>
-        <p className="font-body-md text-body-md text-on-surface-variant">Tra cứu và đối soát tất cả các giao dịch trên nền tảng.</p>
+        <p className="font-body-md text-body-md text-on-surface-variant">Theo dõi tất cả các giao dịch thanh toán và giải ngân.</p>
       </div>
 
       {error && (
@@ -56,9 +57,9 @@ const AdminTransactionHistory: React.FC = () => {
         </div>
       )}
 
-      <div className="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm flex flex-col overflow-hidden animate-slide-up">
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm flex flex-col overflow-hidden">
         <div className="px-6 py-5 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
-          <h3 className="font-headline-sm text-headline-sm text-on-surface">Tất cả giao dịch</h3>
+          <h3 className="font-headline-sm text-headline-sm text-on-surface">Danh sách giao dịch</h3>
           <button 
             onClick={fetchTransactions}
             className="flex items-center gap-1 text-primary font-label-md text-label-md hover:underline"
@@ -73,7 +74,7 @@ const AdminTransactionHistory: React.FC = () => {
             <thead>
               <tr className="border-b border-outline-variant bg-surface-container-low">
                 <th className="py-3 px-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Mã GD</th>
-                <th className="py-3 px-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Phụ huynh</th>
+                <th className="py-3 px-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Đối tác liên quan</th>
                 <th className="py-3 px-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Lớp học</th>
                 <th className="py-3 px-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Số tiền</th>
                 <th className="py-3 px-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Thời gian</th>
@@ -90,7 +91,7 @@ const AdminTransactionHistory: React.FC = () => {
               ) : transactions.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-on-surface-variant font-body-md">
-                    Hệ thống chưa có giao dịch nào.
+                    Không có giao dịch nào.
                   </td>
                 </tr>
               ) : (
@@ -102,7 +103,13 @@ const AdminTransactionHistory: React.FC = () => {
                         <span className="ml-2 px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] rounded font-bold uppercase tracking-wider">Giải ngân</span>
                       )}
                     </td>
-                    <td className="py-4 px-6 font-body-sm text-on-surface font-medium">{t.parentName || 'N/A'}</td>
+                    <td className="py-4 px-6 font-body-sm text-on-surface font-medium">
+                      {t.type === 'PAYOUT' ? (
+                        <div><span className="text-on-surface-variant text-xs">Gia sư:</span> {t.tutorName || 'N/A'}</div>
+                      ) : (
+                        <div><span className="text-on-surface-variant text-xs">Phụ huynh:</span> {t.parentName || 'N/A'}</div>
+                      )}
+                    </td>
                     <td className="py-4 px-6 font-body-sm text-on-surface-variant">{t.className || `Lớp #${t.classId}`}</td>
                     <td className={`py-4 px-6 font-body-sm font-bold ${t.type === 'PAYOUT' ? 'text-secondary' : 'text-primary'}`}>
                       {t.type === 'PAYOUT' ? '-' : '+'}{t.amount ? t.amount.toLocaleString('vi-VN') + ' đ' : '0 đ'}

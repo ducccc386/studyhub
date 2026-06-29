@@ -225,6 +225,7 @@ public class PaymentService {
             "createdAt", t.getCreatedAt() != null ? t.getCreatedAt().toString() : "",
             "className", t.getClassSession() != null && t.getClassSession().getClassName() != null ? t.getClassSession().getClassName() : "",
             "parentName", t.getClassSession() != null && t.getClassSession().getParentName() != null ? t.getClassSession().getParentName() : "",
+            "tutorName", t.getClassSession() != null && t.getClassSession().getTutorName() != null ? t.getClassSession().getTutorName() : "",
             "classId", t.getClassSession() != null ? t.getClassSession().getId() : 0
         );
     }
