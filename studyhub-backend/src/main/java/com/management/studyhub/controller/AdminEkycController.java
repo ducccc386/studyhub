@@ -27,8 +27,9 @@ public class AdminEkycController {
     @GetMapping("/pending")
     @Transactional(readOnly = true)
     public ResponseEntity<List<Map<String, Object>>> getPendingEkyc() {
-        List<Map<String, Object>> pendingProfiles = tutorProfileRepository.findAll().stream()
-                .filter(t -> t.getEkycStatus() == EkycStatus.PROCESSING)
+        // Query thẳng DB theo ekycStatus=PROCESSING — tránh load toàn bộ bảng vào RAM gây OutOfMemoryError
+        List<Map<String, Object>> pendingProfiles = tutorProfileRepository.findByEkycStatus(EkycStatus.PROCESSING)
+                .stream()
                 .map(t -> {
                     Map<String, Object> map = new java.util.HashMap<>();
                     map.put("id", t.getId());

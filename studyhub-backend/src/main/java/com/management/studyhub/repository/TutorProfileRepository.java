@@ -1,6 +1,7 @@
 package com.management.studyhub.repository;
 
 import com.management.studyhub.entity.TutorProfile;
+import com.management.studyhub.entity.enums.EkycStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -17,6 +18,11 @@ public interface TutorProfileRepository extends JpaRepository<TutorProfile, Long
     long countByStatus(com.management.studyhub.entity.enums.TutorStatus status);
 
     List<TutorProfile> findByStatus(com.management.studyhub.entity.enums.TutorStatus status);
+
+    /**
+     * Query trực tiếp DB theo ekycStatus — tránh load toàn bộ bảng vào RAM gây OutOfMemoryError.
+     */
+    List<TutorProfile> findByEkycStatus(EkycStatus ekycStatus);
 
     /**
      * Fetch tutors with their subjects in 1 query to avoid N+1 problem.
