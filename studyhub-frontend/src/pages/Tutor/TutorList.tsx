@@ -47,7 +47,7 @@ const TutorList: React.FC = () => {
         teachingMethod: method,
         sortBy: sortBy,
         page: page,
-        size: 10
+        size: 4
       };
       const response = await tutorApi.getTutors(params);
       setTutors(response.content);
@@ -318,30 +318,66 @@ const TutorList: React.FC = () => {
           )}
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-12 flex justify-center items-center gap-2">
-              <button 
-                onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
-                className="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 hover:border-primary hover:text-primary transition-colors disabled:opacity-30 shadow-sm" >
-                <span className="material-symbols-outlined text-[18px]">chevron_left</span>
-              </button>
-              
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <button 
-                  key={i} 
-                  onClick={() => setPage(i)}
-                  className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${i === page ? 'bg-primary text-white shadow-md shadow-primary/30' : 'border border-slate-200 bg-white text-slate-500 hover:border-primary hover:text-primary shadow-sm'}`}>
-                  {i + 1}
+          {totalPages > 0 && (
+            <div className="mt-10 flex flex-col items-center gap-4">
+              {/* Page info */}
+              <p className="text-xs text-slate-400 font-medium">
+                Trang <span className="font-bold text-slate-600">{page + 1}</span> / <span className="font-bold text-slate-600">{totalPages}</span>
+                <span className="ml-2 text-slate-300">·</span>
+                <span className="ml-2">Tổng <span className="font-bold text-primary">{totalElements}</span> gia sư</span>
+              </p>
+
+              {/* Page buttons */}
+              <div className="flex justify-center items-center gap-1.5">
+                {/* Prev */}
+                <button
+                  onClick={() => { setPage(p => Math.max(0, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  disabled={page === 0}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 hover:border-primary hover:text-primary transition-colors disabled:opacity-30 shadow-sm"
+                >
+                  <span className="material-symbols-outlined text-[18px]">chevron_left</span>
                 </button>
-              ))}
-              
-              <button 
-                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={page >= totalPages - 1}
-                className="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 hover:border-primary hover:text-primary transition-colors disabled:opacity-30 shadow-sm">
-                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
-              </button>
+
+                {/* Smart page numbers */}
+                {(() => {
+                  const pages: (number | '...')[] = [];
+                  if (totalPages <= 7) {
+                    for (let i = 0; i < totalPages; i++) pages.push(i);
+                  } else {
+                    pages.push(0);
+                    if (page > 3) pages.push('...');
+                    for (let i = Math.max(1, page - 2); i <= Math.min(totalPages - 2, page + 2); i++) pages.push(i);
+                    if (page < totalPages - 4) pages.push('...');
+                    pages.push(totalPages - 1);
+                  }
+                  return pages.map((p, idx) =>
+                    p === '...' ? (
+                      <span key={`ellipsis-${idx}`} className="w-9 h-9 flex items-center justify-center text-slate-400 text-sm font-bold">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => { setPage(p as number); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        className={`w-9 h-9 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${
+                          p === page
+                            ? 'bg-primary text-white shadow-md shadow-primary/30 scale-105'
+                            : 'border border-slate-200 bg-white text-slate-500 hover:border-primary hover:text-primary shadow-sm'
+                        }`}
+                      >
+                        {(p as number) + 1}
+                      </button>
+                    )
+                  );
+                })()}
+
+                {/* Next */}
+                <button
+                  onClick={() => { setPage(p => Math.min(totalPages - 1, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  disabled={page >= totalPages - 1}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 hover:border-primary hover:text-primary transition-colors disabled:opacity-30 shadow-sm"
+                >
+                  <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
