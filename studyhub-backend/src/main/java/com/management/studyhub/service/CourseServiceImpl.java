@@ -188,4 +188,34 @@ public class CourseServiceImpl implements CourseService {
         Course course = courseRepository.findById(id).orElseThrow(() -> new RuntimeException("Course not found"));
         return mapToDto(course);
     }
+
+    @Override
+    public List<CourseDto> getCoursesByTutorId(Long tutorId) {
+        return courseRepository.findByTutorId(tutorId).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public CourseDto updateCourse(Long id, CourseDto courseDto) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+        
+        course.setTitle(courseDto.getTitle());
+        course.setDescription(courseDto.getDescription());
+        course.setPrice(courseDto.getPrice());
+        course.setLocationType(courseDto.getLocationType());
+        course.setLocation(courseDto.getLocation() != null && !courseDto.getLocation().isEmpty() ? courseDto.getLocation() : "Học Online");
+        course.setSchedule(courseDto.getSchedule() != null ? courseDto.getSchedule() : "TBD");
+        
+        Course updatedCourse = courseRepository.save(course);
+        return mapToDto(updatedCourse);
+    }
+
+    @Override
+    public void deleteCourse(Long id) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+        courseRepository.delete(course);
+    }
 }
