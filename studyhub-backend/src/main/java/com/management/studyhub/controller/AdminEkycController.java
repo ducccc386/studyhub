@@ -25,9 +25,38 @@ public class AdminEkycController {
     private final EkycApiService ekycApiService;
 
     @GetMapping("/pending")
-    public ResponseEntity<List<TutorProfile>> getPendingEkyc() {
-        List<TutorProfile> pendingProfiles = tutorProfileRepository.findAll().stream()
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<Map<String, Object>>> getPendingEkyc() {
+        List<Map<String, Object>> pendingProfiles = tutorProfileRepository.findAll().stream()
                 .filter(t -> t.getEkycStatus() == EkycStatus.PROCESSING)
+                .map(t -> {
+                    Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("id", t.getId());
+                    map.put("fullName", t.getFullName());
+                    map.put("avatarUrl", t.getAvatarUrl());
+                    if (t.getUser() != null) {
+                        map.put("user", Map.of("email", t.getUser().getEmail() != null ? t.getUser().getEmail() : ""));
+                    }
+                    if (t.getSubjects() != null) {
+                        map.put("subjects", t.getSubjects().stream().map(s -> Map.of("id", s.getId(), "name", s.getName())).toList());
+                    }
+                    map.put("createdAt", t.getCreatedAt());
+                    map.put("idCardFrontUrl", t.getIdCardFrontUrl());
+                    map.put("idCardBackUrl", t.getIdCardBackUrl());
+                    map.put("portraitUrl", t.getPortraitUrl());
+                    map.put("birthDate", t.getBirthDate());
+                    map.put("phoneNumber", t.getPhoneNumber());
+                    map.put("address", t.getAddress());
+                    map.put("similarityScore", t.getSimilarityScore());
+                    map.put("degreeImageUrl", t.getDegreeImageUrl());
+                    map.put("universityName", t.getUniversityName());
+                    map.put("major", t.getMajor());
+                    map.put("experienceYears", t.getExperienceYears());
+                    map.put("certificates", t.getCertificates());
+                    map.put("introduction", t.getIntroduction());
+                    map.put("price", t.getPrice());
+                    return map;
+                })
                 .toList();
         return ResponseEntity.ok(pendingProfiles);
     }
