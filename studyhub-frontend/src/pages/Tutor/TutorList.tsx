@@ -22,7 +22,7 @@ const TutorList: React.FC = () => {
   const [maxPrice, setMaxPrice] = useState<number>(1000000);
   const [rating, setRating] = useState<number | undefined>(undefined);
   const [method, setMethod] = useState<string>('ALL');
-  const [sortBy, setSortBy] = useState('popular');
+  const [sortBy, setSortBy] = useState('price_asc');
 
   useEffect(() => {
     const fetchSubjects = async () => {
