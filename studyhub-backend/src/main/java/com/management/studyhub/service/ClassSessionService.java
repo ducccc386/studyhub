@@ -15,6 +15,7 @@ import com.management.studyhub.repository.ClassSessionRepository;
 import com.management.studyhub.repository.JobPostingRepository;
 import com.management.studyhub.repository.ParentRepository;
 import com.management.studyhub.repository.SyllabusSessionRepository;
+import com.management.studyhub.repository.TransactionRepository;
 import com.management.studyhub.repository.TutorProfileRepository;
 import com.management.studyhub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class ClassSessionService {
     private final SyllabusSessionRepository syllabusSessionRepository;
     private final TutorProfileRepository tutorProfileRepository;
     private final UserRepository userRepository;
+    private final TransactionRepository transactionRepository;
 
     private Parent getOrCreateParent(Long userId) {
         return parentRepository.findByUserId(userId).orElseGet(() -> {
@@ -196,6 +198,34 @@ public class ClassSessionService {
             session.setStatus(ClassSessionStatus.CANCELLED);
         }
         return mapToDTO(classSessionRepository.save(session));
+    }
+
+    @Transactional
+    public ClassSessionDTO updatePrice(Long classSessionId, Double newPricePerSession) {
+        ClassSession session = classSessionRepository.findById(classSessionId)
+                .orElseThrow(() -> new RuntimeException("ClassSession not found: " + classSessionId));
+
+        if (session.getStatus() != ClassSessionStatus.TRIAL && session.getStatus() != ClassSessionStatus.PENDING_PAYMENT) {
+            throw new RuntimeException("Chỉ được đổi giá khi lớp học đang ở trạng thái học thử hoặc chờ thanh toán.");
+        }
+
+        if (newPricePerSession == null || newPricePerSession <= 0) {
+            throw new RuntimeException("Giá tiền không hợp lệ.");
+        }
+
+        session.setPricePerSession(newPricePerSession);
+        session.setPrice(newPricePerSession * 10);
+        classSessionRepository.save(session);
+
+        // Delete all PENDING transactions for this class so they are regenerated with the new price
+        List<com.management.studyhub.entity.Transaction> pendingTxs = 
+            transactionRepository.findByClassSessionId(classSessionId).stream()
+                .filter(t -> t.getStatus() == com.management.studyhub.entity.enums.TransactionStatus.PENDING)
+                .toList();
+        
+        transactionRepository.deleteAll(pendingTxs);
+
+        return mapToDTO(session);
     }
 
     /**

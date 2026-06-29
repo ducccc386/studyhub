@@ -113,6 +113,22 @@ public class ClassSessionController {
         }
     }
 
+    @PutMapping("/{id}/price")
+    public ResponseEntity<?> updatePrice(
+            @PathVariable Long id,
+            @RequestBody Map<String, Double> body) {
+        try {
+            Double newPricePerSession = body.get("pricePerSession");
+            if (newPricePerSession == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "pricePerSession is required"));
+            }
+            ClassSessionDTO updated = classSessionService.updatePrice(id, newPricePerSession);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/{id}/trial-decision")
     public ResponseEntity<?> trialDecision(@PathVariable Long id, @RequestBody Map<String, Boolean> payload) {
         try {

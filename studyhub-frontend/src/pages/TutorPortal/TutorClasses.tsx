@@ -62,6 +62,10 @@ const TutorClasses: React.FC = () => {
   const [classToCancel, setClassToCancel] = useState<number | null>(null);
   const [cancelReason, setCancelReason] = useState('');
 
+  const [priceModalVisible, setPriceModalVisible] = useState(false);
+  const [classToUpdatePrice, setClassToUpdatePrice] = useState<number | null>(null);
+  const [newPrice, setNewPrice] = useState<string>('');
+
   useEffect(() => {
     if (!tutorId) { setLoading(false); return; }
     apiFetch(`/class-sessions/tutor/${tutorId}`)
@@ -113,6 +117,38 @@ const TutorClasses: React.FC = () => {
       setCancelModalVisible(false);
       setClassToCancel(null);
       setCancelReason('');
+    } catch (err: any) {
+      toast.error('Lỗi: ' + err.message);
+    }
+  };
+
+  const handleUpdatePrice = async () => {
+    if (!classToUpdatePrice || !newPrice.trim()) {
+      toast.error('Vui lòng nhập giá mới');
+      return;
+    }
+    const priceNum = Number(newPrice);
+    if (isNaN(priceNum) || priceNum <= 0) {
+      toast.error('Giá mới phải lớn hơn 0');
+      return;
+    }
+
+    try {
+      const res = await apiFetch(`/class-sessions/${classToUpdatePrice}/price`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pricePerSession: priceNum }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Cập nhật thất bại');
+      }
+      const updated: ClassSessionDTO = await res.json();
+      setClasses(prev => prev.map(s => s.id === classToUpdatePrice ? updated : s));
+      toast.success('Cập nhật học phí thành công!');
+      setPriceModalVisible(false);
+      setClassToUpdatePrice(null);
+      setNewPrice('');
     } catch (err: any) {
       toast.error('Lỗi: ' + err.message);
     }
@@ -317,6 +353,18 @@ const TutorClasses: React.FC = () => {
                           Báo hủy lớp
                         </button>
                       )}
+                      {(cls.status === 'TRIAL' || cls.status === 'PENDING_PAYMENT') && (
+                        <button 
+                          onClick={() => {
+                            setClassToUpdatePrice(cls.id);
+                            setNewPrice(cls.pricePerSession?.toString() || '');
+                            setPriceModalVisible(true);
+                          }}
+                          className="text-left px-4 py-2 hover:bg-primary-container hover:text-primary rounded-lg text-sm flex items-center gap-2 text-primary transition-colors mt-1">
+                          <span className="material-symbols-outlined text-[18px]">edit_square</span>
+                          Đổi học phí
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -364,6 +412,52 @@ const TutorClasses: React.FC = () => {
                   className="flex-1 py-3 bg-error text-on-error rounded-xl hover:bg-error/90 font-label-md transition-colors"
                 >
                   Xác nhận hủy
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Price Modal */}
+      {priceModalVisible && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 animate-fade-in">
+          <div className="bg-surface w-full max-w-md rounded-2xl p-6 shadow-xl animate-slide-up">
+            <h3 className="font-headline-sm text-headline-sm text-on-surface mb-2">Điều chỉnh học phí</h3>
+            <p className="text-body-md text-on-surface-variant mb-6">
+              Bạn chỉ có thể đổi giá trước khi phụ huynh thanh toán cọc. 
+              Mã thanh toán của phụ huynh sẽ tự động được cập nhật theo giá mới này.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-label-md font-medium text-on-surface mb-1">Học phí 1 buổi (VNĐ) <span className="text-error">*</span></label>
+                <input 
+                  type="number" 
+                  required
+                  className="w-full px-4 py-3 border border-outline-variant rounded-lg focus:outline-none focus:border-primary bg-surface text-on-surface" 
+                  placeholder="Ví dụ: 150000" 
+                  value={newPrice} 
+                  onChange={e => setNewPrice(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setPriceModalVisible(false);
+                    setClassToUpdatePrice(null);
+                    setNewPrice('');
+                  }} 
+                  className="flex-1 py-3 border border-outline text-on-surface rounded-xl hover:bg-surface-variant font-label-md transition-colors"
+                >
+                  Hủy
+                </button>
+                <button 
+                  type="button" 
+                  onClick={handleUpdatePrice}
+                  className="flex-1 py-3 bg-primary text-on-primary rounded-xl hover:bg-primary/90 font-label-md transition-colors"
+                >
+                  Lưu thay đổi
                 </button>
               </div>
             </div>
