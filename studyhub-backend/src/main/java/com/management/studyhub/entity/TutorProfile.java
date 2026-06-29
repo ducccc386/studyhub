@@ -13,7 +13,16 @@ import java.util.Set;
 
 // TutorProfile.java
 @Entity
-@Table(name = "tutor_profiles") @Data
+@Table(
+    name = "tutor_profiles",
+    indexes = {
+        @Index(name = "idx_tutor_status", columnList = "status"),
+        @Index(name = "idx_tutor_deleted_status", columnList = "isDeleted, status"),
+        @Index(name = "idx_tutor_rating", columnList = "averageRating DESC"),
+        @Index(name = "idx_tutor_price", columnList = "price")
+    }
+)
+@Data
 public class TutorProfile {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,7 +36,7 @@ public class TutorProfile {
     private LocalDate birthDate;
     private String address;
     private String phoneNumber;
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "TEXT")
     private String avatarUrl;
     
     @Column(columnDefinition = "LONGTEXT")
@@ -89,5 +98,6 @@ public class TutorProfile {
         joinColumns = @JoinColumn(name = "tutor_profile_id"),
         inverseJoinColumns = @JoinColumn(name = "subject_id")
     )
+    @org.hibernate.annotations.BatchSize(size = 30)
     private Set<Subject> subjects;
 }

@@ -36,14 +36,13 @@ public class TutorService {
     public PageResponseDTO<TutorListDTO> searchTutors(
             String keyword, List<Integer> subjectIds, Double minPrice, Double maxPrice,
             Double minRating, String teachingMethod, String sortBy, int page, int size) {
-        
-        Sort sort = Sort.unsorted();
+
+        Sort sort;
         if ("price_asc".equalsIgnoreCase(sortBy)) {
             sort = Sort.by(Sort.Direction.ASC, "price");
         } else if ("rating".equalsIgnoreCase(sortBy)) {
             sort = Sort.by(Sort.Direction.DESC, "averageRating");
         } else {
-            // Default "popular" can be rating or totalReviews. Let's use totalReviews or averageRating
             sort = Sort.by(Sort.Direction.DESC, "totalReviews");
         }
 
@@ -51,10 +50,24 @@ public class TutorService {
         Specification<TutorProfile> spec = TutorSpecification.getTutorsByFilters(
                 keyword, subjectIds, minPrice, maxPrice, minRating, teachingMethod);
 
+        // Step 1: Paginate with only scalar fields - fast COUNT + SELECT
         Page<TutorProfile> tutorPage = tutorProfileRepository.findAll(spec, pageable);
 
+        // Step 2: Batch-fetch subjects + user in ONE query to avoid N+1 problem
+        List<Long> ids = tutorPage.getContent().stream()
+                .map(TutorProfile::getId)
+                .collect(Collectors.toList());
+
+        List<TutorProfile> tutorsWithSubjects = ids.isEmpty()
+                ? List.of()
+                : tutorProfileRepository.findAllWithSubjectsByIdIn(ids);
+
+        // Preserve original pagination order
+        Map<Long, TutorProfile> tutorMap = tutorsWithSubjects.stream()
+                .collect(Collectors.toMap(TutorProfile::getId, t -> t));
+
         List<TutorListDTO> dtoList = tutorPage.getContent().stream()
-                .map(this::mapToDTO)
+                .map(t -> mapToDTO(tutorMap.getOrDefault(t.getId(), t)))
                 .collect(Collectors.toList());
 
         return PageResponseDTO.<TutorListDTO>builder()
