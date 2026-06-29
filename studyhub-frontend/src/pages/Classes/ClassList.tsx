@@ -13,6 +13,11 @@ const ClassList: React.FC = () => {
   const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
   const [keyword, setKeyword] = useState<string>('');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+
+  // Pagination
+  const PAGE_SIZE = 4;
+  const [page, setPage] = useState(0);
 
   useEffect(() => {
     // Fetch subjects
@@ -41,10 +46,10 @@ const ClassList: React.FC = () => {
       queryParams.append('keyword', searchKeyword);
     }
     
+    setLoading(true);
     fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'}/courses?${queryParams.toString()}`)
       .then(res => res.json())
       .then(data => {
-        // Sort data manually for now since backend doesn't support sortBy query param
         let sortedData = [...data];
         if (sortBy === 'price_asc') {
            sortedData.sort((a, b) => {
@@ -61,12 +66,13 @@ const ClassList: React.FC = () => {
         } else if (sortBy === 'rating') {
            sortedData.sort((a, b) => parseFloat(b.rating || '0') - parseFloat(a.rating || '0'));
         } else if (sortBy === 'newest') {
-           // Database returns by ID asc, so reverse it to get newest first
            sortedData.reverse();
         }
         setClasses(sortedData);
+        setPage(0); // reset to first page on new data
       })
-      .catch(err => console.error('Failed to fetch courses:', err));
+      .catch(err => console.error('Failed to fetch courses:', err))
+      .finally(() => setLoading(false));
   }, [selectedSubjectIds, maxPrice, teachingMethod, selectedGrades, searchKeyword, sortBy]);
 
   const toggleSubject = (id: number) => {
@@ -88,7 +94,12 @@ const ClassList: React.FC = () => {
       setSelectedGrades([]);
       setSearchKeyword('');
       setKeyword('');
+      setPage(0);
   };
+
+  // Derived pagination values
+  const totalPages = Math.ceil(classes.length / PAGE_SIZE);
+  const pagedClasses = classes.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
   return (
     <div className="bg-[#f7f9ff] text-on-surface min-h-screen">
@@ -264,8 +275,18 @@ const ClassList: React.FC = () => {
             </div>
           </div>
 
+          {loading ? (
+            <div className="flex justify-center py-20">
+              <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : classes.length === 0 ? (
+            <div className="text-center py-20 bg-white rounded-2xl border border-slate-100">
+              <span className="material-symbols-outlined text-6xl text-slate-200 mb-4">search_off</span>
+              <p className="text-slate-500">Không tìm thấy lớp học nào phù hợp với bộ lọc.</p>
+            </div>
+          ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {classes.map((cls) => (
+            {pagedClasses.map((cls) => (
               <div
                 key={cls.id}
                 className="bg-white border border-slate-100 rounded-2xl overflow-hidden hover:shadow-[0_12px_40px_rgba(0,61,155,0.12)] hover:-translate-y-1 transition-all duration-300 group flex flex-col shadow-sm"
@@ -322,13 +343,71 @@ const ClassList: React.FC = () => {
               </div>
             ))}
           </div>
+          )}
 
           {/* Pagination */}
-          {/* Pagination is hidden as we fetch all for now
-          <div className="mt-12 flex justify-center items-center gap-2">
-           ...
-          </div>
-          */}
+          {totalPages > 0 && (
+            <div className="mt-10 flex flex-col items-center gap-4">
+              {/* Page info */}
+              <p className="text-xs text-slate-400 font-medium">
+                Trang <span className="font-bold text-slate-600">{page + 1}</span> / <span className="font-bold text-slate-600">{totalPages}</span>
+                <span className="ml-2 text-slate-300">·</span>
+                <span className="ml-2">Tổng <span className="font-bold text-primary">{classes.length}</span> lớp học</span>
+              </p>
+
+              {/* Page buttons */}
+              <div className="flex justify-center items-center gap-1.5">
+                {/* Prev */}
+                <button
+                  onClick={() => { setPage(p => Math.max(0, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  disabled={page === 0}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 hover:border-primary hover:text-primary transition-colors disabled:opacity-30 shadow-sm"
+                >
+                  <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                </button>
+
+                {/* Smart page numbers */}
+                {(() => {
+                  const pages: (number | '...')[] = [];
+                  if (totalPages <= 7) {
+                    for (let i = 0; i < totalPages; i++) pages.push(i);
+                  } else {
+                    pages.push(0);
+                    if (page > 3) pages.push('...');
+                    for (let i = Math.max(1, page - 2); i <= Math.min(totalPages - 2, page + 2); i++) pages.push(i);
+                    if (page < totalPages - 4) pages.push('...');
+                    pages.push(totalPages - 1);
+                  }
+                  return pages.map((p, idx) =>
+                    p === '...' ? (
+                      <span key={`ellipsis-${idx}`} className="w-9 h-9 flex items-center justify-center text-slate-400 text-sm font-bold">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => { setPage(p as number); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        className={`w-9 h-9 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${
+                          p === page
+                            ? 'bg-primary text-white shadow-md shadow-primary/30 scale-105'
+                            : 'border border-slate-200 bg-white text-slate-500 hover:border-primary hover:text-primary shadow-sm'
+                        }`}
+                      >
+                        {(p as number) + 1}
+                      </button>
+                    )
+                  );
+                })()}
+
+                {/* Next */}
+                <button
+                  onClick={() => { setPage(p => Math.min(totalPages - 1, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  disabled={page >= totalPages - 1}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 hover:border-primary hover:text-primary transition-colors disabled:opacity-30 shadow-sm"
+                >
+                  <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
