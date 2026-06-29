@@ -53,13 +53,19 @@ public class PaymentService {
             transaction.setClassSession(classSession);
             transaction.setTransactionCode(transactionCode);
             
-            Double amount = classSession.getPrice();
-            if (amount == null || amount <= 0) {
-                // Fallback nếu price null: tính theo số buổi (ví dụ mặc định chốt 8 buổi học thử xong)
+            // Tính tổng giá trị khoá học
+            Double totalAmount = classSession.getPrice();
+            if (totalAmount == null || totalAmount <= 0) {
+                // Fallback: 8 buổi học
                 Double pricePerSession = classSession.getPricePerSession() != null ? classSession.getPricePerSession() : 0.0;
-                amount = pricePerSession * 8.0; 
+                totalAmount = pricePerSession * 8.0;
+                // Lưu lại tổng giá vào session để đồng nhất
+                classSession.setPrice(totalAmount);
+                classSessionRepository.save(classSession);
             }
-            transaction.setAmount(amount);
+            // Cọc = 25% tổng giá trị khoá học
+            double depositAmount = totalAmount * 0.25;
+            transaction.setAmount(depositAmount);
             transaction.setStatus(TransactionStatus.PENDING);
             transactionRepository.save(transaction);
         }
