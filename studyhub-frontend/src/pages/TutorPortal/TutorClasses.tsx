@@ -311,16 +311,27 @@ const TutorClasses: React.FC = () => {
 
                 {/* Actions */}
                 <div className="mt-auto pt-4 border-t border-outline-variant flex gap-3">
-                  <Link 
-                    to={`/tutor/classes/${cls.id}/workspace`}
-                    className={`flex-1 text-sm font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
-                    cls.status === 'CONFIRMED'
-                      ? 'bg-primary text-on-primary hover:bg-primary/90'
-                      : 'border border-primary text-primary hover:bg-primary/10'
-                  }`}>
-                    <span className="material-symbols-outlined text-[18px]">play_lesson</span>
-                    Vào không gian lớp
-                  </Link>
+                  {cls.status === 'PENDING_PAYMENT' ? (
+                    <button 
+                      disabled
+                      className="flex-1 text-sm font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 bg-outline-variant/30 text-on-surface-variant cursor-not-allowed border border-outline-variant/50"
+                      title="Chờ phụ huynh thanh toán cọc"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">lock</span>
+                      Vào không gian lớp
+                    </button>
+                  ) : (
+                    <Link 
+                      to={`/tutor/classes/${cls.id}/workspace`}
+                      className={`flex-1 text-sm font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
+                      cls.status === 'CONFIRMED'
+                        ? 'bg-primary text-on-primary hover:bg-primary/90'
+                        : 'border border-primary text-primary hover:bg-primary/10'
+                    }`}>
+                      <span className="material-symbols-outlined text-[18px]">play_lesson</span>
+                      Vào không gian lớp
+                    </Link>
+                  )}
                   
                   {cls.status === 'CONFIRMED' && (
                     <button 

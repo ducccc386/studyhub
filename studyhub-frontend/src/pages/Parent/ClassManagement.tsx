@@ -333,13 +333,24 @@ const ClassManagement: React.FC = () => {
 
                   {/* Actions */}
                   <div className="flex md:flex-col gap-2 shrink-0 justify-start md:items-end">
-                    <Link
-                      to={`/parent/classes/${session.id}/workspace`}
-                      className="px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-sm font-bold hover:bg-primary/20 transition-colors whitespace-nowrap flex items-center justify-center gap-1 mb-2"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">meeting_room</span>
-                      Không gian Lớp học
-                    </Link>
+                    {session.status === 'PENDING_PAYMENT' ? (
+                      <button
+                        disabled
+                        className="px-4 py-2 bg-outline-variant/30 text-on-surface-variant border border-outline-variant/50 rounded-lg text-sm font-bold cursor-not-allowed whitespace-nowrap flex items-center justify-center gap-1 mb-2"
+                        title="Vui lòng thanh toán cọc để vào không gian lớp"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">lock</span>
+                        Không gian Lớp học
+                      </button>
+                    ) : (
+                      <Link
+                        to={`/parent/classes/${session.id}/workspace`}
+                        className="px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-sm font-bold hover:bg-primary/20 transition-colors whitespace-nowrap flex items-center justify-center gap-1 mb-2"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">meeting_room</span>
+                        Không gian Lớp học
+                      </Link>
+                    )}
 
                     {session.status === 'TRIAL' && (
                       <>
