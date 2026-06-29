@@ -154,8 +154,8 @@ const TutorClasses: React.FC = () => {
     }
   };
 
-  const activeClasses    = classes.filter(c => ['TRIAL', 'PENDING_PAYMENT', 'CONFIRMED', 'PENDING_FINAL_PAYMENT', 'PAID_IN_FULL', 'PENDING_SETTLEMENT'].includes(c.status));
-  const completedClasses = classes.filter(c => ['COMPLETED', 'DISBURSED'].includes(c.status));
+  const activeClasses    = classes.filter(c => ['TRIAL', 'PENDING_PAYMENT', 'CONFIRMED', 'PENDING_FINAL_PAYMENT'].includes(c.status));
+  const completedClasses = classes.filter(c => ['PAID_IN_FULL', 'PENDING_SETTLEMENT', 'COMPLETED', 'DISBURSED'].includes(c.status));
   const cancelledClasses = classes.filter(c => c.status === 'CANCELLED');
 
   const displayClasses = (

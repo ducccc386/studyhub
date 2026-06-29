@@ -137,8 +137,8 @@ const ClassManagement: React.FC = () => {
     }
   };
 
-  const activeSessions    = sessions.filter(s => ['TRIAL', 'PENDING_PAYMENT', 'CONFIRMED', 'PENDING_FINAL_PAYMENT', 'PAID_IN_FULL', 'PENDING_SETTLEMENT'].includes(s.status));
-  const completedSessions = sessions.filter(s => ['COMPLETED', 'DISBURSED'].includes(s.status));
+  const activeSessions    = sessions.filter(s => ['TRIAL', 'PENDING_PAYMENT', 'CONFIRMED', 'PENDING_FINAL_PAYMENT'].includes(s.status));
+  const completedSessions = sessions.filter(s => ['PAID_IN_FULL', 'PENDING_SETTLEMENT', 'COMPLETED', 'DISBURSED'].includes(s.status));
   const cancelledSessions = sessions.filter(s => ['CANCELLED', 'PENDING_CANCELLATION'].includes(s.status));
 
   const displaySessions =
