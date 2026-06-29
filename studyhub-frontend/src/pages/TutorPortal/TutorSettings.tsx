@@ -39,6 +39,7 @@ const TutorSettings: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [subjectsList, setSubjectsList] = useState<Subject[]>([]);
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<number[]>([]);
+  const [currentStep, setCurrentStep] = useState(1);
 
   const isReadOnly = profileStatus === 'PROCESSING' || (profileStatus === 'SUCCESS' && !isEditing);
 
@@ -375,7 +376,7 @@ const TutorSettings: React.FC = () => {
                 )}
                 {isParsingCv ? 'Đang đọc CV...' : 'Tự động điền CV'}
               </button>
-              <button className="px-4 py-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-on-primary-fixed-variant transition-colors shadow-sm" onClick={submitEkyc} disabled={isSubmitting}>
+              <button className="hidden md:flex px-4 py-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-on-primary-fixed-variant transition-colors shadow-sm" onClick={submitEkyc} disabled={isSubmitting}>
                 {isSubmitting ? 'Đang gửi...' : 'Gửi xét duyệt'}
               </button>
             </>
@@ -383,9 +384,30 @@ const TutorSettings: React.FC = () => {
         </div>
       </header>
 
+      {/* Stepper UI */}
+      <div className="max-w-[1440px] mx-auto px-4 md:px-8 mb-8 animate-fade-in">
+        <div className="flex items-center justify-between relative max-w-2xl mx-auto">
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-surface-container-high rounded-full -z-10"></div>
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full -z-10 transition-all duration-500" style={{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '50%' : '100%' }}></div>
+          
+          {[1, 2, 3].map((step) => (
+            <div key={step} className="flex flex-col items-center gap-2 cursor-pointer" onClick={() => setCurrentStep(step)}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${currentStep === step ? 'bg-primary text-on-primary shadow-lg ring-4 ring-primary/20 scale-110' : currentStep > step ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
+                {currentStep > step ? <span className="material-symbols-outlined text-[20px]">check</span> : step}
+              </div>
+              <span className={`text-xs font-semibold ${currentStep >= step ? 'text-primary' : 'text-on-surface-variant'}`}>
+                {step === 1 ? 'Cơ bản' : step === 2 ? 'Xác thực' : 'Chuyên môn'}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Bento Grid Layout */}
       <div className="max-w-[1440px] mx-auto pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+          {currentStep === 1 && (
+          <React.Fragment>
           {/* Section 1: Ảnh đại diện */}
           <section className="lg:col-span-12 glass border border-white/20 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 animate-slide-up stagger-1 hover:-translate-y-1">
             <div className="flex items-center gap-3 mb-6 border-b border-outline-variant pb-4">
@@ -475,6 +497,11 @@ const TutorSettings: React.FC = () => {
             </div>
           </section>
 
+          </React.Fragment>
+          )}
+
+          {currentStep === 2 && (
+          <React.Fragment>
           {/* Section 3: eKYC */}
           <section className="lg:col-span-12 glass border border-white/20 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 mt-2 animate-slide-up stagger-3">
             <div className="flex items-center gap-3 mb-6 border-b border-outline-variant pb-4">
@@ -618,6 +645,11 @@ const TutorSettings: React.FC = () => {
 
           </section>
 
+          </React.Fragment>
+          )}
+
+          {currentStep === 3 && (
+          <React.Fragment>
           {/* Section 4 & 5 Container */}
           <div className="lg:col-span-12 grid grid-cols-1 lg:grid-cols-2 gap-gutter mt-2 animate-slide-up stagger-4">
             {/* Section 4: Học vấn */}
@@ -811,6 +843,30 @@ const TutorSettings: React.FC = () => {
               )}
             </section>
           </div>
+          </React.Fragment>
+          )}
+        </div>
+
+        {/* Navigation Bottom Bar (Desktop) */}
+        <div className="hidden md:flex justify-between items-center mt-8 pt-6 border-t border-outline-variant max-w-[1440px] mx-auto px-4 md:px-8">
+          {currentStep > 1 ? (
+            <button onClick={() => setCurrentStep(prev => prev - 1)} className="px-6 py-2.5 bg-surface-container-highest text-on-surface hover:bg-surface-container transition-colors rounded-xl font-bold flex items-center gap-2">
+              <span className="material-symbols-outlined">arrow_back</span> Quay lại
+            </button>
+          ) : <div></div>}
+
+          {currentStep < 3 ? (
+            <button onClick={() => setCurrentStep(prev => prev + 1)} className="px-6 py-2.5 bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors rounded-xl font-bold flex items-center gap-2 shadow-md">
+              Tiếp tục <span className="material-symbols-outlined">arrow_forward</span>
+            </button>
+          ) : (
+            !isReadOnly && (
+              <button className="px-8 py-2.5 bg-primary text-on-primary font-bold rounded-xl hover:bg-on-primary-fixed-variant transition-colors shadow-md flex items-center gap-2" onClick={submitEkyc} disabled={isSubmitting}>
+                {isSubmitting ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span> : <span className="material-symbols-outlined">send</span>} 
+                {isSubmitting ? 'Đang gửi...' : 'Gửi xét duyệt'}
+              </button>
+            )
+          )}
         </div>
 
         {/* Bottom Action Bar (Mobile floating) */}

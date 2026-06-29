@@ -38,8 +38,7 @@ public class BillingController {
                 double pricePer = s.getPricePerSession() != null ? s.getPricePerSession() : 0;
                 int sessionsCount = (s.getProgress() != null && s.getProgress() > 0) ? s.getProgress() : 10;
                 double revenue = s.getPrice() != null ? s.getPrice() : pricePer * sessionsCount;
-                
-                double fee = revenue * 0.15; // 15% platform fee
+                double fee = revenue * 0.25; // 25% platform fee
                 double tutorEarning = revenue - fee;
                 
                 String sStatus = s.getStatus() != null ? s.getStatus().name() : "";
@@ -56,7 +55,7 @@ public class BillingController {
                         "month", java.time.YearMonth.now().toString(),
                         "totalSessions", sessionsCount,
                         "totalRevenue", revenue,
-                        "platformFeePercent", 15,
+                        "platformFeePercent", 25,
                         "platformFeeAmount", fee,
                         "tutorEarnings", tutorEarning,
                         "status", invStatus,

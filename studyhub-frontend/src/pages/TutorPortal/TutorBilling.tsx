@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../utils/api';
 
@@ -48,7 +48,7 @@ const TutorBilling: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 animate-slide-up">
         <div>
           <h2 className="font-bold text-3xl text-on-surface">Công nợ &amp; Thanh toán</h2>
-          <p className="text-on-surface-variant mt-1">Quản lý hóa đơn phí nền tảng (10%) hàng tháng.</p>
+          <p className="text-on-surface-variant mt-1">Quản lý hóa đơn phí nền tảng (25%) hàng tháng.</p>
         </div>
         {totalDebt > 0 && (
           <div className="glass bg-primary-container text-on-primary-container px-4 py-3 rounded-xl flex items-center gap-4 shadow-sm border border-primary/20 hover:-translate-y-1 transition-transform">
@@ -68,7 +68,7 @@ const TutorBilling: React.FC = () => {
         <span className="material-symbols-outlined text-orange-500 shrink-0">warning</span>
         <div>
           <h4 className="font-bold text-sm mb-1">Lưu ý thanh toán phí</h4>
-          <p className="text-sm">Theo chính sách của StudyHub, phí hoa hồng nền tảng (10%) sẽ được tính dựa trên số ca thực dạy đã check-in. Vui lòng thanh toán trước ngày mùng 5 hàng tháng để tránh bị khóa tài khoản.</p>
+          <p className="text-sm">Theo chính sách của StudyHub, phí hoa hồng nền tảng (25%) sẽ được tính dựa trên số ca thực dạy đã check-in. Vui lòng thanh toán trước ngày mùng 5 hàng tháng để tránh bị khóa tài khoản.</p>
         </div>
       </div>
 

@@ -102,11 +102,11 @@ public class PaymentService {
         }
         classSessionRepository.save(classSession);
 
-        // Tạo CommissionRecord (Hoa hồng 20%)
+        // Tạo CommissionRecord (Hoa hồng 25%)
         com.management.studyhub.entity.CommissionRecord commission = new com.management.studyhub.entity.CommissionRecord();
         commission.setTransaction(transaction);
         commission.setTotalAmount(transaction.getAmount());
-        double platformFee = transaction.getAmount() * 0.20;
+        double platformFee = transaction.getAmount() * 0.25;
         commission.setPlatformFee(platformFee);
         commission.setTutorPayout(transaction.getAmount() - platformFee);
         commissionRecordRepository.save(commission);
@@ -154,11 +154,11 @@ public class PaymentService {
                                     }
                                     classSessionRepository.save(classSession);
                                     
-                                    // Tạo CommissionRecord (Hoa hồng 20%)
+                                    // Tạo CommissionRecord (Hoa hồng 25%)
                                     com.management.studyhub.entity.CommissionRecord commission = new com.management.studyhub.entity.CommissionRecord();
                                     commission.setTransaction(t);
                                     commission.setTotalAmount(t.getAmount());
-                                    double platformFee = t.getAmount() * 0.20;
+                                    double platformFee = t.getAmount() * 0.25;
                                     commission.setPlatformFee(platformFee);
                                     commission.setTutorPayout(t.getAmount() - platformFee);
                                     commissionRecordRepository.save(commission);
