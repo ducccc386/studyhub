@@ -99,11 +99,11 @@ const TutorBookings: React.FC = () => {
               <div className="space-y-3 mb-6 flex-1 text-sm text-on-surface">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px] text-primary">school</span>
-                  <span className="font-semibold">{booking.subject}</span>
+                  <span className="font-semibold">{booking.subject || 'Chưa xác định'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px] text-primary">calendar_month</span>
-                  <span>{booking.schedule}</span>
+                  <span>{booking.schedule || 'TBD (Thỏa thuận)'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px] text-primary">payments</span>

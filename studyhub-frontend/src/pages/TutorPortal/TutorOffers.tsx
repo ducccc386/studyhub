@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../utils/api';
@@ -132,11 +132,11 @@ const TutorOffers: React.FC = () => {
                 {/* Class Details & Actions */}
                 <div className="w-full md:w-[320px] shrink-0 border-t md:border-t-0 md:border-l border-outline-variant pt-4 md:pt-0 md:pl-6 space-y-4 flex flex-col justify-between">
                   <div>
-                    <h5 className="font-bold text-on-surface text-lg mb-3">{offer.subject || 'Môn học'}</h5>
+                    <h5 className="font-bold text-on-surface text-lg mb-3">{offer.subject || 'Chưa xác định môn học'}</h5>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm text-on-surface-variant">
                         <span className="material-symbols-outlined text-[18px]">schedule</span>
-                        <span>{offer.schedule}</span>
+                        <span>{offer.schedule || 'TBD (Thỏa thuận)'}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-on-surface-variant">
                         <span className="material-symbols-outlined text-[18px]">payments</span>

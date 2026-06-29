@@ -112,7 +112,7 @@ const TutorDetail: React.FC = () => {
   }
 
   const experienceLabel = () => {
-    if (!tutor.experienceYears) return 'Chưa có thông tin';
+    if (tutor.experienceYears === null || tutor.experienceYears === undefined) return 'Chưa có thông tin';
     if (tutor.experienceYears === 0) return 'Dưới 1 năm';
     if (tutor.experienceYears <= 3) return '1 - 3 năm';
     return 'Trên 3 năm';
@@ -335,7 +335,7 @@ const TutorDetail: React.FC = () => {
                 <p className="text-on-surface-variant text-label-md font-label-md mb-1">Học phí</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-headline-md font-headline-md text-primary">
-                    {tutor.price ? `${tutor.price.toLocaleString('vi-VN')}đ/ca` : 'Thỏa thuận'}
+                    {tutor.price ? `${Math.round(tutor.price).toLocaleString('vi-VN')}đ/ca` : 'Thỏa thuận'}
                   </span>
                 </div>
               </div>

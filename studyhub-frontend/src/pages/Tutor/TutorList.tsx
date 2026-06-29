@@ -301,7 +301,7 @@ const TutorList: React.FC = () => {
 
                     <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                       <div>
-                        <span className="text-lg font-extrabold text-primary">{tutor.price ? tutor.price.toLocaleString() : 'Thỏa thuận'}</span>
+                        <span className="text-lg font-extrabold text-primary">{tutor.price ? Math.round(tutor.price).toLocaleString('vi-VN') : 'Thỏa thuận'}</span>
                         <span className="text-xs text-slate-400 font-medium">{tutor.price ? 'đ/ca' : ''}</span>
                       </div>
                       <Link

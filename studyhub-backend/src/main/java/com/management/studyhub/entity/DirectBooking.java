@@ -24,6 +24,9 @@ public class DirectBooking {
     private String subject;
     private String schedule;
     
+    @Column(name = "job_posting_id")
+    private Long jobPostingId; // ID bài đăng liên kết (nếu mời qua bài đăng)
+    
     @Column(name = "learning_mode")
     private String learningMode;
     

@@ -15,6 +15,7 @@ public class DirectBookingDTO {
     private String tutorName;
     private String tutorAvatarUrl;
     
+    private Long jobPostingId; // ID bài đăng liên kết (nếu có)
     private String subject;
     private String schedule;
     private String learningMode;
