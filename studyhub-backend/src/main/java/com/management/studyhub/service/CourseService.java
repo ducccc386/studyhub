@@ -14,4 +14,9 @@ public interface CourseService {
     CourseDto approveCourse(Long id);
     CourseDto rejectCourse(Long id);
     CourseDto getCourseById(Long id);
+
+    // Tutor Post Management
+    List<CourseDto> getCoursesByTutorId(Long tutorId);
+    CourseDto updateCourse(Long id, CourseDto courseDto);
+    void deleteCourse(Long id);
 }

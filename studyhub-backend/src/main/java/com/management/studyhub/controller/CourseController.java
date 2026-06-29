@@ -65,4 +65,21 @@ public class CourseController {
     public ResponseEntity<CourseDto> rejectCourse(@PathVariable Long id) {
         return ResponseEntity.ok(courseService.rejectCourse(id));
     }
+
+    // --- Tutor Post Management API ---
+    @GetMapping("/tutor/{tutorId}")
+    public ResponseEntity<List<CourseDto>> getCoursesByTutorId(@PathVariable Long tutorId) {
+        return ResponseEntity.ok(courseService.getCoursesByTutorId(tutorId));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CourseDto> updateCourse(@PathVariable Long id, @RequestBody CourseDto courseDto) {
+        return ResponseEntity.ok(courseService.updateCourse(id, courseDto));
+    }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
+        courseService.deleteCourse(id);
+        return ResponseEntity.noContent().build();
+    }
 }

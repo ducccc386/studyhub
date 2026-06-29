@@ -17,4 +17,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     @Query("SELECT c FROM Course c LEFT JOIN c.tutor t LEFT JOIN t.user u WHERE (u.status IS NULL OR u.status = 'ACTIVE')")
     List<Course> findAllActiveCourses();
+
+    List<Course> findByTutorId(Long tutorId);
 }

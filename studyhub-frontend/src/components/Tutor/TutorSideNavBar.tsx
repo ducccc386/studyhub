@@ -137,9 +137,9 @@ const TutorSideNavBar: React.FC = () => {
 
       {/* ── Bottom: Đăng bài PR + Settings + Logout ── */}
       <div className="px-3 pb-4 pt-3 border-t border-slate-100 space-y-1.5">
-        {/* CTA: Đăng bài PR — nổi bật hơn nav item */}
+        {/* CTA: Quản lý bài đăng (PR) */}
         <NavLink
-          to="/tutor/create-post"
+          to="/tutor/posts"
           className={({ isActive }) =>
             `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
               isActive
@@ -156,7 +156,7 @@ const TutorSideNavBar: React.FC = () => {
               >
                 post_add
               </span>
-              Đăng bài PR của bạn
+              Quản lý Bài PR
             </>
           )}
         </NavLink>

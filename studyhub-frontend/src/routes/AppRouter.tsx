@@ -41,6 +41,7 @@ const TutorSchedule = lazy(() => import('../pages/TutorPortal/TutorSchedule'));
 const TutorBookings = lazy(() => import('../pages/TutorPortal/TutorBookings'));
 const TutorReviews = lazy(() => import('../pages/TutorPortal/TutorReviews'));
 const TutorSettings = lazy(() => import('../pages/TutorPortal/TutorSettings'));
+const TutorPostManagement = lazy(() => import('../pages/TutorPortal/TutorPostManagement'));
 
 const ClassWorkspace = lazy(() => import('../pages/Shared/ClassWorkspace'));
 
@@ -103,6 +104,7 @@ const AppRouter: React.FC = () => {
         <Route path="dashboard" element={<TutorDashboard />} />
         <Route path="search-classes" element={<TutorSearchClasses />} />
         <Route path="apply-class/:postId" element={<TutorApplyClass />} />
+        <Route path="posts" element={<TutorPostManagement />} />
         <Route path="create-post" element={<TutorCreatePost />} />
         <Route path="classes" element={<TutorClasses />} />
         <Route path="classes/:id/workspace" element={<ClassWorkspace />} />
