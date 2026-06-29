@@ -10,6 +10,9 @@ import java.util.List;
 public interface LessonLogRepository extends JpaRepository<LessonLog, Long> {
     List<LessonLog> findByClassSessionIdOrderByScheduledDateDesc(Long classSessionId);
 
+    @Query("SELECT COUNT(l) FROM LessonLog l WHERE l.classSession.id = :classSessionId AND l.parentApprovalStatus = :status")
+    long countByClassSessionIdAndParentApprovalStatus(@org.springframework.data.repository.query.Param("classSessionId") Long classSessionId, @org.springframework.data.repository.query.Param("status") ParentApprovalStatus status);
+
     // Tìm tất cả lesson logs PENDING theo userId của parent
     @Query("SELECT l FROM LessonLog l WHERE l.classSession.parent.user.id = :userId AND l.parentApprovalStatus = :status ORDER BY l.scheduledDate DESC")
     List<LessonLog> findByParentUserIdAndApprovalStatus(Long userId, ParentApprovalStatus status);

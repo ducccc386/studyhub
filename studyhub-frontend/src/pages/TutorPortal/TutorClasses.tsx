@@ -31,6 +31,9 @@ const STATUS_LABEL: Record<string, string> = {
   TRIAL:           'Chờ học thử',
   PENDING_PAYMENT: 'Chờ PH thanh toán',
   CONFIRMED:       'Đang dạy',
+  PENDING_FINAL_PAYMENT: 'Chờ thanh toán nốt',
+  PAID_IN_FULL:    'Đã đóng 100%',
+  PENDING_SETTLEMENT: 'Chờ quyết toán',
   COMPLETED:       'Hoàn thành',
   CANCELLED:       'Đã hủy',
   DISBURSED:       'Đã giải ngân',
@@ -40,6 +43,9 @@ const STATUS_STYLE: Record<string, string> = {
   TRIAL:           'bg-amber-100 text-amber-700',
   PENDING_PAYMENT: 'bg-orange-100 text-orange-700',
   CONFIRMED:       'bg-primary-container text-on-primary-container',
+  PENDING_FINAL_PAYMENT: 'bg-teal-100 text-teal-700',
+  PAID_IN_FULL:    'bg-cyan-100 text-cyan-700',
+  PENDING_SETTLEMENT: 'bg-indigo-100 text-indigo-700',
   COMPLETED:       'bg-surface-container-highest text-on-surface',
   CANCELLED:       'bg-error-container text-error',
   DISBURSED:       'bg-purple-100 text-purple-700',
@@ -112,7 +118,7 @@ const TutorClasses: React.FC = () => {
     }
   };
 
-  const activeClasses    = classes.filter(c => ['TRIAL', 'PENDING_PAYMENT', 'CONFIRMED'].includes(c.status));
+  const activeClasses    = classes.filter(c => ['TRIAL', 'PENDING_PAYMENT', 'CONFIRMED', 'PENDING_FINAL_PAYMENT', 'PAID_IN_FULL', 'PENDING_SETTLEMENT'].includes(c.status));
   const completedClasses = classes.filter(c => ['COMPLETED', 'DISBURSED'].includes(c.status));
   const cancelledClasses = classes.filter(c => c.status === 'CANCELLED');
 

@@ -3,5 +3,7 @@ package com.management.studyhub.entity.enums;
 public enum TransactionType {
     DEPOSIT,
     FINAL_PAYMENT,
-    PAYOUT
+    PAYOUT,
+    REFUND,
+    EXTRA_PAYMENT
 }

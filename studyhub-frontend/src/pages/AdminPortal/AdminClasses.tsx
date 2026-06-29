@@ -39,6 +39,10 @@ const AdminClasses: React.FC = () => {
     if (s === 'TRIAL') return { text: 'Đang học thử', cls: 'bg-amber-100 text-amber-800 border-amber-200' };
     if (s === 'CONFIRMED') return { text: 'Chính thức', cls: 'bg-green-100 text-green-800 border-green-200' };
     if (s === 'PENDING_PAYMENT') return { text: 'Chờ thanh toán', cls: 'bg-blue-100 text-blue-800 border-blue-200' };
+    if (s === 'PENDING_FINAL_PAYMENT') return { text: 'Chờ thanh toán nốt', cls: 'bg-teal-100 text-teal-800 border-teal-200' };
+    if (s === 'PAID_IN_FULL') return { text: 'Đã đóng 100%', cls: 'bg-cyan-100 text-cyan-800 border-cyan-200' };
+    if (s === 'PENDING_SETTLEMENT') return { text: 'Chờ quyết toán', cls: 'bg-indigo-100 text-indigo-800 border-indigo-200' };
+    if (s === 'COMPLETED') return { text: 'Hoàn thành', cls: 'bg-slate-200 text-slate-800 border-slate-300' };
     if (s === 'PENDING_CANCELLATION') return { text: 'Chờ duyệt hủy', cls: 'bg-red-100 text-red-800 border-red-200' };
     if (s === 'CANCELLED') return { text: 'Đã hủy', cls: 'bg-slate-100 text-slate-600 border-slate-200' };
     return { text: s, cls: 'bg-slate-100 text-slate-600 border-slate-200' };
@@ -166,6 +170,31 @@ const AdminClasses: React.FC = () => {
                           >
                             <span className="material-symbols-outlined text-[15px]">check_circle</span>
                             Duyệt Hủy
+                          </button>
+                        )}
+                        {cls.status === 'PAID_IN_FULL' && (
+                          <button
+                            onClick={async () => {
+                              if (window.confirm('Thực hiện chốt số buổi thực tế đã dạy dựa trên các Báo cáo được Phụ huynh xác nhận? (Nếu thiếu sẽ hoàn tiền, nếu thừa sẽ thu thêm)')) {
+                                try {
+                                  const res = await apiFetch(`/transactions/settle/${cls.id}`, { method: 'POST' });
+                                  const data = await res.json();
+                                  if (res.ok) {
+                                    alert(data.message || 'Yêu cầu thanh toán bổ sung đã được tạo.');
+                                    loadClasses();
+                                  } else {
+                                    alert('Lỗi: ' + (data.error || 'Không thể quyết toán'));
+                                  }
+                                } catch (e) {
+                                  console.error(e);
+                                  alert('Có lỗi xảy ra khi quyết toán');
+                                }
+                              }
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+                          >
+                            <span className="material-symbols-outlined text-[15px]">calculate</span>
+                            Quyết toán
                           </button>
                         )}
                       </td>

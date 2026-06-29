@@ -102,6 +102,12 @@ const AdminTransactionHistory: React.FC = () => {
                       {t.type === 'PAYOUT' && (
                         <span className="ml-2 px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] rounded font-bold uppercase tracking-wider">Giải ngân</span>
                       )}
+                      {t.type === 'REFUND' && (
+                        <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] rounded font-bold uppercase tracking-wider">Hoàn tiền</span>
+                      )}
+                      {t.type === 'EXTRA_PAYMENT' && (
+                        <span className="ml-2 px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] rounded font-bold uppercase tracking-wider">Thu thêm</span>
+                      )}
                     </td>
                     <td className="py-4 px-6 font-body-sm text-on-surface font-medium">
                       {t.type === 'PAYOUT' ? (
@@ -111,8 +117,8 @@ const AdminTransactionHistory: React.FC = () => {
                       )}
                     </td>
                     <td className="py-4 px-6 font-body-sm text-on-surface-variant">{t.className || `Lớp #${t.classId}`}</td>
-                    <td className={`py-4 px-6 font-body-sm font-bold ${t.type === 'PAYOUT' ? 'text-secondary' : 'text-primary'}`}>
-                      {t.type === 'PAYOUT' ? '-' : '+'}{t.amount ? t.amount.toLocaleString('vi-VN') + ' đ' : '0 đ'}
+                    <td className={`py-4 px-6 font-body-sm font-bold ${(t.type === 'PAYOUT' || t.type === 'REFUND') ? 'text-secondary' : 'text-primary'}`}>
+                      {(t.type === 'PAYOUT' || t.type === 'REFUND') ? '-' : '+'}{t.amount ? t.amount.toLocaleString('vi-VN') + ' đ' : '0 đ'}
                     </td>
                     <td className="py-4 px-6 font-body-sm text-on-surface-variant">
                       {t.createdAt ? new Date(t.createdAt).toLocaleString('vi-VN') : 'N/A'}

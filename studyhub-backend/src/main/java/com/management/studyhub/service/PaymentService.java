@@ -96,6 +96,8 @@ public class PaymentService {
 
         ClassSession classSession = transaction.getClassSession();
         if (transaction.getType() == TransactionType.FINAL_PAYMENT) {
+            classSession.setStatus(ClassSessionStatus.PAID_IN_FULL);
+        } else if (transaction.getType() == TransactionType.EXTRA_PAYMENT) {
             classSession.setStatus(ClassSessionStatus.COMPLETED);
         } else {
             classSession.setStatus(ClassSessionStatus.CONFIRMED);
@@ -148,6 +150,8 @@ public class PaymentService {
                                     
                                     ClassSession classSession = t.getClassSession();
                                     if (t.getType() == TransactionType.FINAL_PAYMENT) {
+                                        classSession.setStatus(ClassSessionStatus.PAID_IN_FULL);
+                                    } else if (t.getType() == TransactionType.EXTRA_PAYMENT) {
                                         classSession.setStatus(ClassSessionStatus.COMPLETED);
                                     } else {
                                         classSession.setStatus(ClassSessionStatus.CONFIRMED);
@@ -188,13 +192,31 @@ public class PaymentService {
             throw new RuntimeException("Class must be COMPLETED to disburse");
         }
 
+        // Tích lũy số tiền thực tế phụ huynh đã đóng (trừ đi hoàn tiền)
+        double totalPaid = 0.0;
+        List<Transaction> transactions = transactionRepository.findByClassSessionId(classId);
+        for (Transaction t : transactions) {
+            if (t.getStatus() == TransactionStatus.SUCCESS) {
+                if (t.getType() == TransactionType.DEPOSIT || 
+                    t.getType() == TransactionType.FINAL_PAYMENT || 
+                    t.getType() == TransactionType.EXTRA_PAYMENT) {
+                    totalPaid += t.getAmount();
+                } else if (t.getType() == TransactionType.REFUND) {
+                    totalPaid -= t.getAmount();
+                }
+            }
+        }
+
+        // Tính số tiền thực nhận của Gia sư (75%)
+        double payoutAmount = totalPaid * 0.75;
+
         classSession.setStatus(ClassSessionStatus.DISBURSED);
         classSessionRepository.save(classSession);
         
         Transaction payout = new Transaction();
         payout.setTransactionCode("PAYOUT-" + System.currentTimeMillis());
         payout.setClassSession(classSession);
-        payout.setAmount(classSession.getPrice() != null ? classSession.getPrice() * 0.75 : 0.0);
+        payout.setAmount(payoutAmount);
         payout.setStatus(TransactionStatus.SUCCESS);
         payout.setType(TransactionType.PAYOUT);
         payout.setCreatedAt(java.time.LocalDateTime.now());

@@ -9,6 +9,8 @@ import com.management.studyhub.entity.CommissionRecord;
 import com.management.studyhub.repository.ClassSessionRepository;
 import com.management.studyhub.repository.TransactionRepository;
 import com.management.studyhub.repository.CommissionRecordRepository;
+import com.management.studyhub.repository.LessonLogRepository;
+import com.management.studyhub.entity.enums.ParentApprovalStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +27,7 @@ public class TransactionController {
     private final ClassSessionRepository classSessionRepository;
     private final TransactionRepository transactionRepository;
     private final CommissionRecordRepository commissionRecordRepository;
+    private final LessonLogRepository lessonLogRepository;
 
     private double calculateTotalPrice(ClassSession session) {
         if (session.getPrice() != null && session.getPrice() > 0) {
@@ -101,5 +104,89 @@ public class TransactionController {
 
         String qrUrl = generateVietQR(tx.getAmount(), tx.getTransactionCode());
         return ResponseEntity.ok(Map.of("qrUrl", qrUrl, "transactionCode", tx.getTransactionCode(), "amount", tx.getAmount()));
+    }
+
+    @PostMapping("/extra/{classSessionId}")
+    @Transactional
+    public ResponseEntity<?> payExtra(@PathVariable Long classSessionId) {
+        ClassSession session = classSessionRepository.findById(classSessionId)
+                .orElseThrow(() -> new RuntimeException("ClassSession not found"));
+
+        if (session.getStatus() != ClassSessionStatus.PENDING_SETTLEMENT) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Lớp học không có khoản thu thêm."));
+        }
+
+        Transaction tx = transactionRepository.findFirstByClassSessionIdAndStatusAndTypeOrderByIdDesc(classSessionId, TransactionStatus.PENDING, TransactionType.EXTRA_PAYMENT)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy giao dịch thu thêm"));
+
+        String qrUrl = generateVietQR(tx.getAmount(), tx.getTransactionCode());
+        return ResponseEntity.ok(Map.of("qrUrl", qrUrl, "transactionCode", tx.getTransactionCode(), "amount", tx.getAmount()));
+    }
+
+    @PostMapping("/settle/{classSessionId}")
+    @Transactional
+    public ResponseEntity<?> settleClassSession(@PathVariable Long classSessionId) {
+        ClassSession session = classSessionRepository.findById(classSessionId)
+                .orElseThrow(() -> new RuntimeException("ClassSession not found"));
+
+        if (session.getStatus() != ClassSessionStatus.PAID_IN_FULL && session.getStatus() != ClassSessionStatus.PENDING_SETTLEMENT) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Lớp học chưa đủ điều kiện quyết toán."));
+        }
+
+        // Đếm số buổi đã học được phụ huynh xác nhận
+        long approvedLessons = lessonLogRepository.countByClassSessionIdAndParentApprovalStatus(classSessionId, ParentApprovalStatus.APPROVED);
+        double actualCost = approvedLessons * (session.getPricePerSession() != null ? session.getPricePerSession() : 0);
+        double paidAmount = session.getPrice() != null ? session.getPrice() : 0;
+
+        if (actualCost == paidAmount) {
+            session.setStatus(ClassSessionStatus.COMPLETED);
+            classSessionRepository.save(session);
+            return ResponseEntity.ok(Map.of("message", "Quyết toán vừa đủ. Lớp học hoàn thành."));
+        }
+
+        if (actualCost < paidAmount) {
+            // Cần hoàn tiền
+            double refundAmount = paidAmount - actualCost;
+            Transaction refundTx = new Transaction();
+            refundTx.setClassSession(session);
+            refundTx.setType(TransactionType.REFUND);
+            refundTx.setStatus(TransactionStatus.SUCCESS);
+            refundTx.setTransactionCode("SHREF" + classSessionId + (System.currentTimeMillis() % 10000));
+            refundTx.setAmount(refundAmount);
+            transactionRepository.save(refundTx);
+
+            // Hoàn lại hoa hồng tương ứng
+            CommissionRecord commission = new CommissionRecord();
+            commission.setTransaction(refundTx);
+            commission.setTotalAmount(-refundAmount);
+            double platformFee = -refundAmount * 0.25;
+            commission.setPlatformFee(platformFee);
+            commission.setTutorPayout(-refundAmount - platformFee);
+            commissionRecordRepository.save(commission);
+
+            session.setStatus(ClassSessionStatus.COMPLETED);
+            classSessionRepository.save(session);
+            return ResponseEntity.ok(Map.of("message", "Quyết toán hoàn tiền thành công. Số tiền hoàn: " + refundAmount));
+        } else {
+            // Cần thu thêm
+            double extraAmount = actualCost - paidAmount;
+            Transaction extraTx = transactionRepository.findFirstByClassSessionIdAndStatusAndTypeOrderByIdDesc(classSessionId, TransactionStatus.PENDING, TransactionType.EXTRA_PAYMENT)
+                    .orElse(new Transaction());
+            
+            if (extraTx.getId() == null) {
+                extraTx.setClassSession(session);
+                extraTx.setType(TransactionType.EXTRA_PAYMENT);
+                extraTx.setStatus(TransactionStatus.PENDING);
+                extraTx.setTransactionCode("SHEXT" + classSessionId + (System.currentTimeMillis() % 10000));
+                extraTx.setAmount(extraAmount);
+                transactionRepository.save(extraTx);
+            }
+
+            session.setStatus(ClassSessionStatus.PENDING_SETTLEMENT);
+            classSessionRepository.save(session);
+
+            String qrUrl = generateVietQR(extraTx.getAmount(), extraTx.getTransactionCode());
+            return ResponseEntity.ok(Map.of("qrUrl", qrUrl, "transactionCode", extraTx.getTransactionCode(), "amount", extraTx.getAmount()));
+        }
     }
 }

@@ -32,6 +32,9 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: str
   TRIAL:           { label: 'Chờ học thử',     color: 'text-amber-700',   bgColor: 'bg-amber-100 border-amber-200',   icon: 'hourglass_empty' },
   PENDING_PAYMENT: { label: 'Chờ thanh toán',  color: 'text-orange-700',  bgColor: 'bg-orange-100 border-orange-200', icon: 'pending_actions' },
   CONFIRMED:       { label: 'Đang học',        color: 'text-green-700',   bgColor: 'bg-green-100 border-green-200',   icon: 'check_circle' },
+  PENDING_FINAL_PAYMENT: { label: 'Chờ thanh toán nốt', color: 'text-teal-700', bgColor: 'bg-teal-100 border-teal-200', icon: 'payments' },
+  PAID_IN_FULL:    { label: 'Đã đóng 100%',    color: 'text-cyan-700',    bgColor: 'bg-cyan-100 border-cyan-200',     icon: 'verified' },
+  PENDING_SETTLEMENT: { label: 'Chờ quyết toán', color: 'text-indigo-700', bgColor: 'bg-indigo-100 border-indigo-200', icon: 'calculate' },
   COMPLETED:       { label: 'Hoàn thành',      color: 'text-blue-700',    bgColor: 'bg-blue-100 border-blue-200',     icon: 'task_alt' },
   CANCELLED:       { label: 'Đã hủy',          color: 'text-red-700',     bgColor: 'bg-red-100 border-red-200',       icon: 'cancel' },
   PENDING_CANCELLATION: { label: 'Chờ xử lý hủy',   color: 'text-red-700',     bgColor: 'bg-red-100 border-red-200',       icon: 'pending_actions' },
@@ -51,7 +54,7 @@ const ClassManagement: React.FC = () => {
   const [transactionCode, setTransactionCode] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('');
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
-  const [paymentType, setPaymentType] = useState<'deposit' | 'final' | ''>('');
+  const [paymentType, setPaymentType] = useState<'deposit' | 'final' | 'extra' | ''>('');
 
   useEffect(() => {
     if (!userId) { setLoading(false); return; }
@@ -110,7 +113,7 @@ const ClassManagement: React.FC = () => {
     }
   };
 
-  const handlePayment = async (sessionId: number, type: 'deposit' | 'final') => {
+  const handlePayment = async (sessionId: number, type: 'deposit' | 'final' | 'extra') => {
     setUpdatingId(sessionId);
     try {
       const res = await apiFetch(`/transactions/${type}/${sessionId}`, {
@@ -134,7 +137,7 @@ const ClassManagement: React.FC = () => {
     }
   };
 
-  const activeSessions    = sessions.filter(s => ['TRIAL', 'PENDING_PAYMENT', 'CONFIRMED', 'PENDING_FINAL_PAYMENT'].includes(s.status));
+  const activeSessions    = sessions.filter(s => ['TRIAL', 'PENDING_PAYMENT', 'CONFIRMED', 'PENDING_FINAL_PAYMENT', 'PAID_IN_FULL', 'PENDING_SETTLEMENT'].includes(s.status));
   const completedSessions = sessions.filter(s => ['COMPLETED', 'DISBURSED'].includes(s.status));
   const cancelledSessions = sessions.filter(s => ['CANCELLED', 'PENDING_CANCELLATION'].includes(s.status));
 
@@ -376,6 +379,16 @@ const ClassManagement: React.FC = () => {
                         Thanh toán nốt (75%)
                       </button>
                     )}
+                    {session.status === 'PENDING_SETTLEMENT' && (
+                      <button
+                        onClick={() => handlePayment(session.id, 'extra')}
+                        disabled={updatingId === session.id}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-60 whitespace-nowrap flex items-center justify-center gap-2 shadow-sm"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">payments</span>
+                        Thanh toán phát sinh
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -390,7 +403,7 @@ const ClassManagement: React.FC = () => {
           <div className="bg-surface w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col">
             <div className="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
               <h3 className="text-xl font-bold text-on-surface">
-                {paymentType === 'deposit' ? 'Thanh toán cọc (25%)' : 'Thanh toán nốt (75%)'}
+                {paymentType === 'deposit' ? 'Thanh toán cọc (25%)' : (paymentType === 'final' ? 'Thanh toán nốt (75%)' : 'Thanh toán phát sinh')}
               </h3>
               <button onClick={() => setShowPaymentModal(false)} className="text-on-surface-variant hover:text-error transition-colors">
                 <span className="material-symbols-outlined">close</span>
@@ -414,6 +427,12 @@ const ClassManagement: React.FC = () => {
                 </div>
               ) : (
                 <>
+                  {paymentType === 'deposit' && (
+                    <div className="w-full bg-blue-50 border border-blue-200 p-4 rounded-xl mb-6 text-sm text-blue-800 flex items-start gap-3 text-left">
+                      <span className="material-symbols-outlined mt-0.5">info</span>
+                      <p>Hệ thống tạm thu cọc dự kiến 10 buổi. Khi kết thúc, sẽ đối soát lại số buổi thực tế đã được bạn xác nhận để hoàn tiền hoặc yêu cầu đóng thêm.</p>
+                    </div>
+                  )}
                   <div className="text-center mb-6">
                     <p className="text-on-surface-variant text-sm mb-1">Mở App ngân hàng quét mã QR để thanh toán</p>
                     <p className="text-primary font-black text-2xl">{paymentAmount.toLocaleString('vi-VN')}đ</p>
