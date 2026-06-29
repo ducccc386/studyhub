@@ -193,8 +193,8 @@ public class PaymentService {
         log.info("Disbursed payment for class: {}", classId);
     }
 
-    public List<Map<String, Object>> getTransactionsByParent(Long parentId) {
-        return transactionRepository.findByClassSession_Parent_Id(parentId).stream()
+    public List<Map<String, Object>> getTransactionsByParent(Long userId) {
+        return transactionRepository.findByClassSession_Parent_User_Id(userId).stream()
             .map(this::mapTransactionToDto)
             .toList();
     }
