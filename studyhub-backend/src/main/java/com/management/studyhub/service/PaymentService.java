@@ -190,6 +190,16 @@ public class PaymentService {
 
         classSession.setStatus(ClassSessionStatus.DISBURSED);
         classSessionRepository.save(classSession);
+        
+        Transaction payout = new Transaction();
+        payout.setTransactionCode("PAYOUT-" + System.currentTimeMillis());
+        payout.setClassSession(classSession);
+        payout.setAmount(classSession.getPrice() != null ? classSession.getPrice() * 0.75 : 0.0);
+        payout.setStatus(TransactionStatus.SUCCESS);
+        payout.setType(TransactionType.PAYOUT);
+        payout.setCreatedAt(java.time.LocalDateTime.now());
+        transactionRepository.save(payout);
+
         log.info("Disbursed payment for class: {}", classId);
     }
 
@@ -211,6 +221,7 @@ public class PaymentService {
             "transactionCode", t.getTransactionCode() != null ? t.getTransactionCode() : "",
             "amount", t.getAmount() != null ? t.getAmount() : 0.0,
             "status", t.getStatus() != null ? t.getStatus().name() : "",
+            "type", t.getType() != null ? t.getType().name() : "",
             "createdAt", t.getCreatedAt() != null ? t.getCreatedAt().toString() : "",
             "className", t.getClassSession() != null && t.getClassSession().getClassName() != null ? t.getClassSession().getClassName() : "",
             "parentName", t.getClassSession() != null && t.getClassSession().getParentName() != null ? t.getClassSession().getParentName() : "",

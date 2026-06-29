@@ -6,6 +6,7 @@ interface Transaction {
   transactionCode: string;
   amount: number;
   status: string;
+  type: string;
   createdAt: string;
   className: string;
   parentName: string;
@@ -95,11 +96,16 @@ const AdminTransactionHistory: React.FC = () => {
               ) : (
                 transactions.map(t => (
                   <tr key={t.id} className="hover:bg-surface-container-low/50 transition-colors">
-                    <td className="py-4 px-6 font-body-sm font-bold text-on-surface">{t.transactionCode || `#${t.id}`}</td>
+                    <td className="py-4 px-6 font-body-sm font-bold text-on-surface">
+                      {t.transactionCode || `#${t.id}`}
+                      {t.type === 'PAYOUT' && (
+                        <span className="ml-2 px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] rounded font-bold uppercase tracking-wider">Giải ngân</span>
+                      )}
+                    </td>
                     <td className="py-4 px-6 font-body-sm text-on-surface font-medium">{t.parentName || 'N/A'}</td>
                     <td className="py-4 px-6 font-body-sm text-on-surface-variant">{t.className || `Lớp #${t.classId}`}</td>
-                    <td className="py-4 px-6 font-body-sm text-primary font-bold">
-                      {t.amount ? t.amount.toLocaleString('vi-VN') + ' đ' : '0 đ'}
+                    <td className={`py-4 px-6 font-body-sm font-bold ${t.type === 'PAYOUT' ? 'text-secondary' : 'text-primary'}`}>
+                      {t.type === 'PAYOUT' ? '-' : '+'}{t.amount ? t.amount.toLocaleString('vi-VN') + ' đ' : '0 đ'}
                     </td>
                     <td className="py-4 px-6 font-body-sm text-on-surface-variant">
                       {t.createdAt ? new Date(t.createdAt).toLocaleString('vi-VN') : 'N/A'}
