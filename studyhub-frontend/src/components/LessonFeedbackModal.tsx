@@ -7,13 +7,21 @@ interface LessonFeedbackModalProps {
   lessonTitle: string;
 }
 
-const PREDEFINED_TAGS = [
+const POSITIVE_TAGS = [
   "Đúng giờ",
   "Giảng bài dễ hiểu",
   "Nhiệt tình",
   "Giao bài tập đầy đủ",
-  "Tương tác tốt với học sinh",
-  "Chưa đúng giờ"
+  "Tương tác tốt với học sinh"
+];
+
+const NEGATIVE_TAGS = [
+  "Chưa đúng giờ",
+  "Giảng bài khó hiểu",
+  "Thiếu nhiệt tình",
+  "Không giao bài tập",
+  "Gia sư vắng mặt",
+  "Lớp học bị gián đoạn"
 ];
 
 const LessonFeedbackModal: React.FC<LessonFeedbackModalProps> = ({ isOpen, onClose, onSubmit, lessonTitle }) => {
@@ -23,6 +31,12 @@ const LessonFeedbackModal: React.FC<LessonFeedbackModalProps> = ({ isOpen, onClo
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   if (!isOpen) return null;
+
+  const handleStatusChange = (newStatus: 'APPROVED' | 'DISPUTED') => {
+    setStatus(newStatus);
+    setSelectedTags([]); // Clear tags when status changes
+    setRating(newStatus === 'APPROVED' ? 5 : 1); // Set rating default based on status
+  };
 
   const toggleTag = (tag: string) => {
     setSelectedTags(prev => 
@@ -63,14 +77,14 @@ const LessonFeedbackModal: React.FC<LessonFeedbackModalProps> = ({ isOpen, onClo
               <label className={`flex-1 flex items-center justify-center gap-2 p-3 border rounded-xl cursor-pointer transition-all font-medium text-sm
                 ${status === 'APPROVED' ? 'bg-green-50 border-green-500 text-green-700' : 'border-outline-variant text-on-surface hover:bg-surface-container'}`}
               >
-                <input type="radio" name="status" value="APPROVED" checked={status === 'APPROVED'} onChange={() => setStatus('APPROVED')} className="hidden" />
+                <input type="radio" name="status" value="APPROVED" checked={status === 'APPROVED'} onChange={() => handleStatusChange('APPROVED')} className="hidden" />
                 <span className="material-symbols-outlined text-[20px]">check_circle</span>
                 Đồng ý đã học
               </label>
               <label className={`flex-1 flex items-center justify-center gap-2 p-3 border rounded-xl cursor-pointer transition-all font-medium text-sm
                 ${status === 'DISPUTED' ? 'bg-error/10 border-error text-error' : 'border-outline-variant text-on-surface hover:bg-surface-container'}`}
               >
-                <input type="radio" name="status" value="DISPUTED" checked={status === 'DISPUTED'} onChange={() => setStatus('DISPUTED')} className="hidden" />
+                <input type="radio" name="status" value="DISPUTED" checked={status === 'DISPUTED'} onChange={() => handleStatusChange('DISPUTED')} className="hidden" />
                 <span className="material-symbols-outlined text-[20px]">report_problem</span>
                 Khiếu nại / Vấn đề
               </label>
@@ -82,25 +96,33 @@ const LessonFeedbackModal: React.FC<LessonFeedbackModalProps> = ({ isOpen, onClo
 
           <div className="space-y-3">
             <label className="block text-sm font-bold text-on-surface">Đánh giá Gia sư</label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map(star => (
-                <button 
-                  key={star} 
-                  onClick={() => setRating(star)}
-                  className="transition-transform hover:scale-110 outline-none"
-                >
-                  <span className={`material-symbols-outlined text-3xl ${star <= rating ? 'text-amber-400 fill-amber-400 icon-filled' : 'text-outline-variant'}`}>
-                    star
-                  </span>
-                </button>
-              ))}
+            <div className="flex items-center gap-4">
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button 
+                    key={star} 
+                    onClick={() => status === 'APPROVED' && setRating(star)}
+                    disabled={status === 'DISPUTED'}
+                    className={`transition-transform outline-none ${status === 'APPROVED' ? 'hover:scale-110' : 'cursor-not-allowed opacity-60'}`}
+                  >
+                    <span className={`material-symbols-outlined text-3xl ${star <= rating ? 'text-amber-400 fill-amber-400 icon-filled' : 'text-outline-variant'}`}>
+                      star
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {status === 'DISPUTED' && (
+                <span className="text-xs text-error font-medium bg-error/10 px-2.5 py-1 rounded-lg">
+                  Bắt buộc 1★ khi khiếu nại
+                </span>
+              )}
             </div>
           </div>
 
           <div className="space-y-3">
             <label className="block text-sm font-bold text-on-surface">Đánh giá nhanh</label>
             <div className="flex flex-wrap gap-2">
-              {PREDEFINED_TAGS.map(tag => (
+              {(status === 'APPROVED' ? POSITIVE_TAGS : NEGATIVE_TAGS).map(tag => (
                 <button
                   key={tag}
                   onClick={() => toggleTag(tag)}

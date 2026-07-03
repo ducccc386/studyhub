@@ -24,6 +24,8 @@ import com.management.studyhub.repository.SubjectRepository;
 import com.management.studyhub.repository.TestimonialRepository;
 import com.management.studyhub.repository.TutorProfileRepository;
 import com.management.studyhub.repository.UserRepository;
+import com.management.studyhub.entity.LessonLog;
+import com.management.studyhub.repository.LessonLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -49,6 +51,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final ClassSessionRepository classSessionRepository;
     private final DirectBookingRepository directBookingRepository;
     private final ApplicantRepository applicantRepository;
+    private final LessonLogRepository lessonLogRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -74,6 +77,9 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
         if (classSessionRepository.count() == 0) {
             seedClassSessions();
+        }
+        if (lessonLogRepository.count() == 0) {
+            seedLessonLogs();
         }
     }
 
@@ -635,5 +641,32 @@ public class DatabaseSeeder implements CommandLineRunner {
         c10.setTutor(t8);
         c10.setSubject(geographySubject);
         courseRepository.save(c10);
+    }
+
+    private void seedLessonLogs() {
+        List<ClassSession> sessions = classSessionRepository.findAll();
+        if (!sessions.isEmpty()) {
+            ClassSession session = sessions.get(0);
+            
+            LessonLog log1 = new LessonLog();
+            log1.setClassSession(session);
+            log1.setScheduledDate(java.time.LocalDateTime.now().minusDays(2));
+            log1.setTitle("Buổi 1: Giới thiệu và giao tiếp cơ bản");
+            log1.setContent("Làm quen với các mẫu câu giới thiệu bản thân thông dụng. Luyện phát âm các âm cơ bản.");
+            log1.setTutorFeedback("Học viên tiếp thu nhanh, cần chú ý phát âm gió.");
+            log1.setStatus(com.management.studyhub.entity.enums.LessonStatus.PRESENT);
+            log1.setParentApprovalStatus(com.management.studyhub.entity.enums.ParentApprovalStatus.PENDING);
+            lessonLogRepository.save(log1);
+
+            LessonLog log2 = new LessonLog();
+            log2.setClassSession(session);
+            log2.setScheduledDate(java.time.LocalDateTime.now().minusDays(1));
+            log2.setTitle("Buổi 2: Giao tiếp nơi công sở");
+            log2.setContent("Học các mẫu câu viết email và giao tiếp điện thoại với đồng nghiệp.");
+            log2.setTutorFeedback("Học viên làm tốt bài tập viết email, cần tự tin hơn khi nói điện thoại.");
+            log2.setStatus(com.management.studyhub.entity.enums.LessonStatus.PRESENT);
+            log2.setParentApprovalStatus(com.management.studyhub.entity.enums.ParentApprovalStatus.PENDING);
+            lessonLogRepository.save(log2);
+        }
     }
 }

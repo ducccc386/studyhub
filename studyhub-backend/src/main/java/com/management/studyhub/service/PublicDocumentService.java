@@ -20,7 +20,7 @@ public class PublicDocumentService {
         return publicDocumentRepository.findAll();
     }
 
-    public PublicDocument uploadDocument(Long uploaderId, String title, MultipartFile file) throws IOException {
+    public PublicDocument uploadDocument(Long uploaderId, String title, String schoolLevel, String category, MultipartFile file) throws IOException {
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null || !originalFilename.toLowerCase().endsWith(".pdf")) {
             throw new RuntimeException("Chỉ cho phép tải lên file định dạng PDF");
@@ -32,6 +32,8 @@ public class PublicDocumentService {
         document.setTitle(title);
         document.setFileUrl(fileUrl);
         document.setUploadedBy(uploaderId);
+        document.setSchoolLevel(schoolLevel);
+        document.setCategory(category);
 
         return publicDocumentRepository.save(document);
     }

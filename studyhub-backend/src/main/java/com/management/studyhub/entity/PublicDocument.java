@@ -22,6 +22,10 @@ public class PublicDocument {
 
     private LocalDateTime uploadedAt;
 
+    private String schoolLevel; // "Cấp 1", "Cấp 2", "Cấp 3"
+
+    private String category; // "Đề thi", "Sách giáo khoa", "Tài liệu chuyên đề", v.v.
+
     @PrePersist
     protected void onCreate() {
         uploadedAt = LocalDateTime.now();

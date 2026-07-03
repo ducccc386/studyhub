@@ -27,9 +27,11 @@ public class PublicDocumentController {
     public ResponseEntity<?> uploadDocument(
             @RequestParam("uploaderId") Long uploaderId,
             @RequestParam("title") String title,
+            @RequestParam(value = "schoolLevel", required = false) String schoolLevel,
+            @RequestParam(value = "category", required = false) String category,
             @RequestParam("file") MultipartFile file) {
         try {
-            PublicDocument document = publicDocumentService.uploadDocument(uploaderId, title, file);
+            PublicDocument document = publicDocumentService.uploadDocument(uploaderId, title, schoolLevel, category, file);
             return ResponseEntity.ok(document);
         } catch (IOException e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Lỗi xử lý file: " + e.getMessage()));

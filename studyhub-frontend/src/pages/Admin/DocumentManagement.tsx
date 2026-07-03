@@ -8,6 +8,8 @@ const DocumentManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [title, setTitle] = useState('');
+  const [schoolLevel, setSchoolLevel] = useState('Cấp 1');
+  const [category, setCategory] = useState('Đề thi');
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -52,7 +54,7 @@ const DocumentManagement: React.FC = () => {
 
     try {
       setUploading(true);
-      await documentApi.uploadDocument(adminId, title, file);
+      await documentApi.uploadDocument(adminId, title, schoolLevel, category, file);
       setTitle('');
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -90,7 +92,7 @@ const DocumentManagement: React.FC = () => {
           Tải lên tài liệu mới (PDF)
         </h2>
         <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-          <div className="md:col-span-5">
+          <div className="md:col-span-4">
             <label className="block text-sm font-medium text-slate-700 mb-1">Tên tài liệu</label>
             <input
               type="text"
@@ -101,7 +103,31 @@ const DocumentManagement: React.FC = () => {
               required
             />
           </div>
-          <div className="md:col-span-5">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-slate-700 mb-1">Cấp học</label>
+            <select
+              value={schoolLevel}
+              onChange={(e) => setSchoolLevel(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+            >
+              <option value="Cấp 1">Cấp 1 (Tiểu học)</option>
+              <option value="Cấp 2">Cấp 2 (THCS)</option>
+              <option value="Cấp 3">Cấp 3 (THPT)</option>
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-slate-700 mb-1">Phân loại</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+            >
+              <option value="Đề thi">Đề thi</option>
+              <option value="Sách giáo khoa">Sách giáo khoa</option>
+              <option value="Tài liệu chuyên đề">Tài liệu chuyên đề</option>
+            </select>
+          </div>
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-slate-700 mb-1">File PDF</label>
             <input
               type="file"
@@ -135,6 +161,8 @@ const DocumentManagement: React.FC = () => {
             <thead className="bg-slate-50 text-slate-500 font-medium">
               <tr>
                 <th className="px-6 py-4">Tên tài liệu</th>
+                <th className="px-6 py-4">Cấp học</th>
+                <th className="px-6 py-4">Phân loại</th>
                 <th className="px-6 py-4">Ngày tải lên</th>
                 <th className="px-6 py-4">Hành động</th>
               </tr>
@@ -142,17 +170,29 @@ const DocumentManagement: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-8 text-center text-slate-400">Đang tải...</td>
+                  <td colSpan={5} className="px-6 py-8 text-center text-slate-400">Đang tải...</td>
                 </tr>
               ) : documents.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-8 text-center text-slate-400">Chưa có tài liệu nào.</td>
+                  <td colSpan={5} className="px-6 py-8 text-center text-slate-400">Chưa có tài liệu nào.</td>
                 </tr>
               ) : (
                 documents.map((doc) => (
                   <tr key={doc.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-6 py-4 font-medium text-slate-800 max-w-md truncate">
+                    <td className="px-6 py-4 font-medium text-slate-800 max-w-xs truncate">
                       {doc.title}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {doc.schoolLevel || 'Cấp 3'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        doc.category === 'Đề thi' ? 'bg-red-50 text-red-600 border border-red-100' :
+                        doc.category === 'Sách giáo khoa' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
+                        'bg-slate-50 text-slate-600 border border-slate-100'
+                      }`}>
+                        {doc.category || 'Tài liệu'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {new Date(doc.uploadedAt).toLocaleString('vi-VN')}
