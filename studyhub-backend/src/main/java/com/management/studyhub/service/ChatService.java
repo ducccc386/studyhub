@@ -45,6 +45,7 @@ public class ChatService {
         });
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<ConversationDTO> getConversations(Long userId, String role) {
         List<ClassSession> sessions;
         if ("PARENT".equalsIgnoreCase(role)) {
@@ -99,11 +100,13 @@ public class ChatService {
         return conversations;
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<ChatMessageDTO> getMessages(Long classSessionId) {
         return chatMessageRepository.findByClassSessionIdOrderBySentAtAsc(classSessionId)
                 .stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public ChatMessageDTO sendMessage(Long classSessionId, Long senderId, String messageContent) {
         ClassSession session = classSessionRepository.findById(classSessionId)
                 .orElseThrow(() -> new RuntimeException("ClassSession not found"));

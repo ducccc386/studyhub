@@ -121,6 +121,7 @@ public class ClassSessionService {
     /**
      * Lấy danh sách lớp học của phụ huynh
      */
+    @Transactional(readOnly = true)
     public List<ClassSessionDTO> getSessionsByParent(Long userId) {
         Parent parent = getOrCreateParent(userId);
 
@@ -130,6 +131,7 @@ public class ClassSessionService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<ClassSessionDTO> getSessionsByTutor(Long tutorProfileId) {
         return classSessionRepository.findByTutorProfileId(tutorProfileId)
                 .stream()
@@ -140,6 +142,7 @@ public class ClassSessionService {
     /**
      * Admin: lấy tất cả lớp học trong hệ thống
      */
+    @Transactional(readOnly = true)
     public List<ClassSessionDTO> getAllSessions() {
         return classSessionRepository.findAll()
                 .stream()
@@ -147,6 +150,7 @@ public class ClassSessionService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public ClassSessionDTO getSessionById(Long id) {
         ClassSession session = classSessionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("ClassSession not found"));

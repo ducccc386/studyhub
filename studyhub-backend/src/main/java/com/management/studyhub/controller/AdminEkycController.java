@@ -27,7 +27,7 @@ public class AdminEkycController {
     @GetMapping("/pending")
     @Transactional(readOnly = true)
     public ResponseEntity<List<Map<String, Object>>> getPendingEkyc() {
-        // Query thẳng DB theo ekycStatus=PROCESSING — tránh load toàn bộ bảng vào RAM gây OutOfMemoryError
+        // findByEkycStatus dùng JOIN FETCH user + subjects → chỉ 1 câu SQL, không có N+1
         List<Map<String, Object>> pendingProfiles = tutorProfileRepository.findByEkycStatus(EkycStatus.PROCESSING)
                 .stream()
                 .map(t -> {
@@ -105,27 +105,41 @@ public class AdminEkycController {
         return ResponseEntity.ok("Đã từ chối hồ sơ");
     }
 
+    // Bỏ @Transactional ở đây: nếu giữ @Transactional thì kết nối DB sẽ bị giữ trong suốt thời gian chờ gọi API Face++ (có thể mất vài giây),
+    // gây cạn kiệt HikariPool khi có nhiều request đồng thời.
     @PutMapping("/{id}/re-evaluate")
-    @Transactional
     public ResponseEntity<Map<String, Object>> reEvaluateEkyc(@PathVariable Long id) {
-        TutorProfile tutor = tutorProfileRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tutor not found"));
-
-        if (tutor.getAvatarUrl() == null || tutor.getIdCardFrontUrl() == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Thiếu ảnh Avatar hoặc CCCD"));
+        // Bước 1: Đọc dữ liệu — kết nối DB mở & đóng ngay sau khi lấy xong
+        final String avatarUrl;
+        final String idCardFrontUrl;
+        try {
+            TutorProfile tutor = tutorProfileRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Tutor not found"));
+            if (tutor.getAvatarUrl() == null || tutor.getIdCardFrontUrl() == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Thiếu ảnh Avatar hoặc CCCD"));
+            }
+            avatarUrl = tutor.getAvatarUrl();
+            idCardFrontUrl = tutor.getIdCardFrontUrl();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
 
-        java.math.BigDecimal score = ekycApiService.compareFaces(tutor.getAvatarUrl(), tutor.getIdCardFrontUrl());
-        
-        if (score != null) {
-            tutor.setSimilarityScore(score);
-            tutorProfileRepository.save(tutor);
-            return ResponseEntity.ok(Map.of(
-                "message", "Quét AI thành công",
-                "similarityScore", score
-            ));
-        } else {
+        // Bước 2: Gọi API Face++ — không giữ kết nối DB trong bước này
+        java.math.BigDecimal score = ekycApiService.compareFaces(avatarUrl, idCardFrontUrl);
+
+        if (score == null) {
             return ResponseEntity.status(500).body(Map.of("error", "AI Face Matching thất bại (Có thể ảnh mờ hoặc không có khuôn mặt)"));
         }
+
+        // Bước 3: Cập nhật kết quả vào DB — transaction nhỏ, chỉ lúc save
+        TutorProfile tutorToUpdate = tutorProfileRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tutor not found"));
+        tutorToUpdate.setSimilarityScore(score);
+        tutorProfileRepository.save(tutorToUpdate);
+
+        return ResponseEntity.ok(Map.of(
+            "message", "Quét AI thành công",
+            "similarityScore", score
+        ));
     }
 }

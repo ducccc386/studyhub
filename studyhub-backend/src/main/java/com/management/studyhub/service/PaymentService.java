@@ -231,12 +231,14 @@ public class PaymentService {
         log.info("Disbursed payment for class: {}", classId);
     }
 
+    @Transactional(readOnly = true)
     public List<Map<String, Object>> getTransactionsByParent(Long userId) {
         return transactionRepository.findByClassSession_Parent_User_Id(userId).stream()
             .map(this::mapTransactionToDto)
             .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<Map<String, Object>> getAllTransactions() {
         return transactionRepository.findAll().stream()
             .map(this::mapTransactionToDto)

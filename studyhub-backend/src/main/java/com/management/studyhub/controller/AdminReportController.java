@@ -42,9 +42,8 @@ public class AdminReportController {
         long totalCourses = courseRepository.count();
         long successfulConnections = classSessionRepository.count();
         
-        long pendingApprovals = tutorProfileRepository.findAll().stream()
-                .filter(t -> t.getEkycStatus() == EkycStatus.PROCESSING)
-                .count();
+        // Dùng countByEkycStatus trực tiếp thay vì findAll() + filter trong Java
+        long pendingApprovals = tutorProfileRepository.countByEkycStatus(EkycStatus.PROCESSING);
 
         response.put("totalUsers", totalUsers);
         response.put("totalCourses", totalCourses);

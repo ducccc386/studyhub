@@ -64,6 +64,7 @@ public class JobPostingService {
         return mapToDTO(savedJob);
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<JobPostingDTO> getAllRecruitingPosts() {
         return jobPostingRepository.findActiveByStatus("RECRUITING")
                 .stream()
@@ -71,6 +72,7 @@ public class JobPostingService {
                 .collect(Collectors.toList());
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<JobPostingDTO> getPostsByParent(Long userId) {
         Parent parent = getOrCreateParent(userId);
 
@@ -89,6 +91,7 @@ public class JobPostingService {
                 .collect(Collectors.toList());
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<JobPostingDTO> getPendingPosts() {
         return jobPostingRepository.findByStatus("PENDING_APPROVAL")
                 .stream()
@@ -119,6 +122,7 @@ public class JobPostingService {
     /**
      * Lấy danh sách ứng viên theo postId
      */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<ApplicantDTO> getApplicantsByPost(Long postId) {
         return applicantRepository.findByJobPostingId(postId)
                 .stream()
@@ -129,6 +133,7 @@ public class JobPostingService {
     /**
      * Gia sư xem các đơn mình đã nộp, kèm thông tin bài đăng
      */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<ApplicantDTO> getMyApplications(Long tutorProfileId) {
         return applicantRepository.findByTutorId(String.valueOf(tutorProfileId))
                 .stream()

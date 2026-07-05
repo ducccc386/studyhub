@@ -17,12 +17,15 @@ public interface TutorProfileRepository extends JpaRepository<TutorProfile, Long
 
     long countByStatus(com.management.studyhub.entity.enums.TutorStatus status);
 
+    long countByEkycStatus(EkycStatus ekycStatus);
+
     List<TutorProfile> findByStatus(com.management.studyhub.entity.enums.TutorStatus status);
 
     /**
-     * Query trực tiếp DB theo ekycStatus — tránh load toàn bộ bảng vào RAM gây OutOfMemoryError.
+     * Query trực tiếp DB theo ekycStatus — JOIN FETCH user + subjects trong 1 câu SQL để tránh N+1.
      */
-    List<TutorProfile> findByEkycStatus(EkycStatus ekycStatus);
+    @Query("SELECT DISTINCT t FROM TutorProfile t LEFT JOIN FETCH t.user LEFT JOIN FETCH t.subjects WHERE t.ekycStatus = :status")
+    List<TutorProfile> findByEkycStatus(@Param("status") EkycStatus status);
 
     /**
      * Fetch tutors with their subjects in 1 query to avoid N+1 problem.

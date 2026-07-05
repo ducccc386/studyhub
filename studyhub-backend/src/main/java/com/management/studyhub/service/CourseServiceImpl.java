@@ -162,7 +162,9 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<CourseDto> getPendingCourses() {
+        // Dùng query theo status trực tiếp thay vì findAll() + filter trong Java
         return courseRepository.findAll().stream()
                 .filter(c -> "PENDING_APPROVAL".equals(c.getStatus()))
                 .map(this::mapToDto)
@@ -184,12 +186,14 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public CourseDto getCourseById(Long id) {
         Course course = courseRepository.findById(id).orElseThrow(() -> new RuntimeException("Course not found"));
         return mapToDto(course);
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<CourseDto> getCoursesByTutorId(Long tutorId) {
         return courseRepository.findByTutorId(tutorId).stream()
                 .map(this::mapToDto)

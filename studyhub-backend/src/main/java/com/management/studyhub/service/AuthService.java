@@ -39,6 +39,7 @@ public class AuthService {
     @Value("${google.client.id}")
     private String googleClientId;
 
+    @org.springframework.transaction.annotation.Transactional
     public AuthResponseDTO googleLogin(GoogleLoginRequestDTO request) {
         try {
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
@@ -132,6 +133,7 @@ public class AuthService {
         return new AuthResponseDTO(token, user.getRole(), user.getEmail(), user.getFullName(), user.getAvatarUrl(), tutorId, user.getId());
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public AuthResponseDTO register(RegisterDTO request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already in use");

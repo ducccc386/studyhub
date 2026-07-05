@@ -48,6 +48,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<EnrollmentDto> getEnrollmentsByParentId(Long parentId) {
         return enrollmentRepository.findByParentId(parentId).stream()
                 .map(this::mapToDto)
@@ -55,6 +56,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<EnrollmentDto> getEnrollmentsByTutorId(Long tutorId) {
         return enrollmentRepository.findByCourseTutorId(tutorId).stream()
                 .map(this::mapToDto)
@@ -62,6 +64,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public EnrollmentDto approveEnrollment(Long id) {
         Enrollment enrollment = enrollmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Enrollment not found"));
@@ -115,6 +118,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public EnrollmentDto rejectEnrollment(Long id) {
         Enrollment enrollment = enrollmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Enrollment not found"));
