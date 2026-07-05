@@ -102,8 +102,12 @@ const LessonFeedbackModal: React.FC<LessonFeedbackModalProps> = ({ isOpen, onClo
                   <button 
                     key={star} 
                     onClick={() => status === 'APPROVED' && setRating(star)}
-                    disabled={status === 'DISPUTED'}
-                    className={`transition-transform outline-none ${status === 'APPROVED' ? 'hover:scale-110' : 'cursor-not-allowed opacity-60'}`}
+                    disabled={status === 'DISPUTED' || (status === 'APPROVED' && star < 3)}
+                    className={`transition-transform outline-none ${
+                      status === 'APPROVED' 
+                        ? (star >= 3 ? 'hover:scale-110' : 'cursor-not-allowed opacity-80') 
+                        : 'cursor-not-allowed opacity-60'
+                    }`}
                   >
                     <span className={`material-symbols-outlined text-3xl ${star <= rating ? 'text-amber-400 fill-amber-400 icon-filled' : 'text-outline-variant'}`}>
                       star
@@ -114,6 +118,11 @@ const LessonFeedbackModal: React.FC<LessonFeedbackModalProps> = ({ isOpen, onClo
               {status === 'DISPUTED' && (
                 <span className="text-xs text-error font-medium bg-error/10 px-2.5 py-1 rounded-lg">
                   Bắt buộc 1★ khi khiếu nại
+                </span>
+              )}
+              {status === 'APPROVED' && (
+                <span className="text-xs text-primary font-medium bg-primary/5 px-2.5 py-1 rounded-lg">
+                  Tối thiểu 3★ khi hoàn thành tốt
                 </span>
               )}
             </div>
