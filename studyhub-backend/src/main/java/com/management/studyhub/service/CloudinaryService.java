@@ -35,6 +35,10 @@ public class CloudinaryService {
     }
 
     public String uploadFile(MultipartFile file) throws IOException {
+        if ("your_api_key_here".equals(apiKey) || apiKey == null || apiKey.trim().isEmpty()) {
+            return "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
+        }
+
         String originalFilename = file.getOriginalFilename();
         String resourceType = "auto";
         String extension = "";

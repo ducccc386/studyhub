@@ -9,6 +9,8 @@ export interface PublicDocument {
   fileUrl: string;
   uploadedBy: number;
   uploadedAt: string;
+  schoolLevel?: string;
+  category?: string;
 }
 
 export const documentApi = {
@@ -17,10 +19,12 @@ export const documentApi = {
     return response.data;
   },
 
-  uploadDocument: async (uploaderId: number, title: string, file: File): Promise<PublicDocument> => {
+  uploadDocument: async (uploaderId: number, title: string, schoolLevel: string, category: string, file: File): Promise<PublicDocument> => {
     const formData = new FormData();
     formData.append('uploaderId', uploaderId.toString());
     formData.append('title', title);
+    formData.append('schoolLevel', schoolLevel);
+    formData.append('category', category);
     formData.append('file', file);
 
     const response = await axios.post(API_URL, formData, {
