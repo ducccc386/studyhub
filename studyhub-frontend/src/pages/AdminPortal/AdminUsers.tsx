@@ -112,6 +112,30 @@ const AdminUsers: React.FC = () => {
     }
   };
 
+  const exportUsersCSV = () => {
+    const headers = ['ID', 'Họ tên', 'Email', 'Vai trò', 'Số điện thoại', 'Ngày tham gia', 'Trạng thái'];
+    const rows = users.map((u: any) => [
+      u.id,
+      `"${(u.fullName || '').replace(/"/g, '""')}"`,
+      u.email || '',
+      u.role === 'ADMIN' ? 'Quản trị' : u.role === 'TUTOR' ? 'Gia sư' : 'Phụ huynh',
+      u.phoneNumber || u.phone || '',
+      u.createdAt ? new Date(u.createdAt).toLocaleDateString('vi-VN') : '',
+      u.status === 'ACTIVE' || !u.status ? 'Hoạt động' : 'Đã khóa',
+    ]);
+    const csvContent = [headers.join(','), ...rows.map((r: any[]) => r.join(','))].join('\n');
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `danh-sach-nguoi-dung-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="max-w-[1440px] mx-auto pb-20 animate-fade-in">
       {/* Page Header & Tabs */}
@@ -140,8 +164,8 @@ const AdminUsers: React.FC = () => {
       {/* TAB: QUẢN LÝ TÀI KHOẢN */}
       {activeTab === 'accounts' && (
         <div className="animate-slide-up stagger-1 space-y-6">
-          {/* Search */}
-          <div className="flex items-center gap-4">
+          {/* Search + Actions */}
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="relative flex-1 max-w-sm">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
               <input
@@ -159,6 +183,27 @@ const AdminUsers: React.FC = () => {
               <span className="material-symbols-outlined text-[18px]">refresh</span>
               Làm mới
             </button>
+            <button
+              onClick={exportUsersCSV}
+              className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition-colors flex items-center gap-2"
+              title="Xuất danh sách người dùng ra CSV để import Google Sheets"
+            >
+              <span className="material-symbols-outlined text-[18px]">table_chart</span>
+              Xuất Google Sheets (.csv)
+            </button>
+
+            {/* Summary badges */}
+            <div className="ml-auto flex gap-2">
+              <span className="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold">
+                Tổng: {filteredUsers.length} người dùng
+              </span>
+              <span className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold">
+                Gia sư: {filteredUsers.filter((u: any) => u.role === 'TUTOR').length}
+              </span>
+              <span className="bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg text-xs font-bold">
+                Phụ huynh: {filteredUsers.filter((u: any) => u.role === 'PARENT').length}
+              </span>
+            </div>
           </div>
 
           <div className="bg-white p-0 rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -176,22 +221,24 @@ const AdminUsers: React.FC = () => {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50">
-                      <th className="py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider">Người dùng</th>
-                      <th className="py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider">Vai trò</th>
-                      <th className="py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider">Ngày tham gia</th>
-                      <th className="py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider">Trạng thái</th>
-                      <th className="py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Thao tác</th>
+                      <th className="py-3 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Người dùng</th>
+                      <th className="py-3 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Vai trò</th>
+                      <th className="py-3 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Số điện thoại</th>
+                      <th className="py-3 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Ngày tham gia</th>
+                      <th className="py-3 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Trạng thái</th>
+                      <th className="py-3 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredUsers.map(user => (
-                      <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-4 px-6">
+                    {filteredUsers.map((user: any) => (
+                      <tr key={user.id} className="hover:bg-slate-50/60 transition-colors">
+                        {/* Avatar + Name + Email */}
+                        <td className="py-3.5 px-5">
                           <div className="flex items-center gap-3">
                             <img
                               src={user.avatar || user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName || user.email || 'U')}&background=random`}
                               alt={user.fullName}
-                              className="w-9 h-9 rounded-full object-cover"
+                              className="w-9 h-9 rounded-full object-cover ring-2 ring-slate-100"
                             />
                             <div>
                               <p className="font-semibold text-sm text-slate-800">{user.fullName || '—'}</p>
@@ -199,7 +246,8 @@ const AdminUsers: React.FC = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="py-4 px-6">
+                        {/* Role */}
+                        <td className="py-3.5 px-5">
                           <span className={`px-2 py-1 rounded-md text-[11px] font-bold uppercase ${
                             user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
                             user.role === 'TUTOR' ? 'bg-blue-100 text-blue-700' :
@@ -208,17 +256,39 @@ const AdminUsers: React.FC = () => {
                             {user.role === 'ADMIN' ? 'Quản trị' : user.role === 'TUTOR' ? 'Gia sư' : 'Phụ huynh'}
                           </span>
                         </td>
-                        <td className="py-4 px-6 text-sm text-slate-500">
-                          {user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : '—'}
+                        {/* Phone */}
+                        <td className="py-3.5 px-5 text-sm text-slate-600">
+                          {user.phoneNumber || user.phone ? (
+                            <a href={`tel:${user.phoneNumber || user.phone}`} className="flex items-center gap-1 hover:text-primary transition-colors">
+                              <span className="material-symbols-outlined text-[13px] text-slate-400">call</span>
+                              {user.phoneNumber || user.phone}
+                            </a>
+                          ) : (
+                            <span className="text-slate-300 italic text-xs">Chưa cập nhật</span>
+                          )}
                         </td>
-                        <td className="py-4 px-6">
-                          <span className={`px-2 py-1 rounded-md text-[11px] font-bold ${
-                            user.status === 'ACTIVE' || !user.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                          }`}>
-                            {user.status === 'ACTIVE' || !user.status ? 'Hoạt động' : 'Đã khóa'}
-                          </span>
+                        {/* Join date */}
+                        <td className="py-3.5 px-5 text-sm text-slate-500">
+                          {user.createdAt ? (
+                            <div>
+                              <p className="font-medium text-slate-700">{new Date(user.createdAt).toLocaleDateString('vi-VN')}</p>
+                              <p className="text-xs text-slate-400">{new Date(user.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</p>
+                            </div>
+                          ) : '—'}
                         </td>
-                        <td className="py-4 px-6 text-right">
+                        {/* Status */}
+                        <td className="py-3.5 px-5">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`w-2 h-2 rounded-full ${user.status === 'ACTIVE' || !user.status ? 'bg-green-500' : 'bg-red-400'}`}></span>
+                            <span className={`text-xs font-bold ${
+                              user.status === 'ACTIVE' || !user.status ? 'text-green-700' : 'text-red-700'
+                            }`}>
+                              {user.status === 'ACTIVE' || !user.status ? 'Hoạt động' : 'Đã khóa'}
+                            </span>
+                          </div>
+                        </td>
+                        {/* Actions */}
+                        <td className="py-3.5 px-5 text-right">
                           {user.role !== 'ADMIN' && (
                             <button
                               onClick={() => handleToggleLock(user.id, user.status || 'ACTIVE')}
