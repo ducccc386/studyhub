@@ -20,15 +20,19 @@ public class AdminUserController {
     @GetMapping
     public ResponseEntity<List<Map<String, Object>>> getAllUsers() {
         List<Map<String, Object>> users = userRepository.findAll().stream()
-                .map(u -> Map.<String, Object>of(
-                        "id", u.getId(),
-                        "email", u.getEmail(),
-                        "fullName", u.getFullName() != null ? u.getFullName() : "",
-                        "avatarUrl", u.getAvatarUrl() != null ? u.getAvatarUrl() : "",
-                        "role", u.getRole().name(),
-                        "createdAt", u.getCreatedAt() != null ? u.getCreatedAt().toString() : "",
-                        "status", u.getStatus() != null ? u.getStatus() : "ACTIVE"
-                ))
+                .map(u -> {
+                    Map<String, Object> map = new java.util.LinkedHashMap<>();
+                    map.put("id", u.getId());
+                    map.put("email", u.getEmail());
+                    map.put("fullName", u.getFullName() != null ? u.getFullName() : "");
+                    map.put("avatarUrl", u.getAvatarUrl() != null ? u.getAvatarUrl() : "");
+                    map.put("role", u.getRole().name());
+                    map.put("phoneNumber", u.getPhoneNumber() != null ? u.getPhoneNumber() : "");
+                    map.put("address", u.getAddress() != null ? u.getAddress() : "");
+                    map.put("createdAt", u.getCreatedAt() != null ? u.getCreatedAt().toString() : "");
+                    map.put("status", u.getStatus() != null ? u.getStatus() : "ACTIVE");
+                    return map;
+                })
                 .collect(Collectors.toList());
         return ResponseEntity.ok(users);
     }

@@ -28,6 +28,12 @@ public class User {
     @Column(columnDefinition = "LONGTEXT")
     private String avatarUrl;
 
+    @Column(length = 20)
+    private String phoneNumber;
+
+    @Column(columnDefinition = "TEXT")
+    private String address;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 

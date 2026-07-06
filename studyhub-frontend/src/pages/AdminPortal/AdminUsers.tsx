@@ -112,18 +112,38 @@ const AdminUsers: React.FC = () => {
     }
   };
 
+  const formatDateCSV = (dateStr: string) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch { return ''; }
+  };
+
+  const escapeCSV = (val: any) => {
+    const str = String(val ?? '').replace(/"/g, '""');
+    return `"${str}"`;
+  };
+
   const exportUsersCSV = () => {
-    const headers = ['ID', 'Họ tên', 'Email', 'Vai trò', 'Số điện thoại', 'Ngày tham gia', 'Trạng thái'];
+    const headers = ['ID', 'Họ tên', 'Email', 'Vai trò', 'Số điện thoại', 'Địa chỉ', 'Ngày tham gia', 'Trạng thái'];
     const rows = users.map((u: any) => [
       u.id,
-      `"${(u.fullName || '').replace(/"/g, '""')}"`,
-      u.email || '',
-      u.role === 'ADMIN' ? 'Quản trị' : u.role === 'TUTOR' ? 'Gia sư' : 'Phụ huynh',
-      u.phoneNumber || u.phone || '',
-      u.createdAt ? new Date(u.createdAt).toLocaleDateString('vi-VN') : '',
-      u.status === 'ACTIVE' || !u.status ? 'Hoạt động' : 'Đã khóa',
+      escapeCSV(u.fullName || ''),
+      escapeCSV(u.email || ''),
+      escapeCSV(u.role === 'ADMIN' ? 'Quản trị' : u.role === 'TUTOR' ? 'Gia sư' : 'Phụ huynh'),
+      escapeCSV(u.phoneNumber || ''),
+      escapeCSV(u.address || ''),
+      escapeCSV(formatDateCSV(u.createdAt)),
+      escapeCSV(u.status === 'ACTIVE' || !u.status ? 'Hoạt động' : 'Đã khóa'),
     ]);
-    const csvContent = [headers.join(','), ...rows.map((r: any[]) => r.join(','))].join('\n');
+    const csvContent = [
+      headers.map(h => escapeCSV(h)).join(','),
+      ...rows.map((r: any[]) => r.join(','))
+    ].join('\n');
     const bom = '\uFEFF';
     const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -224,6 +244,7 @@ const AdminUsers: React.FC = () => {
                       <th className="py-3 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Người dùng</th>
                       <th className="py-3 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Vai trò</th>
                       <th className="py-3 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Số điện thoại</th>
+                      <th className="py-3 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Địa chỉ</th>
                       <th className="py-3 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Ngày tham gia</th>
                       <th className="py-3 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Trạng thái</th>
                       <th className="py-3 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Thao tác</th>
@@ -258,11 +279,19 @@ const AdminUsers: React.FC = () => {
                         </td>
                         {/* Phone */}
                         <td className="py-3.5 px-5 text-sm text-slate-600">
-                          {user.phoneNumber || user.phone ? (
-                            <a href={`tel:${user.phoneNumber || user.phone}`} className="flex items-center gap-1 hover:text-primary transition-colors">
+                          {user.phoneNumber ? (
+                            <a href={`tel:${user.phoneNumber}`} className="flex items-center gap-1 hover:text-primary transition-colors">
                               <span className="material-symbols-outlined text-[13px] text-slate-400">call</span>
-                              {user.phoneNumber || user.phone}
+                              {user.phoneNumber}
                             </a>
+                          ) : (
+                            <span className="text-slate-300 italic text-xs">Chưa cập nhật</span>
+                          )}
+                        </td>
+                        {/* Address */}
+                        <td className="py-3.5 px-5 text-sm text-slate-500 max-w-[180px]">
+                          {user.address ? (
+                            <span className="line-clamp-2 text-slate-600" title={user.address}>{user.address}</span>
                           ) : (
                             <span className="text-slate-300 italic text-xs">Chưa cập nhật</span>
                           )}
