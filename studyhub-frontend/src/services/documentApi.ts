@@ -10,6 +10,8 @@ export interface PublicDocument {
   uploadedBy: number;
   uploadedAt: string;
   schoolLevel?: string;
+  grade?: string;
+  subject?: string;
   category?: string;
 }
 
@@ -19,11 +21,13 @@ export const documentApi = {
     return response.data;
   },
 
-  uploadDocument: async (uploaderId: number, title: string, schoolLevel: string, category: string, file: File): Promise<PublicDocument> => {
+  uploadDocument: async (uploaderId: number, title: string, schoolLevel: string, grade: string, subject: string, category: string, file: File): Promise<PublicDocument> => {
     const formData = new FormData();
     formData.append('uploaderId', uploaderId.toString());
     formData.append('title', title);
     formData.append('schoolLevel', schoolLevel);
+    formData.append('grade', grade);
+    formData.append('subject', subject);
     formData.append('category', category);
     formData.append('file', file);
 

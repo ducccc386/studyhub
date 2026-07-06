@@ -8,7 +8,8 @@ const DocumentManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [title, setTitle] = useState('');
-  const [schoolLevel, setSchoolLevel] = useState('Cấp 1');
+  const [grade, setGrade] = useState('Lớp 12');
+  const [subject, setSubject] = useState('Toán');
   const [category, setCategory] = useState('Đề thi');
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -54,7 +55,20 @@ const DocumentManagement: React.FC = () => {
 
     try {
       setUploading(true);
-      await documentApi.uploadDocument(adminId, title, schoolLevel, category, file);
+      
+      // Tự động xác định Cấp học từ Lớp
+      let determinedLevel = 'Cấp 3';
+      const match = grade.match(/\d+/);
+      if (match) {
+        const gradeNum = parseInt(match[0]);
+        if (gradeNum >= 1 && gradeNum <= 5) determinedLevel = 'Cấp 1';
+        else if (gradeNum >= 6 && gradeNum <= 9) determinedLevel = 'Cấp 2';
+        else if (gradeNum >= 10 && gradeNum <= 12) determinedLevel = 'Cấp 3';
+      } else {
+        determinedLevel = 'Khác';
+      }
+
+      await documentApi.uploadDocument(adminId, title, determinedLevel, grade, subject, category, file);
       setTitle('');
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -91,8 +105,8 @@ const DocumentManagement: React.FC = () => {
           <span className="material-symbols-outlined text-primary">upload_file</span>
           Tải lên tài liệu mới (PDF)
         </h2>
-        <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-          <div className="md:col-span-4">
+        <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+          <div className="md:col-span-3">
             <label className="block text-sm font-medium text-slate-700 mb-1">Tên tài liệu</label>
             <input
               type="text"
@@ -104,15 +118,28 @@ const DocumentManagement: React.FC = () => {
             />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-slate-700 mb-1">Cấp học</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Lớp</label>
             <select
-              value={schoolLevel}
-              onChange={(e) => setSchoolLevel(e.target.value)}
+              value={grade}
+              onChange={(e) => setGrade(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
             >
-              <option value="Cấp 1">Cấp 1 (Tiểu học)</option>
-              <option value="Cấp 2">Cấp 2 (THCS)</option>
-              <option value="Cấp 3">Cấp 3 (THPT)</option>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
+                <option key={n} value={`Lớp ${n}`}>{`Lớp ${n}`}</option>
+              ))}
+              <option value="Khác">Khác</option>
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-slate-700 mb-1">Môn học</label>
+            <select
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+            >
+              {["Toán", "Vật lý", "Hóa học", "Tiếng Anh", "Ngữ văn", "Sinh học", "Lịch sử", "Địa lý", "Tin học", "Khác"].map(sub => (
+                <option key={sub} value={sub}>{sub}</option>
+              ))}
             </select>
           </div>
           <div className="md:col-span-2">
@@ -138,7 +165,7 @@ const DocumentManagement: React.FC = () => {
               required
             />
           </div>
-          <div className="md:col-span-2">
+          <div className="md:col-span-1">
             <button
               type="submit"
               disabled={uploading}
@@ -146,7 +173,7 @@ const DocumentManagement: React.FC = () => {
                 uploading ? 'bg-primary/60 cursor-not-allowed' : 'bg-primary hover:bg-primary/90 shadow-md shadow-primary/20'
               }`}
             >
-              {uploading ? 'Đang tải lên...' : 'Tải lên'}
+              {uploading ? '...' : 'Tải'}
             </button>
           </div>
         </form>
@@ -161,7 +188,8 @@ const DocumentManagement: React.FC = () => {
             <thead className="bg-slate-50 text-slate-500 font-medium">
               <tr>
                 <th className="px-6 py-4">Tên tài liệu</th>
-                <th className="px-6 py-4">Cấp học</th>
+                <th className="px-6 py-4">Lớp</th>
+                <th className="px-6 py-4">Môn học</th>
                 <th className="px-6 py-4">Phân loại</th>
                 <th className="px-6 py-4">Ngày tải lên</th>
                 <th className="px-6 py-4">Hành động</th>
@@ -170,11 +198,11 @@ const DocumentManagement: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-slate-400">Đang tải...</td>
+                  <td colSpan={6} className="px-6 py-8 text-center text-slate-400">Đang tải...</td>
                 </tr>
               ) : documents.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-slate-400">Chưa có tài liệu nào.</td>
+                  <td colSpan={6} className="px-6 py-8 text-center text-slate-400">Chưa có tài liệu nào.</td>
                 </tr>
               ) : (
                 documents.map((doc) => (
@@ -183,7 +211,10 @@ const DocumentManagement: React.FC = () => {
                       {doc.title}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {doc.schoolLevel || 'Cấp 3'}
+                      {doc.grade || 'Lớp 12'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {doc.subject || 'Toán'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 rounded-full text-xs font-semibold ${

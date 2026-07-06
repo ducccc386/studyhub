@@ -7,6 +7,8 @@ const PublicDocumentList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [activeLevel, setActiveLevel] = useState<string>('Tất cả');
+  const [activeGrade, setActiveGrade] = useState<string>('Tất cả');
+  const [activeSubject, setActiveSubject] = useState<string>('Tất cả');
   const [activeCategory, setActiveCategory] = useState<string>('Tất cả');
 
   useEffect(() => {
@@ -27,10 +29,24 @@ const PublicDocumentList: React.FC = () => {
     }
   };
 
+  const getVisibleGrades = () => {
+    if (activeLevel === 'Cấp 1') return ["Lớp 1", "Lớp 2", "Lớp 3", "Lớp 4", "Lớp 5"];
+    if (activeLevel === 'Cấp 2') return ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9"];
+    if (activeLevel === 'Cấp 3') return ["Lớp 10", "Lớp 11", "Lớp 12"];
+    return ["Lớp 1", "Lớp 2", "Lớp 3", "Lớp 4", "Lớp 5", "Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9", "Lớp 10", "Lớp 11", "Lớp 12"];
+  };
+
+  const handleLevelChange = (level: string) => {
+    setActiveLevel(level);
+    setActiveGrade('Tất cả'); // Reset lớp khi đổi cấp
+  };
+
   const filteredDocuments = documents.filter((doc) => {
     const matchesLevel = activeLevel === 'Tất cả' || (doc.schoolLevel || 'Cấp 3') === activeLevel;
+    const matchesGrade = activeGrade === 'Tất cả' || doc.grade === activeGrade;
+    const matchesSubject = activeSubject === 'Tất cả' || doc.subject === activeSubject;
     const matchesCategory = activeCategory === 'Tất cả' || (doc.category || 'Tài liệu') === activeCategory;
-    return matchesLevel && matchesCategory;
+    return matchesLevel && matchesGrade && matchesSubject && matchesCategory;
   });
 
   return (
@@ -41,7 +57,7 @@ const PublicDocumentList: React.FC = () => {
             Tài liệu <span className="text-primary">Công khai</span>
           </h1>
           <p className="text-slate-500 max-w-2xl mx-auto text-lg">
-            Khám phá kho tài liệu học tập đa dạng, được phân chia cấp học rõ ràng và cung cấp hoàn toàn miễn phí bởi đội ngũ StudyHub.
+            Khám phá kho tài liệu học tập đa dạng, được phân chia theo Lớp và Môn học rõ ràng, hoàn toàn miễn phí từ StudyHub.
           </p>
         </div>
 
@@ -54,7 +70,7 @@ const PublicDocumentList: React.FC = () => {
               {['Tất cả', 'Cấp 1', 'Cấp 2', 'Cấp 3'].map((level) => (
                 <button
                   key={level}
-                  onClick={() => setActiveLevel(level)}
+                  onClick={() => handleLevelChange(level)}
                   className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
                     activeLevel === level
                       ? 'bg-primary text-white border-primary shadow-sm'
@@ -62,6 +78,56 @@ const PublicDocumentList: React.FC = () => {
                   }`}
                 >
                   {level === 'Tất cả' ? 'Tất cả cấp học' : level === 'Cấp 1' ? 'Cấp 1 (Tiểu học)' : level === 'Cấp 2' ? 'Cấp 2 (THCS)' : 'Cấp 3 (THPT)'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Lớp học */}
+          <div className="flex flex-col md:flex-row md:items-start gap-3 border-t border-slate-100 pt-4">
+            <span className="text-sm font-bold text-slate-700 w-24 shrink-0 mt-2">Lớp:</span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setActiveGrade('Tất cả')}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                  activeGrade === 'Tất cả'
+                    ? 'bg-primary text-white border-primary shadow-sm'
+                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                Tất cả lớp
+              </button>
+              {getVisibleGrades().map((gradeOpt) => (
+                <button
+                  key={gradeOpt}
+                  onClick={() => setActiveGrade(gradeOpt)}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                    activeGrade === gradeOpt
+                      ? 'bg-primary text-white border-primary shadow-sm'
+                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {gradeOpt}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Môn học */}
+          <div className="flex flex-col md:flex-row md:items-center gap-3 border-t border-slate-100 pt-4">
+            <span className="text-sm font-bold text-slate-700 w-24 shrink-0">Môn học:</span>
+            <div className="flex flex-wrap gap-2">
+              {['Tất cả', 'Toán', 'Vật lý', 'Hóa học', 'Tiếng Anh', 'Ngữ văn', 'Sinh học', 'Lịch sử', 'Địa lý', 'Tin học', 'Khác'].map((sub) => (
+                <button
+                  key={sub}
+                  onClick={() => setActiveSubject(sub)}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                    activeSubject === sub
+                      ? 'bg-primary text-white border-primary shadow-sm'
+                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {sub === 'Tất cả' ? 'Tất cả môn' : sub}
                 </button>
               ))}
             </div>
@@ -103,7 +169,7 @@ const PublicDocumentList: React.FC = () => {
               <span className="material-symbols-outlined text-4xl text-slate-300">folder_open</span>
             </div>
             <h3 className="text-xl font-bold text-slate-700 mb-2">Không tìm thấy tài liệu phù hợp</h3>
-            <p className="text-slate-500">Hãy thử đổi bộ lọc cấp học hoặc phân loại khác.</p>
+            <p className="text-slate-500">Hãy thử đổi bộ lọc Lớp, Môn học hoặc Phân loại khác.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -114,9 +180,12 @@ const PublicDocumentList: React.FC = () => {
                     <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center group-hover:scale-110 transition-transform">
                       <span className="material-symbols-outlined text-red-500 text-[24px]">picture_as_pdf</span>
                     </div>
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-1.5 flex-wrap justify-end max-w-[70%]">
                       <span className="px-2.5 py-1 bg-primary/5 text-primary border border-primary/10 rounded-lg text-[10px] font-bold">
-                        {doc.schoolLevel || 'Cấp 3'}
+                        {doc.grade || 'Lớp 12'}
+                      </span>
+                      <span className="px-2.5 py-1 bg-green-50 text-green-700 border border-green-100 rounded-lg text-[10px] font-bold">
+                        {doc.subject || 'Toán'}
                       </span>
                       <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border ${
                         doc.category === 'Đề thi' ? 'bg-red-50 text-red-600 border-red-100' :

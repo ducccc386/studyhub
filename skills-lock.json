@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "prompt-master": {
+      "source": "nidhinjs/prompt-master",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "3832fe1828f285c3d5e49dda60ac597408caddd73403c2dbb8398ee9d8b4d319"
+    }
+  }
+}
