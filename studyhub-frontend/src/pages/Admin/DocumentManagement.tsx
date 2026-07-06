@@ -16,6 +16,31 @@ const DocumentManagement: React.FC = () => {
 
   const adminId = userId || parseInt(localStorage.getItem('userId') || '1');
 
+  const exportToCSV = () => {
+    const headers = ['ID', 'Tên tài liệu', 'Lớp', 'Môn học', 'Cấp học', 'Phân loại', 'Ngày tải lên', 'Link tài liệu'];
+    const rows = documents.map(doc => [
+      doc.id,
+      `"${doc.title.replace(/"/g, '""')}"`,
+      doc.grade || '',
+      doc.subject || '',
+      doc.schoolLevel || '',
+      doc.category || '',
+      doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('vi-VN') : '',
+      doc.fileUrl || '',
+    ]);
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const bom = '\uFEFF'; // UTF-8 BOM for Excel/Sheets Vietnamese support
+    const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `danh-sach-tai-lieu-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   useEffect(() => {
     fetchDocuments();
   }, []);
@@ -95,9 +120,19 @@ const DocumentManagement: React.FC = () => {
 
   return (
     <div className="p-6">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-800">Quản lý Tài liệu Công khai</h1>
-        <p className="text-slate-500">Tải lên và quản lý các tài liệu miễn phí cho người dùng.</p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Quản lý Tài liệu Công khai</h1>
+          <p className="text-slate-500">Tải lên và quản lý các tài liệu miễn phí cho người dùng.</p>
+        </div>
+        <button
+          onClick={exportToCSV}
+          className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-sm transition-all shrink-0"
+          title="Tải file CSV rồi vào Google Sheets → File → Import để xem"
+        >
+          <span className="material-symbols-outlined text-[18px]">table_chart</span>
+          Xuất Google Sheets (.csv)
+        </button>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-8 shadow-sm">
