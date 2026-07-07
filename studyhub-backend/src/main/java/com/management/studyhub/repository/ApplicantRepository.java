@@ -9,4 +9,5 @@ public interface ApplicantRepository extends JpaRepository<Applicant, Long> {
     List<Applicant> findByJobPostingId(Long jobPostingId);
     List<Applicant> findByJobPostingIdAndStatus(Long jobPostingId, String status);
     List<Applicant> findByTutorId(String tutorId);
+    void deleteByJobPostingId(Long jobPostingId);
 }

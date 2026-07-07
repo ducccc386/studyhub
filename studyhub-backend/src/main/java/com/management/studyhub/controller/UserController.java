@@ -20,14 +20,18 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getUser(@PathVariable Long id) {
         return userRepository.findById(id)
-                .map(u -> ResponseEntity.ok(Map.of(
-                        "id", u.getId(),
-                        "email", u.getEmail(),
-                        "fullName", u.getFullName() != null ? u.getFullName() : "",
-                        "avatarUrl", u.getAvatarUrl() != null ? u.getAvatarUrl() : "",
-                        "role", u.getRole().name(),
-                        "createdAt", u.getCreatedAt().toString()
-                )))
+                .map(u -> {
+                    java.util.Map<String, Object> resp = new java.util.LinkedHashMap<>();
+                    resp.put("id", u.getId());
+                    resp.put("email", u.getEmail());
+                    resp.put("fullName", u.getFullName() != null ? u.getFullName() : "");
+                    resp.put("avatarUrl", u.getAvatarUrl() != null ? u.getAvatarUrl() : "");
+                    resp.put("role", u.getRole().name());
+                    resp.put("phone", u.getPhoneNumber() != null ? u.getPhoneNumber() : "");
+                    resp.put("address", u.getAddress() != null ? u.getAddress() : "");
+                    resp.put("createdAt", u.getCreatedAt() != null ? u.getCreatedAt().toString() : "");
+                    return ResponseEntity.ok(resp);
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -39,6 +43,12 @@ public class UserController {
             }
             if (body.containsKey("avatarUrl") && body.get("avatarUrl") != null && !body.get("avatarUrl").isBlank()) {
                 u.setAvatarUrl(body.get("avatarUrl"));
+            }
+            if (body.containsKey("phone")) {
+                u.setPhoneNumber(body.get("phone"));
+            }
+            if (body.containsKey("address")) {
+                u.setAddress(body.get("address"));
             }
             userRepository.save(u);
             return ResponseEntity.ok(Map.of(

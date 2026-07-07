@@ -60,6 +60,10 @@ const Navbar: React.FC = () => {
     navLinks.push({ to: '/tutor/search-classes', label: 'Tìm lớp', icon: 'search' });
   }
 
+  if (role === 'parent') {
+    navLinks.push({ to: '/parent/posts', label: 'Bài đăng của tôi', icon: 'article' });
+  }
+
   const userAvatar = avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=random`;
 
   return (
@@ -236,6 +240,7 @@ const Navbar: React.FC = () => {
                         </>
                       ) : role === 'parent' ? (
                         <>
+                          <MenuItem to="/parent/posts" icon="article" label="Bài đăng của tôi" onClick={() => setIsDropdownOpen(false)} />
                           <MenuItem to="/parent/settings" icon="settings" label="Cài đặt tài khoản" onClick={() => setIsDropdownOpen(false)} muted />
                         </>
                       ) : (

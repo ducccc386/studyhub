@@ -64,7 +64,7 @@ const Settings: React.FC = () => {
     try {
       const res = await apiFetch(`/users/${userId}`, {
         method: 'PUT',
-        body: JSON.stringify({ fullName, avatarUrl: avatar }),
+        body: JSON.stringify({ fullName, avatarUrl: avatar, phone, address }),
       });
       if (!res.ok) {
         const err = await res.json();

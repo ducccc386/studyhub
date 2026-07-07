@@ -55,6 +55,11 @@ const PostManagement: React.FC = () => {
   const [inviteBanner, setInviteBanner] = useState<string | null>(inviteTutorId);
   const [sendingInvite, setSendingInvite] = useState<number | null>(null);
 
+  // Edit Post Modal state
+  const [editingPost, setEditingPost] = useState<JobPostingDTO | null>(null);
+  const [editForm, setEditForm] = useState<Partial<JobPostingDTO>>({});
+  const [editSaving, setEditSaving] = useState(false);
+
   useEffect(() => {
     if (!userId) return;
 
@@ -127,6 +132,54 @@ const PostManagement: React.FC = () => {
       alert('Lỗi kết nối máy chủ.');
     } finally {
       setSendingInvite(null);
+    }
+  };
+
+  const handleOpenEdit = (post: JobPostingDTO) => {
+    setEditingPost(post);
+    setEditForm({
+      title: post.title,
+      subject: post.subject,
+      classLevel: post.classLevel,
+      description: post.description,
+      location: post.location,
+      detailedAddress: post.detailedAddress,
+      schedule: post.schedule,
+      pricePerSession: post.pricePerSession,
+      learningMode: post.learningMode,
+      requirement: post.requirement,
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingPost) return;
+    setEditSaving(true);
+    try {
+      const res = await apiFetch(`/posts/${editingPost.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(editForm),
+      });
+      if (!res.ok) throw new Error('Lỗi lưu bài đăng');
+      const updated = await res.json();
+      setPosts(prev => prev.map(p => p.id === editingPost.id ? { ...p, ...updated, applicants: p.applicants } : p));
+      setEditingPost(null);
+      alert('Đã cập nhật bài đăng thành công!');
+    } catch (err: any) {
+      alert('Lỗi: ' + err.message);
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const handleDeletePost = async (postId: number) => {
+    if (!window.confirm('Bạn có chắc muốn xóa bài đăng này không? Hành động này không thể hoàn tác.')) return;
+    try {
+      const res = await apiFetch(`/posts/${postId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Lỗi xóa bài đăng');
+      setPosts(prev => prev.filter(p => p.id !== postId));
+      alert('Đã xóa bài đăng thành công!');
+    } catch (err: any) {
+      alert('Lỗi: ' + err.message);
     }
   };
 
@@ -322,6 +375,24 @@ const PostManagement: React.FC = () => {
                       <p className="text-xs text-on-surface-variant mb-1 font-medium">Số người ứng tuyển</p>
                       <p className="text-2xl font-bold text-primary">{post.applicantsCount || 0}</p>
                     </div>
+                    {!isClosed && (
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => handleOpenEdit(post)}
+                          className="px-4 py-2 bg-surface border border-primary/40 text-primary text-sm font-semibold rounded-xl hover:bg-primary/5 transition-colors flex items-center gap-1.5"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">edit</span>
+                          Chỉnh sửa
+                        </button>
+                        <button
+                          onClick={() => handleDeletePost(typeof post.id === 'string' ? parseInt(post.id) : post.id)}
+                          className="px-4 py-2 bg-surface border border-red-200 text-red-500 text-sm font-semibold rounded-xl hover:bg-red-50 transition-colors flex items-center gap-1.5"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">delete</span>
+                          Xóa
+                        </button>
+                      </div>
+                    )}
                     {inviteBanner && post.status === 'RECRUITING' && (
                       <button
                         onClick={() => handleInviteTutorToPost(typeof post.id === 'string' ? parseInt(post.id) : post.id)}
@@ -473,6 +544,69 @@ const PostManagement: React.FC = () => {
           tutorId={selectedTutorId} 
           onClose={() => setSelectedTutorId(null)} 
         />
+      )}
+
+      {/* Edit Post Modal */}
+      {editingPost && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-outline-variant">
+              <h3 className="font-bold text-xl text-on-surface">Chỉnh sửa bài đăng</h3>
+              <button onClick={() => setEditingPost(null)} className="p-2 rounded-full hover:bg-surface-container-low transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-on-surface-variant mb-1">Tiêu đề</label>
+                <input className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary outline-none" value={editForm.title || ''} onChange={e => setEditForm(prev => ({...prev, title: e.target.value}))} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-on-surface-variant mb-1">Môn học</label>
+                  <input className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary outline-none" value={editForm.subject || ''} onChange={e => setEditForm(prev => ({...prev, subject: e.target.value}))} />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-on-surface-variant mb-1">Lớp</label>
+                  <input className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary outline-none" value={editForm.classLevel || ''} onChange={e => setEditForm(prev => ({...prev, classLevel: e.target.value}))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-on-surface-variant mb-1">Học phí/buổi (VNĐ)</label>
+                  <input type="number" className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary outline-none" value={editForm.pricePerSession || ''} onChange={e => setEditForm(prev => ({...prev, pricePerSession: Number(e.target.value)}))} />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-on-surface-variant mb-1">Hình thức</label>
+                  <select className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary outline-none" value={editForm.learningMode || ''} onChange={e => setEditForm(prev => ({...prev, learningMode: e.target.value}))}>
+                    <option value="ONLINE">Trực tuyến (Online)</option>
+                    <option value="OFFLINE">Trực tiếp (Offline)</option>
+                    <option value="BOTH">Cả hai</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-on-surface-variant mb-1">Lịch học</label>
+                <input className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary outline-none" placeholder="VD: Thứ 2, Thứ 4, Thứ 6" value={editForm.schedule || ''} onChange={e => setEditForm(prev => ({...prev, schedule: e.target.value}))} />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-on-surface-variant mb-1">Địa điểm</label>
+                <input className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary outline-none" value={editForm.location || ''} onChange={e => setEditForm(prev => ({...prev, location: e.target.value}))} />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-on-surface-variant mb-1">Mô tả yêu cầu</label>
+                <textarea rows={3} className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary outline-none resize-none" value={editForm.description || ''} onChange={e => setEditForm(prev => ({...prev, description: e.target.value}))} />
+              </div>
+            </div>
+            <div className="p-6 border-t border-outline-variant flex justify-end gap-3">
+              <button onClick={() => setEditingPost(null)} className="px-6 py-2.5 rounded-xl text-sm font-semibold text-on-surface-variant border border-outline-variant hover:bg-surface-container transition-colors">Hủy</button>
+              <button onClick={handleSaveEdit} disabled={editSaving} className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-60 flex items-center gap-2">
+                {editSaving && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                Lưu thay đổi
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

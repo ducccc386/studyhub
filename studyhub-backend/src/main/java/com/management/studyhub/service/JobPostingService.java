@@ -119,6 +119,30 @@ public class JobPostingService {
         jobPostingRepository.save(job);
     }
 
+    public JobPostingDTO updatePost(Long id, JobPostingDTO dto) {
+        JobPosting job = jobPostingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bài đăng"));
+        if (dto.getTitle() != null && !dto.getTitle().isBlank()) job.setTitle(dto.getTitle());
+        if (dto.getSubject() != null) job.setSubject(dto.getSubject());
+        if (dto.getClassLevel() != null) job.setClassLevel(dto.getClassLevel());
+        if (dto.getDescription() != null) job.setDescription(dto.getDescription());
+        if (dto.getLocation() != null) job.setLocation(dto.getLocation());
+        if (dto.getDetailedAddress() != null) job.setDetailedAddress(dto.getDetailedAddress());
+        if (dto.getSchedule() != null) job.setSchedule(dto.getSchedule());
+        if (dto.getPricePerSession() != null) job.setPricePerSession(dto.getPricePerSession());
+        if (dto.getLearningMode() != null) job.setLearningMode(dto.getLearningMode());
+        if (dto.getRequirement() != null) job.setRequirement(dto.getRequirement());
+        return mapToDTO(jobPostingRepository.save(job));
+    }
+
+    public void deletePost(Long id) {
+        if (!jobPostingRepository.existsById(id)) {
+            throw new RuntimeException("Không tìm thấy bài đăng");
+        }
+        applicantRepository.deleteByJobPostingId(id);
+        jobPostingRepository.deleteById(id);
+    }
+
     /**
      * Lấy danh sách ứng viên theo postId
      */

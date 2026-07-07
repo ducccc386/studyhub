@@ -45,6 +45,26 @@ public class JobPostingController {
         }
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updatePost(@PathVariable Long id, @RequestBody JobPostingDTO dto) {
+        try {
+            JobPostingDTO updated = jobPostingService.updatePost(id, dto);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletePost(@PathVariable Long id) {
+        try {
+            jobPostingService.deletePost(id);
+            return ResponseEntity.ok(Map.of("message", "Đã xóa bài đăng"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     // Admin endpoints
     @GetMapping("/admin/pending")
     public ResponseEntity<List<JobPostingDTO>> getPendingPosts() {
