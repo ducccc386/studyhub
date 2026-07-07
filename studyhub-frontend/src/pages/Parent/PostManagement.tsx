@@ -4,6 +4,34 @@ import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../utils/api';
 import TutorProfileModal from '../../components/Shared/TutorProfileModal';
 
+// ── Constants dùng chung cho form tạo/chỉnh sửa ──────────────────────────────
+const EDIT_SUBJECTS = [
+  'Toán học','Ngữ văn','Tiếng Anh','Vật lý','Hóa học',
+  'Sinh học','Lịch sử','Địa lý','Tin học','GDCD','Ngoại ngữ khác'
+];
+
+const CLASS_LEVELS = [
+  { group: 'Tiểu học', options: ['Lớp 1','Lớp 2','Lớp 3','Lớp 4','Lớp 5'] },
+  { group: 'Trung học cơ sở', options: ['Lớp 6','Lớp 7','Lớp 8','Lớp 9'] },
+  { group: 'Trung học phổ thông', options: ['Lớp 10','Lớp 11','Lớp 12'] },
+];
+
+const DAYS_OF_WEEK = ['T2','T3','T4','T5','T6','T7','CN'] as const;
+const DAY_LABELS: Record<string, string> = {
+  'T2':'Thứ 2','T3':'Thứ 3','T4':'Thứ 4',
+  'T5':'Thứ 5','T6':'Thứ 6','T7':'Thứ 7','CN':'Chủ nhật'
+};
+// Reverse map: "Thứ 2" → "T2" etc.
+const LABEL_TO_DAY: Record<string, string> = Object.fromEntries(
+  Object.entries(DAY_LABELS).map(([k,v]) => [v, k])
+);
+
+const LEARNING_MODES_EDIT = [
+  { value: 'ONLINE',  label: 'Online',   icon: 'videocam' },
+  { value: 'OFFLINE', label: 'Offline',  icon: 'location_on' },
+  { value: 'BOTH',    label: 'Cả hai',   icon: 'devices' },
+];
+
 interface ApplicantDTO {
   id: number;
   jobPostingId: number;
@@ -59,6 +87,9 @@ const PostManagement: React.FC = () => {
   const [editingPost, setEditingPost] = useState<JobPostingDTO | null>(null);
   const [editForm, setEditForm] = useState<Partial<JobPostingDTO>>({});
   const [editSaving, setEditSaving] = useState(false);
+  const [editSelectedDays, setEditSelectedDays] = useState<string[]>([]);
+  const [editSessionTime, setEditSessionTime] = useState('');
+  const [editPriceError, setEditPriceError] = useState('');
 
   useEffect(() => {
     if (!userId) return;
@@ -137,6 +168,19 @@ const PostManagement: React.FC = () => {
 
   const handleOpenEdit = (post: JobPostingDTO) => {
     setEditingPost(post);
+    setEditPriceError('');
+    // Parse schedule string back to days + time
+    // Format saved: "Thứ 2, Thứ 4, Thứ 6 - 08:00" or just "Thứ 2, Thứ 4"
+    let parsedDays: string[] = [];
+    let parsedTime = '';
+    if (post.schedule) {
+      const parts = post.schedule.split(' - ');
+      const daysPart = parts[0] || '';
+      parsedTime = parts[1] || '';
+      parsedDays = daysPart.split(',').map(s => s.trim()).map(label => LABEL_TO_DAY[label] || '').filter(Boolean);
+    }
+    setEditSelectedDays(parsedDays);
+    setEditSessionTime(parsedTime);
     setEditForm({
       title: post.title,
       subject: post.subject,
@@ -153,11 +197,16 @@ const PostManagement: React.FC = () => {
 
   const handleSaveEdit = async () => {
     if (!editingPost) return;
+    if (editPriceError) { alert(editPriceError); return; }
+    // Build schedule string from checkboxes + time
+    const scheduleStr = editSelectedDays.length > 0
+      ? `${editSelectedDays.map(d => DAY_LABELS[d]).join(', ')}${editSessionTime ? ` - ${editSessionTime}` : ''}`
+      : (editForm.schedule || '');
     setEditSaving(true);
     try {
       const res = await apiFetch(`/posts/${editingPost.id}`, {
         method: 'PUT',
-        body: JSON.stringify(editForm),
+        body: JSON.stringify({ ...editForm, schedule: scheduleStr }),
       });
       if (!res.ok) throw new Error('Lỗi lưu bài đăng');
       const updated = await res.json();
@@ -550,57 +599,175 @@ const PostManagement: React.FC = () => {
       {editingPost && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-outline-variant">
               <h3 className="font-bold text-xl text-on-surface">Chỉnh sửa bài đăng</h3>
               <button onClick={() => setEditingPost(null)} className="p-2 rounded-full hover:bg-surface-container-low transition-colors">
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-on-surface-variant mb-1">Tiêu đề</label>
-                <input className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary outline-none" value={editForm.title || ''} onChange={e => setEditForm(prev => ({...prev, title: e.target.value}))} />
-              </div>
+
+            <div className="p-6 space-y-5">
+              {/* Môn học + Lớp — dropdown */}
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-on-surface-variant mb-1">Môn học</label>
-                  <input className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary outline-none" value={editForm.subject || ''} onChange={e => setEditForm(prev => ({...prev, subject: e.target.value}))} />
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-semibold text-on-surface">Môn học</label>
+                  <div className="relative">
+                    <select
+                      className="w-full appearance-none bg-surface border border-outline-variant rounded-xl px-4 py-3 pr-10 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm"
+                      value={editForm.subject || ''}
+                      onChange={e => setEditForm(prev => ({...prev, subject: e.target.value}))}
+                    >
+                      <option value="" disabled>Chọn môn học</option>
+                      {EDIT_SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant text-[20px]">expand_more</span>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-on-surface-variant mb-1">Lớp</label>
-                  <input className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary outline-none" value={editForm.classLevel || ''} onChange={e => setEditForm(prev => ({...prev, classLevel: e.target.value}))} />
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-semibold text-on-surface">Lớp</label>
+                  <div className="relative">
+                    <select
+                      className="w-full appearance-none bg-surface border border-outline-variant rounded-xl px-4 py-3 pr-10 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm"
+                      value={editForm.classLevel || ''}
+                      onChange={e => setEditForm(prev => ({...prev, classLevel: e.target.value}))}
+                    >
+                      <option value="" disabled>Chọn lớp</option>
+                      {CLASS_LEVELS.map(g => (
+                        <optgroup key={g.group} label={g.group}>
+                          {g.options.map(o => <option key={o} value={o}>{o}</option>)}
+                        </optgroup>
+                      ))}
+                    </select>
+                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant text-[20px]">expand_more</span>
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-on-surface-variant mb-1">Học phí/buổi (VNĐ)</label>
-                  <input type="number" className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary outline-none" value={editForm.pricePerSession || ''} onChange={e => setEditForm(prev => ({...prev, pricePerSession: Number(e.target.value)}))} />
+
+              {/* Hình thức học */}
+              <div className="space-y-1.5">
+                <label className="block text-sm font-semibold text-on-surface">Hình thức học</label>
+                <div className="flex gap-2">
+                  {LEARNING_MODES_EDIT.map(m => (
+                    <label key={m.value} className="flex-1 cursor-pointer">
+                      <input
+                        className="peer hidden"
+                        type="radio"
+                        name="editLearningMode"
+                        value={m.value}
+                        checked={editForm.learningMode === m.value}
+                        onChange={() => setEditForm(prev => ({...prev, learningMode: m.value}))}
+                      />
+                      <div className="flex flex-col items-center justify-center gap-1 py-3 border border-outline-variant rounded-xl bg-surface text-on-surface-variant peer-checked:bg-primary peer-checked:text-white peer-checked:border-primary transition-all text-xs font-semibold">
+                        <span className="material-symbols-outlined text-[18px]">{m.icon}</span>
+                        {m.label}
+                      </div>
+                    </label>
+                  ))}
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-on-surface-variant mb-1">Hình thức</label>
-                  <select className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary outline-none" value={editForm.learningMode || ''} onChange={e => setEditForm(prev => ({...prev, learningMode: e.target.value}))}>
-                    <option value="ONLINE">Trực tuyến (Online)</option>
-                    <option value="OFFLINE">Trực tiếp (Offline)</option>
-                    <option value="BOTH">Cả hai</option>
-                  </select>
+              </div>
+
+              {/* Học phí — number input với min/max */}
+              <div className="space-y-1.5">
+                <label className="block text-sm font-semibold text-on-surface">Mức học phí đề xuất (VNĐ/buổi)</label>
+                <input
+                  type="number"
+                  min={50000}
+                  max={1000000}
+                  step={10000}
+                  className={`w-full bg-surface border rounded-xl px-4 py-3 focus:ring-2 outline-none text-sm ${
+                    editPriceError ? 'border-red-400 focus:border-red-400 focus:ring-red-200' : 'border-outline-variant focus:border-primary focus:ring-primary/20'
+                  }`}
+                  placeholder="Ví dụ: 200000"
+                  value={editForm.pricePerSession || ''}
+                  onChange={e => {
+                    const n = Number(e.target.value);
+                    setEditForm(prev => ({...prev, pricePerSession: n}));
+                    if (n < 50000) setEditPriceError('Tối thiểu 50,000 VNĐ');
+                    else if (n > 1000000) setEditPriceError('Tối đa 1,000,000 VNĐ');
+                    else setEditPriceError('');
+                  }}
+                />
+                {editPriceError
+                  ? <p className="text-xs text-red-500 mt-1">{editPriceError}</p>
+                  : <p className="text-xs text-on-surface-variant mt-1">Từ 50,000 đến 1,000,000 VNĐ/buổi</p>
+                }
+              </div>
+
+              {/* Lịch học — checkbox ngày + giờ */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-on-surface">
+                  Lịch học <span className="text-on-surface-variant font-normal">(chọn các ngày trong tuần)</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {DAYS_OF_WEEK.map(day => (
+                    <label key={day} className="cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="peer hidden"
+                        checked={editSelectedDays.includes(day)}
+                        onChange={() => setEditSelectedDays(prev =>
+                          prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+                        )}
+                      />
+                      <div className="px-4 py-2 rounded-lg border border-outline-variant text-sm font-semibold text-on-surface-variant peer-checked:bg-primary peer-checked:text-white peer-checked:border-primary transition-all select-none">
+                        {day}
+                      </div>
+                    </label>
+                  ))}
                 </div>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="material-symbols-outlined text-on-surface-variant text-[20px]">schedule</span>
+                  <input
+                    type="time"
+                    value={editSessionTime}
+                    onChange={e => setEditSessionTime(e.target.value)}
+                    className="bg-surface border border-outline-variant rounded-lg px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm"
+                  />
+                  <span className="text-sm text-on-surface-variant">Giờ bắt đầu buổi học</span>
+                </div>
+                {(editSelectedDays.length > 0 || editSessionTime) && (
+                  <p className="text-sm text-primary font-medium bg-primary/5 px-3 py-2 rounded-lg border border-primary/20">
+                    Lịch: {editSelectedDays.join(', ')}{editSessionTime ? ` — ${editSessionTime}` : ''}
+                  </p>
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-on-surface-variant mb-1">Lịch học</label>
-                <input className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary outline-none" placeholder="VD: Thứ 2, Thứ 4, Thứ 6" value={editForm.schedule || ''} onChange={e => setEditForm(prev => ({...prev, schedule: e.target.value}))} />
+
+              {/* Địa điểm */}
+              <div className="space-y-1.5">
+                <label className="block text-sm font-semibold text-on-surface">Địa điểm</label>
+                <input
+                  className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                  value={editForm.location || ''}
+                  onChange={e => setEditForm(prev => ({...prev, location: e.target.value}))}
+                />
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-on-surface-variant mb-1">Địa điểm</label>
-                <input className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary outline-none" value={editForm.location || ''} onChange={e => setEditForm(prev => ({...prev, location: e.target.value}))} />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-on-surface-variant mb-1">Mô tả yêu cầu</label>
-                <textarea rows={3} className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary outline-none resize-none" value={editForm.description || ''} onChange={e => setEditForm(prev => ({...prev, description: e.target.value}))} />
+
+              {/* Mô tả yêu cầu */}
+              <div className="space-y-1.5">
+                <label className="block text-sm font-semibold text-on-surface">Mô tả yêu cầu</label>
+                <textarea
+                  rows={4}
+                  className="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none resize-none"
+                  value={editForm.description || ''}
+                  onChange={e => setEditForm(prev => ({...prev, description: e.target.value}))}
+                />
               </div>
             </div>
+
+            {/* Footer */}
             <div className="p-6 border-t border-outline-variant flex justify-end gap-3">
-              <button onClick={() => setEditingPost(null)} className="px-6 py-2.5 rounded-xl text-sm font-semibold text-on-surface-variant border border-outline-variant hover:bg-surface-container transition-colors">Hủy</button>
-              <button onClick={handleSaveEdit} disabled={editSaving} className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-60 flex items-center gap-2">
+              <button
+                onClick={() => setEditingPost(null)}
+                className="px-6 py-2.5 rounded-xl text-sm font-semibold text-on-surface-variant border border-outline-variant hover:bg-surface-container transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={editSaving || !!editPriceError}
+                className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-60 flex items-center gap-2"
+              >
                 {editSaving && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                 Lưu thay đổi
               </button>
