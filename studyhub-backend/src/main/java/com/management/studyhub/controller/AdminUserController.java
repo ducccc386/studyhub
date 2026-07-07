@@ -28,13 +28,29 @@ public class AdminUserController {
         List<User> allUsers = userRepository.findAll();
 
         // Prefetch tutor profiles and parents to map them by userId and avoid N+1
-        Map<Long, TutorProfile> tutorProfileMap = tutorProfileRepository.findAll().stream()
-                .filter(t -> t.getUser() != null)
-                .collect(Collectors.toMap(t -> t.getUser().getId(), t -> t, (t1, t2) -> t1));
+        Map<Long, TutorProfile> tutorProfileMap = new java.util.HashMap<>();
+        try {
+            List<TutorProfile> tutors = tutorProfileRepository.findAll();
+            for (TutorProfile t : tutors) {
+                try {
+                    if (t.getUser() != null && t.getUser().getId() != null) {
+                        tutorProfileMap.put(t.getUser().getId(), t);
+                    }
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception ignored) {}
 
-        Map<Long, Parent> parentMap = parentRepository.findAll().stream()
-                .filter(p -> p.getUser() != null)
-                .collect(Collectors.toMap(p -> p.getUser().getId(), p -> p, (p1, p2) -> p1));
+        Map<Long, Parent> parentMap = new java.util.HashMap<>();
+        try {
+            List<Parent> parents = parentRepository.findAll();
+            for (Parent p : parents) {
+                try {
+                    if (p.getUser() != null && p.getUser().getId() != null) {
+                        parentMap.put(p.getUser().getId(), p);
+                    }
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception ignored) {}
 
         List<Map<String, Object>> users = allUsers.stream()
                 .map(u -> {
@@ -43,18 +59,20 @@ public class AdminUserController {
                     map.put("email", u.getEmail());
                     map.put("fullName", u.getFullName() != null ? u.getFullName() : "");
                     map.put("avatarUrl", u.getAvatarUrl() != null ? u.getAvatarUrl() : "");
-                    map.put("role", u.getRole().name());
+                    
+                    String roleName = u.getRole() != null ? u.getRole().name() : "";
+                    map.put("role", roleName);
 
                     String phone = "";
                     String address = "";
 
-                    if ("TUTOR".equals(u.getRole().name())) {
+                    if ("TUTOR".equals(roleName)) {
                         TutorProfile tutor = tutorProfileMap.get(u.getId());
                         if (tutor != null) {
                             phone = tutor.getPhoneNumber();
                             address = tutor.getAddress();
                         }
-                    } else if ("PARENT".equals(u.getRole().name())) {
+                    } else if ("PARENT".equals(roleName)) {
                         Parent parent = parentMap.get(u.getId());
                         if (parent != null) {
                             phone = parent.getPhone();
