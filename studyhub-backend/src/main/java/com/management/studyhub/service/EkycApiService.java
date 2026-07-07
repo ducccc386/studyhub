@@ -2,6 +2,7 @@ package com.management.studyhub.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -16,9 +17,13 @@ import java.util.Map;
 @Slf4j
 public class EkycApiService {
 
-    private final String API_KEY = "SVXWp0lSG8gJNtjbsld4xTE7OBb_Cycn";
-    private final String API_SECRET = "4913jAGF8Jq37TOOmNb592p7EezmGJhy";
-    private final String FACEPP_COMPARE_URL = "https://api-us.faceplusplus.com/facepp/v3/compare";
+    @Value("${ekyc.facepp.api_key}")
+    private String API_KEY;
+
+    @Value("${ekyc.facepp.api_secret}")
+    private String API_SECRET;
+
+    private static final String FACEPP_COMPARE_URL = "https://api-us.faceplusplus.com/facepp/v3/compare";
 
     private final RestTemplate restTemplate = new RestTemplate();
 

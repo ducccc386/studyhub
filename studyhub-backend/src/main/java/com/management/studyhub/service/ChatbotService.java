@@ -17,6 +17,9 @@ import java.util.Map;
 @Slf4j
 public class ChatbotService {
 
+    // Reuse một instance duy nhất - thread-safe, tránh tạo mới mỗi request
+    private static final RestTemplate REST_TEMPLATE = new RestTemplate();
+
     @Value("${gemini.api.key}")
     private String geminiApiKey;
 
@@ -42,7 +45,6 @@ public class ChatbotService {
 
     public String askChatbot(String userMessage) {
         try {
-            RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -61,7 +63,7 @@ public class ChatbotService {
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
-            ResponseEntity<Map> response = restTemplate.postForEntity(fullUrl, request, Map.class);
+            ResponseEntity<Map> response = REST_TEMPLATE.postForEntity(fullUrl, request, Map.class);
             Map<String, Object> body = response.getBody();
 
             if (body != null && body.containsKey("candidates")) {

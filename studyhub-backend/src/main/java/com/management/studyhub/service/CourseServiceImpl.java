@@ -162,11 +162,10 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<CourseDto> getPendingCourses() {
-        // Dùng query theo status trực tiếp thay vì findAll() + filter trong Java
-        return courseRepository.findAll().stream()
-                .filter(c -> "PENDING_APPROVAL".equals(c.getStatus()))
+        // Dùng query theo status trực tiếp tại DB thay vì findAll() + filter trong Java
+        return courseRepository.findByStatus("PENDING_APPROVAL")
+                .stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }

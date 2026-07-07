@@ -19,4 +19,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> findAllActiveCourses();
 
     List<Course> findByTutorId(Long tutorId);
+
+    @Query("SELECT c FROM Course c LEFT JOIN FETCH c.tutor t LEFT JOIN FETCH c.subject WHERE c.status = :status")
+    List<Course> findByStatus(@org.springframework.data.repository.query.Param("status") String status);
 }
