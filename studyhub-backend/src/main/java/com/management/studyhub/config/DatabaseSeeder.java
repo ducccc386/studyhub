@@ -84,9 +84,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         if (lessonLogRepository.count() == 0) {
             seedLessonLogs();
         }
-        if (publicDocumentRepository.count() <= 1) {
-            seedPublicDocuments();
-        }
+        seedPublicDocuments();
     }
 
     private void seedBookings() {
@@ -677,34 +675,47 @@ public class DatabaseSeeder implements CommandLineRunner {
     }
 
     private void seedPublicDocuments() {
+        // Delete all old giaokhoaonline documents to clean up
+        List<PublicDocument> oldDocs = publicDocumentRepository.findAll();
+        for (PublicDocument d : oldDocs) {
+            if (d.getFileUrl() != null && d.getFileUrl().contains("giaokhoaonline.com")) {
+                publicDocumentRepository.delete(d);
+            }
+        }
+
         User admin = userRepository.findByEmail("admin@gmail.com").orElse(null);
         Long adminId = admin != null ? admin.getId() : 1L;
 
         String[][] docs = {
-            {"Sách giáo khoa Toán 1 (Kết nối tri thức)", "https://giaokhoaonline.com/sach-toan-1-t1-ket-noi/", "Cấp 1", "Lớp 1", "Toán"},
-            {"Sách giáo khoa Tiếng Anh 2 (Family and Friends)", "https://giaokhoaonline.com/sach-tieng-anh-2-family-and-friends/", "Cấp 1", "Lớp 2", "Tiếng Anh"},
-            {"Sách giáo khoa Toán 3 (Chân trời sáng tạo)", "https://giaokhoaonline.com/sach-toan-3-t1-chan-troi/", "Cấp 1", "Lớp 3", "Toán"},
-            {"Sách giáo khoa Tiếng Anh 4 (Global Success)", "https://giaokhoaonline.com/sach-tieng-anh-4-tap-1-global-success/", "Cấp 1", "Lớp 4", "Tiếng Anh"},
-            {"Sách giáo khoa Toán 5 (Kết nối tri thức)", "https://giaokhoaonline.com/sach-toan-5-t1-ket-noi/", "Cấp 1", "Lớp 5", "Toán"},
-            {"Sách giáo khoa Ngữ văn 6 (Kết nối tri thức)", "https://giaokhoaonline.com/sach-ngu-van-6-tap-1-ket-noi/", "Cấp 2", "Lớp 6", "Ngữ văn"},
-            {"Sách giáo khoa Toán 7 (Cánh Diều)", "https://giaokhoaonline.com/sach-toan-7-t1-canh-dieu/", "Cấp 2", "Lớp 7", "Toán"},
-            {"Sách giáo khoa Tin học 8 (Cánh Diều)", "https://giaokhoaonline.com/sach-tin-hoc-8-canh-dieu/", "Cấp 2", "Lớp 8", "Tin học"},
-            {"Sách giáo khoa Hóa học 9 (Kết nối tri thức)", "https://giaokhoaonline.com/sach-hoa-hoc-9-ket-noi/", "Cấp 2", "Lớp 9", "Hóa học"},
-            {"Sách giáo khoa Vật lý 10 (Chân trời sáng tạo)", "https://giaokhoaonline.com/sach-vat-ly-10-chan-troi/", "Cấp 3", "Lớp 10", "Vật lý"},
-            {"Sách giáo khoa Toán 11 (Kết nối tri thức)", "https://giaokhoaonline.com/sach-toan-11-t1-ket-noi/", "Cấp 3", "Lớp 11", "Toán"},
-            {"Sách giáo khoa Ngữ văn 12 (Kết nối tri thức)", "https://giaokhoaonline.com/sach-ngu-van-12-tap-1-ket-noi/", "Cấp 3", "Lớp 12", "Ngữ văn"}
+            {"Sách giáo khoa Toán 1 (Kết nối tri thức)", "https://loigiaihay.com/sgk-toan-1-c618.html", "Cấp 1", "Lớp 1", "Toán"},
+            {"Sách giáo khoa Tiếng Anh 2 (Family and Friends)", "https://loigiaihay.com/sgk-tieng-anh-2-family-and-friends-national-edition-c852.html", "Cấp 1", "Lớp 2", "Tiếng Anh"},
+            {"Sách giáo khoa Toán 3 (Kết nối tri thức)", "https://loigiaihay.com/sgk-toan-3-c59.html", "Cấp 1", "Lớp 3", "Toán"},
+            {"Sách giáo khoa Tiếng Anh 4 (Global Success)", "https://loigiaihay.com/sgk-tieng-anh-4-global-success-c861.html", "Cấp 1", "Lớp 4", "Tiếng Anh"},
+            {"Sách giáo khoa Toán 5 (Kết nối tri thức)", "https://loigiaihay.com/sgk-toan-5-ket-noi-tri-thuc-c1605.html", "Cấp 1", "Lớp 5", "Toán"},
+            {"Sách giáo khoa Ngữ văn 6 (Kết nối tri thức)", "https://loigiaihay.com/sgk-ngu-van-6-ket-noi-tri-thuc-c612.html", "Cấp 2", "Lớp 6", "Ngữ văn"},
+            {"Sách giáo khoa Toán 7 (Cánh Diều)", "https://loigiaihay.com/sgk-toan-7-canh-dieu-c711.html", "Cấp 2", "Lớp 7", "Toán"},
+            {"Sách giáo khoa Tin học 8 (Cánh Diều)", "https://loigiaihay.com/sgk-tin-hoc-8-canh-dieu-c901.html", "Cấp 2", "Lớp 8", "Tin học"},
+            {"Sách giáo khoa Hóa học 9 (Cánh Diều)", "https://loigiaihay.com/sgk-hoa-hoc-9-c70.html", "Cấp 2", "Lớp 9", "Hóa học"},
+            {"Sách giáo khoa Vật lý 10 (Kết nối tri thức)", "https://loigiaihay.com/sgk-vat-ly-10-c74.html", "Cấp 3", "Lớp 10", "Vật lý"},
+            {"Sách giáo khoa Toán 11 (Kết nối tri thức)", "https://loigiaihay.com/sgk-toan-11-ket-noi-tri-thuc-c1249.html", "Cấp 3", "Lớp 11", "Toán"},
+            {"Sách giáo khoa Ngữ văn 12 (Kết nối tri thức)", "https://loigiaihay.com/sgk-ngu-van-12-c77.html", "Cấp 3", "Lớp 12", "Ngữ văn"}
         };
 
         for (String[] docInfo : docs) {
-            PublicDocument doc = new PublicDocument();
-            doc.setTitle(docInfo[0]);
-            doc.setFileUrl(docInfo[1]);
-            doc.setUploadedBy(adminId);
-            doc.setSchoolLevel(docInfo[2]);
-            doc.setGrade(docInfo[3]);
-            doc.setSubject(docInfo[4]);
-            doc.setCategory("Sách giáo khoa");
-            publicDocumentRepository.save(doc);
+            // Check if document already exists to avoid duplication
+            boolean exists = publicDocumentRepository.findAll().stream()
+                .anyMatch(d -> d.getFileUrl() != null && d.getFileUrl().equals(docInfo[1]));
+            if (!exists) {
+                PublicDocument doc = new PublicDocument();
+                doc.setTitle(docInfo[0]);
+                doc.setFileUrl(docInfo[1]);
+                doc.setUploadedBy(adminId);
+                doc.setSchoolLevel(docInfo[2]);
+                doc.setGrade(docInfo[3]);
+                doc.setSubject(docInfo[4]);
+                doc.setCategory("Sách giáo khoa");
+                publicDocumentRepository.save(doc);
+            }
         }
     }
 }
