@@ -26,6 +26,8 @@ import com.management.studyhub.repository.TutorProfileRepository;
 import com.management.studyhub.repository.UserRepository;
 import com.management.studyhub.entity.LessonLog;
 import com.management.studyhub.repository.LessonLogRepository;
+import com.management.studyhub.entity.PublicDocument;
+import com.management.studyhub.repository.PublicDocumentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -52,6 +54,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final DirectBookingRepository directBookingRepository;
     private final ApplicantRepository applicantRepository;
     private final LessonLogRepository lessonLogRepository;
+    private final PublicDocumentRepository publicDocumentRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -80,6 +83,9 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
         if (lessonLogRepository.count() == 0) {
             seedLessonLogs();
+        }
+        if (publicDocumentRepository.count() <= 1) {
+            seedPublicDocuments();
         }
     }
 
@@ -667,6 +673,38 @@ public class DatabaseSeeder implements CommandLineRunner {
             log2.setStatus(com.management.studyhub.entity.enums.LessonStatus.PRESENT);
             log2.setParentApprovalStatus(com.management.studyhub.entity.enums.ParentApprovalStatus.PENDING);
             lessonLogRepository.save(log2);
+        }
+    }
+
+    private void seedPublicDocuments() {
+        User admin = userRepository.findByEmail("admin@gmail.com").orElse(null);
+        Long adminId = admin != null ? admin.getId() : 1L;
+
+        String[][] docs = {
+            {"Sách giáo khoa Toán 1 (Kết nối tri thức)", "https://giaokhoaonline.com/sach-toan-1-t1-ket-noi/", "Cấp 1", "Lớp 1", "Toán"},
+            {"Sách giáo khoa Tiếng Anh 2 (Family and Friends)", "https://giaokhoaonline.com/sach-tieng-anh-2-family-and-friends/", "Cấp 1", "Lớp 2", "Tiếng Anh"},
+            {"Sách giáo khoa Toán 3 (Chân trời sáng tạo)", "https://giaokhoaonline.com/sach-toan-3-t1-chan-troi/", "Cấp 1", "Lớp 3", "Toán"},
+            {"Sách giáo khoa Tiếng Anh 4 (Global Success)", "https://giaokhoaonline.com/sach-tieng-anh-4-tap-1-global-success/", "Cấp 1", "Lớp 4", "Tiếng Anh"},
+            {"Sách giáo khoa Toán 5 (Kết nối tri thức)", "https://giaokhoaonline.com/sach-toan-5-t1-ket-noi/", "Cấp 1", "Lớp 5", "Toán"},
+            {"Sách giáo khoa Ngữ văn 6 (Kết nối tri thức)", "https://giaokhoaonline.com/sach-ngu-van-6-tap-1-ket-noi/", "Cấp 2", "Lớp 6", "Ngữ văn"},
+            {"Sách giáo khoa Toán 7 (Cánh Diều)", "https://giaokhoaonline.com/sach-toan-7-t1-canh-dieu/", "Cấp 2", "Lớp 7", "Toán"},
+            {"Sách giáo khoa Tin học 8 (Cánh Diều)", "https://giaokhoaonline.com/sach-tin-hoc-8-canh-dieu/", "Cấp 2", "Lớp 8", "Tin học"},
+            {"Sách giáo khoa Hóa học 9 (Kết nối tri thức)", "https://giaokhoaonline.com/sach-hoa-hoc-9-ket-noi/", "Cấp 2", "Lớp 9", "Hóa học"},
+            {"Sách giáo khoa Vật lý 10 (Chân trời sáng tạo)", "https://giaokhoaonline.com/sach-vat-ly-10-chan-troi/", "Cấp 3", "Lớp 10", "Vật lý"},
+            {"Sách giáo khoa Toán 11 (Kết nối tri thức)", "https://giaokhoaonline.com/sach-toan-11-t1-ket-noi/", "Cấp 3", "Lớp 11", "Toán"},
+            {"Sách giáo khoa Ngữ văn 12 (Kết nối tri thức)", "https://giaokhoaonline.com/sach-ngu-van-12-tap-1-ket-noi/", "Cấp 3", "Lớp 12", "Ngữ văn"}
+        };
+
+        for (String[] docInfo : docs) {
+            PublicDocument doc = new PublicDocument();
+            doc.setTitle(docInfo[0]);
+            doc.setFileUrl(docInfo[1]);
+            doc.setUploadedBy(adminId);
+            doc.setSchoolLevel(docInfo[2]);
+            doc.setGrade(docInfo[3]);
+            doc.setSubject(docInfo[4]);
+            doc.setCategory("Sách giáo khoa");
+            publicDocumentRepository.save(doc);
         }
     }
 }
