@@ -248,13 +248,15 @@ public class DatabaseSeeder implements CommandLineRunner {
     }
 
     private User createUser(String email, UserRole role, String fullName, String avatarUrl) {
-        User u = new User();
-        u.setEmail(email);
-        u.setPassword(passwordEncoder.encode("123456"));
-        u.setRole(role);
-        u.setFullName(fullName);
-        u.setAvatarUrl(avatarUrl);
-        return userRepository.save(u);
+        return userRepository.findByEmail(email).orElseGet(() -> {
+            User u = new User();
+            u.setEmail(email);
+            u.setPassword(passwordEncoder.encode("123456"));
+            u.setRole(role);
+            u.setFullName(fullName);
+            u.setAvatarUrl(avatarUrl);
+            return userRepository.save(u);
+        });
     }
 
     private void seedTutorsAndCourses() {
@@ -276,6 +278,10 @@ public class DatabaseSeeder implements CommandLineRunner {
                 parent.setAvatar(parentUser.getAvatarUrl());
                 parentRepository.save(parent);
             }
+        }
+
+        if (tutorProfileRepository.count() > 0) {
+            return;
         }
 
         List<Subject> subjects = subjectRepository.findAll();
