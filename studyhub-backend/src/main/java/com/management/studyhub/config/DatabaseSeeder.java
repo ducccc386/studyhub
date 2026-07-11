@@ -28,10 +28,24 @@ import com.management.studyhub.entity.LessonLog;
 import com.management.studyhub.repository.LessonLogRepository;
 import com.management.studyhub.entity.PublicDocument;
 import com.management.studyhub.repository.PublicDocumentRepository;
+import com.management.studyhub.entity.ChatMessage;
+import com.management.studyhub.entity.CommissionRecord;
+import com.management.studyhub.entity.Enrollment;
+import com.management.studyhub.entity.SyllabusSession;
+import com.management.studyhub.entity.Transaction;
+import com.management.studyhub.entity.StudyMaterial;
+import com.management.studyhub.repository.ChatMessageRepository;
+import com.management.studyhub.repository.CommissionRecordRepository;
+import com.management.studyhub.repository.EnrollmentRepository;
+import com.management.studyhub.repository.SyllabusSessionRepository;
+import com.management.studyhub.repository.TransactionRepository;
+import com.management.studyhub.repository.StudyMaterialRepository;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import java.time.LocalDateTime;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -55,6 +69,12 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final ApplicantRepository applicantRepository;
     private final LessonLogRepository lessonLogRepository;
     private final PublicDocumentRepository publicDocumentRepository;
+    private final ChatMessageRepository chatMessageRepository;
+    private final CommissionRecordRepository commissionRecordRepository;
+    private final EnrollmentRepository enrollmentRepository;
+    private final SyllabusSessionRepository syllabusSessionRepository;
+    private final TransactionRepository transactionRepository;
+    private final StudyMaterialRepository studyMaterialRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -85,6 +105,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             seedLessonLogs();
         }
         seedPublicDocuments();
+        cleanLockedUsersAndRandomizeJoinDates();
     }
 
     private void seedBookings() {
@@ -717,5 +738,188 @@ public class DatabaseSeeder implements CommandLineRunner {
                 publicDocumentRepository.save(doc);
             }
         }
+    }
+
+    private void cleanLockedUsersAndRandomizeJoinDates() {
+        // Clean up locked users
+        List<User> lockedUsers = userRepository.findAll().stream()
+            .filter(u -> "LOCKED".equals(u.getStatus()))
+            .collect(Collectors.toList());
+        for (User u : lockedUsers) {
+            deleteUserAndDependencies(u);
+        }
+
+        // Randomize join dates for all users between June 1st and July 10th
+        List<User> allUsers = userRepository.findAll();
+        java.util.Random random = new java.util.Random();
+        for (User u : allUsers) {
+            int month = random.nextBoolean() ? 6 : 7;
+            int day = (month == 6) ? (random.nextInt(30) + 1) : (random.nextInt(10) + 1);
+            int hour = random.nextInt(24);
+            int minute = random.nextInt(60);
+            u.setCreatedAt(LocalDateTime.of(2026, month, day, hour, minute));
+            userRepository.save(u);
+        }
+    }
+
+    private void deleteUserAndDependencies(User user) {
+        if (user.getRole() == UserRole.TUTOR) {
+            TutorProfile tutor = tutorProfileRepository.findAll().stream()
+                .filter(t -> t.getUser() != null && t.getUser().getId().equals(user.getId()))
+                .findFirst().orElse(null);
+            if (tutor != null) {
+                // Delete related applicants
+                String userIdStr = String.valueOf(user.getId());
+                List<Applicant> applicants = applicantRepository.findAll().stream()
+                    .filter(a -> userIdStr.equals(a.getTutorId()))
+                    .collect(Collectors.toList());
+                applicantRepository.deleteAll(applicants);
+
+                // Delete class sessions and dependencies
+                List<ClassSession> sessions = classSessionRepository.findAll().stream()
+                    .filter(s -> tutor.getId().equals(s.getTutorProfileId()))
+                    .collect(Collectors.toList());
+                for (ClassSession s : sessions) {
+                    List<SyllabusSession> syllabus = syllabusSessionRepository.findAll().stream()
+                        .filter(ss -> ss.getClassSession() != null && s.getId().equals(ss.getClassSession().getId()))
+                        .collect(Collectors.toList());
+                    syllabusSessionRepository.deleteAll(syllabus);
+
+                    List<LessonLog> logs = lessonLogRepository.findAll().stream()
+                        .filter(l -> l.getClassSession() != null && s.getId().equals(l.getClassSession().getId()))
+                        .collect(Collectors.toList());
+                    lessonLogRepository.deleteAll(logs);
+
+                    List<StudyMaterial> materials = studyMaterialRepository.findAll().stream()
+                        .filter(sm -> sm.getClassSession() != null && s.getId().equals(sm.getClassSession().getId()))
+                        .collect(Collectors.toList());
+                    studyMaterialRepository.deleteAll(materials);
+
+                    List<ChatMessage> chatMsgs = chatMessageRepository.findAll().stream()
+                        .filter(cm -> cm.getClassSession() != null && s.getId().equals(cm.getClassSession().getId()))
+                        .collect(Collectors.toList());
+                    chatMessageRepository.deleteAll(chatMsgs);
+
+                    List<Transaction> transactions = transactionRepository.findAll().stream()
+                        .filter(t -> t.getClassSession() != null && s.getId().equals(t.getClassSession().getId()))
+                        .collect(Collectors.toList());
+                    for (Transaction tr : transactions) {
+                        CommissionRecord commission = commissionRecordRepository.findAll().stream()
+                            .filter(cr -> cr.getTransaction() != null && tr.getId().equals(cr.getTransaction().getId()))
+                            .findFirst().orElse(null);
+                        if (commission != null) {
+                            commissionRecordRepository.delete(commission);
+                        }
+                    }
+                    transactionRepository.deleteAll(transactions);
+
+                    classSessionRepository.delete(s);
+                }
+
+                // Delete related courses and enrollments
+                List<Course> courses = courseRepository.findAll().stream()
+                    .filter(c -> c.getTutor() != null && tutor.getId().equals(c.getTutor().getId()))
+                    .collect(Collectors.toList());
+                for (Course c : courses) {
+                    List<Enrollment> enrollments = enrollmentRepository.findAll().stream()
+                        .filter(e -> e.getCourse() != null && c.getId().equals(e.getCourse().getId()))
+                        .collect(Collectors.toList());
+                    enrollmentRepository.deleteAll(enrollments);
+                    courseRepository.delete(c);
+                }
+
+                // Delete direct bookings
+                List<DirectBooking> bookings = directBookingRepository.findAll().stream()
+                    .filter(b -> b.getTutor() != null && tutor.getId().equals(b.getTutor().getId()))
+                    .collect(Collectors.toList());
+                directBookingRepository.deleteAll(bookings);
+
+                tutorProfileRepository.delete(tutor);
+            }
+        } else if (user.getRole() == UserRole.PARENT) {
+            Parent parent = parentRepository.findByUserId(user.getId()).orElse(null);
+            if (parent != null) {
+                // Delete job postings and applicants
+                List<JobPosting> jobPostings = jobPostingRepository.findAll().stream()
+                    .filter(jp -> jp.getParent() != null && parent.getId().equals(jp.getParent().getId()))
+                    .collect(Collectors.toList());
+                for (JobPosting jp : jobPostings) {
+                    List<Applicant> applicants = applicantRepository.findAll().stream()
+                        .filter(a -> a.getJobPosting() != null && jp.getId().equals(a.getJobPosting().getId()))
+                        .collect(Collectors.toList());
+                    applicantRepository.deleteAll(applicants);
+                    jobPostingRepository.delete(jp);
+                }
+
+                // Delete enrollments
+                List<Enrollment> enrollments = enrollmentRepository.findAll().stream()
+                    .filter(e -> e.getParent() != null && user.getId().equals(e.getParent().getId()))
+                    .collect(Collectors.toList());
+                enrollmentRepository.deleteAll(enrollments);
+
+                // Delete direct bookings
+                List<DirectBooking> bookings = directBookingRepository.findAll().stream()
+                    .filter(b -> b.getParent() != null && user.getId().equals(b.getParent().getId()))
+                    .collect(Collectors.toList());
+                directBookingRepository.deleteAll(bookings);
+
+                // Delete class sessions
+                List<ClassSession> sessions = classSessionRepository.findAll().stream()
+                    .filter(s -> s.getParent() != null && parent.getId().equals(s.getParent().getId()))
+                    .collect(Collectors.toList());
+                for (ClassSession s : sessions) {
+                    List<SyllabusSession> syllabus = syllabusSessionRepository.findAll().stream()
+                        .filter(ss -> ss.getClassSession() != null && s.getId().equals(ss.getClassSession().getId()))
+                        .collect(Collectors.toList());
+                    syllabusSessionRepository.deleteAll(syllabus);
+
+                    List<LessonLog> logs = lessonLogRepository.findAll().stream()
+                        .filter(l -> l.getClassSession() != null && s.getId().equals(l.getClassSession().getId()))
+                        .collect(Collectors.toList());
+                    lessonLogRepository.deleteAll(logs);
+
+                    List<StudyMaterial> materials = studyMaterialRepository.findAll().stream()
+                        .filter(sm -> sm.getClassSession() != null && s.getId().equals(sm.getClassSession().getId()))
+                        .collect(Collectors.toList());
+                    studyMaterialRepository.deleteAll(materials);
+
+                    List<ChatMessage> chatMsgs = chatMessageRepository.findAll().stream()
+                        .filter(cm -> cm.getClassSession() != null && s.getId().equals(cm.getClassSession().getId()))
+                        .collect(Collectors.toList());
+                    chatMessageRepository.deleteAll(chatMsgs);
+
+                    List<Transaction> transactions = transactionRepository.findAll().stream()
+                        .filter(t -> t.getClassSession() != null && s.getId().equals(t.getClassSession().getId()))
+                        .collect(Collectors.toList());
+                    for (Transaction tr : transactions) {
+                        CommissionRecord commission = commissionRecordRepository.findAll().stream()
+                            .filter(cr -> cr.getTransaction() != null && tr.getId().equals(cr.getTransaction().getId()))
+                            .findFirst().orElse(null);
+                        if (commission != null) {
+                            commissionRecordRepository.delete(commission);
+                        }
+                    }
+                    transactionRepository.deleteAll(transactions);
+
+                    classSessionRepository.delete(s);
+                }
+
+                parentRepository.delete(parent);
+            }
+        }
+
+        // Delete chat messages sent by user
+        List<ChatMessage> sentChatMsgs = chatMessageRepository.findAll().stream()
+            .filter(cm -> cm.getSender() != null && user.getId().equals(cm.getSender().getId()))
+            .collect(Collectors.toList());
+        chatMessageRepository.deleteAll(sentChatMsgs);
+
+        // Delete study materials uploaded by user
+        List<StudyMaterial> uploadedMaterials = studyMaterialRepository.findAll().stream()
+            .filter(sm -> sm.getUploader() != null && user.getId().equals(sm.getUploader().getId()))
+            .collect(Collectors.toList());
+        studyMaterialRepository.deleteAll(uploadedMaterials);
+
+        userRepository.delete(user);
     }
 }
