@@ -75,6 +75,8 @@ public class DatabaseSeeder implements CommandLineRunner {
         if (testimonialRepository.count() == 0) {
             seedTestimonials();
         }
+        // Disabled seeding of mock classes and transactions
+        /*
         if (directBookingRepository.count() == 0) {
             seedBookings();
         }
@@ -90,8 +92,10 @@ public class DatabaseSeeder implements CommandLineRunner {
         if (lessonLogRepository.count() == 0) {
             seedLessonLogs();
         }
+        */
         seedPublicDocuments();
         cleanLockedUsersAndRandomizeJoinDates();
+        cleanAllClassesAndTransactions();
     }
 
     private void seedBookings() {
@@ -884,6 +888,27 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         } finally {
             // Re-enable foreign key checks
+            entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 1").executeUpdate();
+        }
+    }
+
+    private void cleanAllClassesAndTransactions() {
+        entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 0").executeUpdate();
+        try {
+            entityManager.createNativeQuery("DELETE FROM commission_records").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM transactions").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM class_sessions").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM lesson_logs").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM syllabus_sessions").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM study_materials").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM chat_messages").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM parent_feedbacks").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM enrollments").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM courses").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM direct_bookings").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM applicants").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM job_postings").executeUpdate();
+        } finally {
             entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 1").executeUpdate();
         }
     }
