@@ -112,6 +112,23 @@ const AdminUsers: React.FC = () => {
     }
   };
 
+  const handleCleanAndRandomize = async () => {
+    if (!window.confirm('Bạn có chắc chắn muốn XÓA vĩnh viễn toàn bộ tài khoản bị khóa và ngẫu nhiên hóa ngày tham gia của các tài khoản khác?')) return;
+    try {
+      const response = await apiFetch('/admin/users/clean-and-randomize', { method: 'POST' });
+      const data = await response.json();
+      if (response.ok) {
+        alert(`Đã dọn dẹp ${data.deletedCount} tài khoản bị khóa thành công!`);
+        fetchUsers();
+      } else {
+        alert(`Lỗi: ${data.error || 'Có lỗi xảy ra'}`);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Có lỗi xảy ra khi kết nối máy chủ');
+    }
+  };
+
   const formatDateCSV = (dateStr: string) => {
     if (!dateStr) return '';
     try {
@@ -202,6 +219,14 @@ const AdminUsers: React.FC = () => {
             >
               <span className="material-symbols-outlined text-[18px]">refresh</span>
               Làm mới
+            </button>
+            <button
+              onClick={handleCleanAndRandomize}
+              className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold transition-colors flex items-center gap-2"
+              title="Xóa toàn bộ tài khoản bị khóa vĩnh viễn và ngẫu nhiên hóa ngày tham gia"
+            >
+              <span className="material-symbols-outlined text-[18px]">cleaning_services</span>
+              Dọn dẹp &amp; Ngẫu nhiên ngày
             </button>
             <button
               onClick={exportUsersCSV}
