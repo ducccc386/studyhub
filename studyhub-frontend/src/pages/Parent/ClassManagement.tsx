@@ -377,7 +377,7 @@ const ClassManagement: React.FC = () => {
                         className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-semibold hover:bg-orange-600 transition-opacity whitespace-nowrap flex items-center justify-center gap-2"
                       >
                         <span className="material-symbols-outlined text-[18px]">payments</span>
-                        Thanh toán cọc (25%)
+                        Thanh toán học phí
                       </button>
                     )}
                     {session.status === 'PENDING_FINAL_PAYMENT' && (
@@ -414,7 +414,7 @@ const ClassManagement: React.FC = () => {
           <div className="bg-surface w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col">
             <div className="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
               <h3 className="text-xl font-bold text-on-surface">
-                {paymentType === 'deposit' ? 'Thanh toán cọc (25%)' : (paymentType === 'final' ? 'Thanh toán nốt (75%)' : 'Thanh toán phát sinh')}
+                {paymentType === 'deposit' ? 'Thanh toán học phí' : (paymentType === 'final' ? 'Thanh toán nốt' : 'Thanh toán phát sinh')}
               </h3>
               <button onClick={() => setShowPaymentModal(false)} className="text-on-surface-variant hover:text-error transition-colors">
                 <span className="material-symbols-outlined">close</span>
@@ -441,7 +441,7 @@ const ClassManagement: React.FC = () => {
                   {paymentType === 'deposit' && (
                     <div className="w-full bg-blue-50 border border-blue-200 p-4 rounded-xl mb-6 text-sm text-blue-800 flex items-start gap-3 text-left">
                       <span className="material-symbols-outlined mt-0.5">info</span>
-                      <p>Hệ thống tạm thu cọc dự kiến 10 buổi. Khi kết thúc, sẽ đối soát lại số buổi thực tế đã được bạn xác nhận để hoàn tiền hoặc yêu cầu đóng thêm.</p>
+                      <p>Hệ thống tạm thu học phí 1 tháng. Khi kết thúc, sẽ đối soát lại số buổi thực tế đã được bạn xác nhận để hoàn tiền hoặc yêu cầu đóng thêm.</p>
                     </div>
                   )}
                   <div className="text-center mb-6">

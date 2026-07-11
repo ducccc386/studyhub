@@ -29,14 +29,27 @@ public class TransactionController {
     private final CommissionRecordRepository commissionRecordRepository;
     private final LessonLogRepository lessonLogRepository;
 
-    private double calculateTotalPrice(ClassSession session) {
-        if (session.getPrice() != null && session.getPrice() > 0) {
-            return session.getPrice();
+    private int parseSessionsPerWeek(String schedule) {
+        if (schedule == null || schedule.isEmpty()) {
+            return 2;
         }
-        // Fallback: assume 10 sessions if progress is 0
-        int sessionsCount = (session.getProgress() != null && session.getProgress() > 0) ? session.getProgress() : 10;
+        String s = schedule.toLowerCase();
+        int count = 0;
+        if (s.contains("hai") || s.contains("2")) count++;
+        if (s.contains("ba") || s.contains("3")) count++;
+        if (s.contains("tư") || s.contains("bốn") || s.contains("4")) count++;
+        if (s.contains("năm") || s.contains("5")) count++;
+        if (s.contains("sáu") || s.contains("6")) count++;
+        if (s.contains("bảy") || s.contains("7")) count++;
+        if (s.contains("chủ nhật") || s.contains("cn") || s.contains("sunday") || s.contains("chủnhật")) count++;
+        return count > 0 ? count : 2;
+    }
+
+    private double calculateTotalPrice(ClassSession session) {
         double pricePer = session.getPricePerSession() != null ? session.getPricePerSession() : 0;
-        return pricePer * sessionsCount;
+        int sessionsPerWeek = parseSessionsPerWeek(session.getSchedule());
+        int monthlySessions = sessionsPerWeek * 4;
+        return pricePer * monthlySessions;
     }
 
     private String generateVietQR(double amount, String transactionCode) {
@@ -57,10 +70,8 @@ public class TransactionController {
         }
 
         double totalPrice = calculateTotalPrice(session);
-        if (session.getPrice() == null) {
-            session.setPrice(totalPrice);
-            classSessionRepository.save(session);
-        }
+        session.setPrice(totalPrice);
+        classSessionRepository.save(session);
 
         Transaction tx = transactionRepository.findFirstByClassSessionIdAndStatusAndTypeOrderByIdDesc(classSessionId, TransactionStatus.PENDING, TransactionType.DEPOSIT)
                 .orElse(new Transaction());
@@ -70,7 +81,10 @@ public class TransactionController {
             tx.setType(TransactionType.DEPOSIT);
             tx.setStatus(TransactionStatus.PENDING);
             tx.setTransactionCode("SHDEP" + classSessionId + (System.currentTimeMillis() % 10000));
-            tx.setAmount(totalPrice * 0.25);
+            tx.setAmount(totalPrice);
+            transactionRepository.save(tx);
+        } else {
+            tx.setAmount(totalPrice);
             transactionRepository.save(tx);
         }
 

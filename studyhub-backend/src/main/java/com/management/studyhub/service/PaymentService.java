@@ -29,6 +29,22 @@ public class PaymentService {
     private static final String ACCOUNT_NUMBER = "2516032004";
     private static final String ACCOUNT_NAME = "NGUYEN ANH DUC";
 
+    private int parseSessionsPerWeek(String schedule) {
+        if (schedule == null || schedule.isEmpty()) {
+            return 2;
+        }
+        String s = schedule.toLowerCase();
+        int count = 0;
+        if (s.contains("hai") || s.contains("2")) count++;
+        if (s.contains("ba") || s.contains("3")) count++;
+        if (s.contains("tư") || s.contains("bốn") || s.contains("4")) count++;
+        if (s.contains("năm") || s.contains("5")) count++;
+        if (s.contains("sáu") || s.contains("6")) count++;
+        if (s.contains("bảy") || s.contains("7")) count++;
+        if (s.contains("chủ nhật") || s.contains("cn") || s.contains("sunday") || s.contains("chủnhật")) count++;
+        return count > 0 ? count : 2;
+    }
+
     @Transactional
     public Map<String, String> generatePaymentQR(Long classId) {
         ClassSession classSession = classSessionRepository.findById(classId)
@@ -46,26 +62,35 @@ public class PaymentService {
         String transactionCode;
         if (transaction != null) {
             transactionCode = transaction.getTransactionCode();
+            
+            // Recalculate amount if needed to match new monthly logic
+            Double pricePerSession = classSession.getPricePerSession() != null ? classSession.getPricePerSession() : 0.0;
+            int sessionsPerWeek = parseSessionsPerWeek(classSession.getSchedule());
+            int monthlySessions = sessionsPerWeek * 4;
+            Double totalAmount = pricePerSession * monthlySessions;
+            classSession.setPrice(totalAmount);
+            classSessionRepository.save(classSession);
+            
+            transaction.setAmount(totalAmount);
+            transactionRepository.save(transaction);
         } else {
             // Tạo Transaction mới
             transactionCode = "SH" + classId + (System.currentTimeMillis() % 10000);
             transaction = new Transaction();
             transaction.setClassSession(classSession);
             transaction.setTransactionCode(transactionCode);
+            transaction.setType(TransactionType.DEPOSIT); // Keep type as DEPOSIT for flow consistency
             
-            // Tính tổng giá trị khoá học
-            Double totalAmount = classSession.getPrice();
-            if (totalAmount == null || totalAmount <= 0) {
-                // Fallback: 8 buổi học
-                Double pricePerSession = classSession.getPricePerSession() != null ? classSession.getPricePerSession() : 0.0;
-                totalAmount = pricePerSession * 8.0;
-                // Lưu lại tổng giá vào session để đồng nhất
-                classSession.setPrice(totalAmount);
-                classSessionRepository.save(classSession);
-            }
-            // Cọc = 25% tổng giá trị khoá học
-            double depositAmount = totalAmount * 0.25;
-            transaction.setAmount(depositAmount);
+            // Tính tổng giá trị khoá học dựa trên số buổi học/tuần * 4
+            Double pricePerSession = classSession.getPricePerSession() != null ? classSession.getPricePerSession() : 0.0;
+            int sessionsPerWeek = parseSessionsPerWeek(classSession.getSchedule());
+            int monthlySessions = sessionsPerWeek * 4;
+            Double totalAmount = pricePerSession * monthlySessions;
+            
+            classSession.setPrice(totalAmount);
+            classSessionRepository.save(classSession);
+            
+            transaction.setAmount(totalAmount);
             transaction.setStatus(TransactionStatus.PENDING);
             transactionRepository.save(transaction);
         }
