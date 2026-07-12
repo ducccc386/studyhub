@@ -25,9 +25,9 @@ public class PaymentService {
     private final com.management.studyhub.repository.CommissionRecordRepository commissionRecordRepository;
 
     // Thay bằng số tài khoản thật của StudyHub
-    private static final String BANK_BIN = "970415"; // Techcombank
-    private static final String ACCOUNT_NUMBER = "2516032004";
-    private static final String ACCOUNT_NAME = "NGUYEN ANH DUC";
+    private static final String BANK_BIN = "970423"; // TPBank
+    private static final String ACCOUNT_NUMBER = "00000800387";
+    private static final String ACCOUNT_NAME = "TRAN THI LUYEN";
 
     private int parseSessionsPerWeek(String schedule) {
         if (schedule == null || schedule.isEmpty()) {
