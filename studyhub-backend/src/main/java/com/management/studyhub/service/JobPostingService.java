@@ -42,26 +42,33 @@ public class JobPostingService {
     }
 
     public JobPostingDTO createPost(Long userId, JobPostingDTO dto) {
-        Parent parent = getOrCreateParent(userId);
+        try {
+            Parent parent = getOrCreateParent(userId);
 
-        JobPosting job = new JobPosting();
-        job.setParent(parent);
-        job.setTitle(dto.getTitle());
-        job.setSubject(dto.getSubject());
-        job.setClassLevel(dto.getClassLevel());
-        job.setDescription(dto.getDescription());
-        job.setPostedAt(LocalDateTime.now());
-        job.setStatus("RECRUITING"); // Hoặc PENDING_APPROVAL
-        job.setLocation(dto.getLocation());
-        job.setDetailedAddress(dto.getDetailedAddress());
-        job.setSchedule(dto.getSchedule());
-        job.setPricePerSession(dto.getPricePerSession());
-        job.setLearningMode(dto.getLearningMode());
-        job.setRequirement(dto.getRequirement());
-        job.setApplicantsCount(0);
+            JobPosting job = new JobPosting();
+            job.setParent(parent);
+            job.setTitle(dto.getTitle());
+            job.setSubject(dto.getSubject());
+            job.setClassLevel(dto.getClassLevel());
+            job.setDescription(dto.getDescription());
+            job.setPostedAt(LocalDateTime.now());
+            job.setStatus("RECRUITING"); // Hoặc PENDING_APPROVAL
+            job.setLocation(dto.getLocation());
+            job.setDetailedAddress(dto.getDetailedAddress());
+            job.setSchedule(dto.getSchedule());
+            job.setPricePerSession(dto.getPricePerSession());
+            job.setLearningMode(dto.getLearningMode());
+            job.setRequirement(dto.getRequirement());
+            job.setApplicantsCount(0);
+            job.setTutorGenderPreference("ANY"); // Default to ANY to avoid NULL constraint violations
 
-        JobPosting savedJob = jobPostingRepository.save(job);
-        return mapToDTO(savedJob);
+            JobPosting savedJob = jobPostingRepository.save(job);
+            return mapToDTO(savedJob);
+        } catch (Exception e) {
+            System.err.println(">>> ERROR IN createPost: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi lưu bài đăng: " + e.getMessage(), e);
+        }
     }
 
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
