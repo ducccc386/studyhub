@@ -64,38 +64,29 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
+        System.out.println(">>> DATABASE SEEDER STARTING...");
         if (subjectRepository.count() == 0) {
+            System.out.println(">>> Seeding subjects...");
             seedSubjects();
         }
         if (courseRepository.count() == 0) {
+            System.out.println(">>> Seeding tutors and courses...");
             seedTutorsAndCourses();
         } else {
+            System.out.println(">>> Skipping tutor seeding (count > 0) or fixing subjects...");
             fixCourseSubjects();
         }
         if (testimonialRepository.count() == 0) {
+            System.out.println(">>> Seeding testimonials...");
             seedTestimonials();
         }
-        // Disabled seeding of mock classes and transactions
-        /*
-        if (directBookingRepository.count() == 0) {
-            seedBookings();
-        }
-        if (jobPostingRepository.count() == 0) {
-            seedJobPostings();
-        }
-        if (applicantRepository.count() == 0) {
-            seedApplicants();
-        }
-        if (classSessionRepository.count() == 0) {
-            seedClassSessions();
-        }
-        if (lessonLogRepository.count() == 0) {
-            seedLessonLogs();
-        }
-        */
+        System.out.println(">>> Seeding public documents...");
         seedPublicDocuments();
+        System.out.println(">>> Cleaning locked users and randomizing dates...");
         cleanLockedUsersAndRandomizeJoinDates();
+        System.out.println(">>> Cleaning all classes and transactions...");
         cleanAllClassesAndTransactions();
+        System.out.println(">>> DATABASE SEEDER RUN SUCCESSFULLY COMPLETED!");
     }
 
     private void seedBookings() {
