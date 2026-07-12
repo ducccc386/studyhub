@@ -24,11 +24,13 @@ public class StudyMaterialService {
     private final UserRepository userRepository;
     private final CloudinaryService cloudinaryService;
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<StudyMaterialDTO> getMaterialsByClassSessionId(Long classSessionId) {
         return studyMaterialRepository.findByClassSessionIdOrderByUploadedAtDesc(classSessionId)
                 .stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public StudyMaterialDTO uploadMaterial(Long classSessionId, Long uploaderId, String title, String materialType, String uploaderRole, MultipartFile file) throws IOException {
         ClassSession classSession = classSessionRepository.findById(classSessionId)
                 .orElseThrow(() -> new RuntimeException("Lớp học không tồn tại"));
@@ -68,6 +70,7 @@ public class StudyMaterialService {
         return mapToDTO(saved);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void deleteMaterial(Long id) {
         studyMaterialRepository.deleteById(id);
     }

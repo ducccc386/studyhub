@@ -25,6 +25,7 @@ public class LessonLogService {
     private final ClassSessionRepository classSessionRepository;
     private final TutorProfileRepository tutorProfileRepository;
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<LessonLogDTO> getLessonLogsByClassSessionId(Long classSessionId) {
         return lessonLogRepository.findByClassSessionIdOrderByScheduledDateDesc(classSessionId)
                 .stream()
@@ -32,6 +33,7 @@ public class LessonLogService {
                 .collect(Collectors.toList());
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<LessonLogDTO> getPendingLogsForParent(Long userId) {
         return lessonLogRepository.findByParentUserIdAndApprovalStatus(userId, ParentApprovalStatus.PENDING)
                 .stream()
@@ -39,6 +41,7 @@ public class LessonLogService {
                 .collect(Collectors.toList());
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<LessonLogDTO> getReviewedLogsForParent(Long userId) {
         return lessonLogRepository.findReviewedByParentUserId(userId)
                 .stream()
