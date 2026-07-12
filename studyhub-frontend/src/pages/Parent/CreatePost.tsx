@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../utils/api';
@@ -97,7 +97,8 @@ const CreatePost: React.FC = () => {
         alert('Đăng tin thành công! Gia sư có thể xem và ứng tuyển ngay bây giờ.');
         navigate('/parent/posts');
       } else {
-        alert('Có lỗi xảy ra, vui lòng thử lại.');
+        const errorData = await res.json().catch(() => ({}));
+        alert(errorData.error || 'Có lỗi xảy ra, vui lòng thử lại.');
       }
     } catch {
       alert('Không thể kết nối đến máy chủ.');

@@ -41,6 +41,7 @@ public class JobPostingService {
         });
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public JobPostingDTO createPost(Long userId, JobPostingDTO dto) {
         try {
             Parent parent = getOrCreateParent(userId);
@@ -126,28 +127,48 @@ public class JobPostingService {
         jobPostingRepository.save(job);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public JobPostingDTO updatePost(Long id, JobPostingDTO dto) {
-        JobPosting job = jobPostingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy bài đăng"));
-        if (dto.getTitle() != null && !dto.getTitle().isBlank()) job.setTitle(dto.getTitle());
-        if (dto.getSubject() != null) job.setSubject(dto.getSubject());
-        if (dto.getClassLevel() != null) job.setClassLevel(dto.getClassLevel());
-        if (dto.getDescription() != null) job.setDescription(dto.getDescription());
-        if (dto.getLocation() != null) job.setLocation(dto.getLocation());
-        if (dto.getDetailedAddress() != null) job.setDetailedAddress(dto.getDetailedAddress());
-        if (dto.getSchedule() != null) job.setSchedule(dto.getSchedule());
-        if (dto.getPricePerSession() != null) job.setPricePerSession(dto.getPricePerSession());
-        if (dto.getLearningMode() != null) job.setLearningMode(dto.getLearningMode());
-        if (dto.getRequirement() != null) job.setRequirement(dto.getRequirement());
-        return mapToDTO(jobPostingRepository.save(job));
+        try {
+            JobPosting job = jobPostingRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy bài đăng"));
+            if (dto.getTitle() != null && !dto.getTitle().isBlank()) job.setTitle(dto.getTitle());
+            if (dto.getSubject() != null) job.setSubject(dto.getSubject());
+            if (dto.getClassLevel() != null) job.setClassLevel(dto.getClassLevel());
+            if (dto.getDescription() != null) job.setDescription(dto.getDescription());
+            if (dto.getLocation() != null) job.setLocation(dto.getLocation());
+            if (dto.getDetailedAddress() != null) job.setDetailedAddress(dto.getDetailedAddress());
+            if (dto.getSchedule() != null) job.setSchedule(dto.getSchedule());
+            if (dto.getPricePerSession() != null) job.setPricePerSession(dto.getPricePerSession());
+            if (dto.getLearningMode() != null) job.setLearningMode(dto.getLearningMode());
+            if (dto.getRequirement() != null) job.setRequirement(dto.getRequirement());
+            
+            if (job.getTutorGenderPreference() == null) {
+                job.setTutorGenderPreference("ANY");
+            }
+            
+            JobPosting savedJob = jobPostingRepository.save(job);
+            return mapToDTO(savedJob);
+        } catch (Exception e) {
+            System.err.println(">>> ERROR IN updatePost: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi cập nhật bài đăng: " + e.getMessage(), e);
+        }
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void deletePost(Long id) {
-        if (!jobPostingRepository.existsById(id)) {
-            throw new RuntimeException("Không tìm thấy bài đăng");
+        try {
+            if (!jobPostingRepository.existsById(id)) {
+                throw new RuntimeException("Không tìm thấy bài đăng");
+            }
+            applicantRepository.deleteByJobPostingId(id);
+            jobPostingRepository.deleteById(id);
+        } catch (Exception e) {
+            System.err.println(">>> ERROR IN deletePost: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi xóa bài đăng: " + e.getMessage(), e);
         }
-        applicantRepository.deleteByJobPostingId(id);
-        jobPostingRepository.deleteById(id);
     }
 
     /**

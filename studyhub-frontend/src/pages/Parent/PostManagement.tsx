@@ -208,7 +208,10 @@ const PostManagement: React.FC = () => {
         method: 'PUT',
         body: JSON.stringify({ ...editForm, schedule: scheduleStr }),
       });
-      if (!res.ok) throw new Error('Lỗi lưu bài đăng');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Lỗi lưu bài đăng');
+      }
       const updated = await res.json();
       setPosts(prev => prev.map(p => p.id === editingPost.id ? { ...p, ...updated, applicants: p.applicants } : p));
       setEditingPost(null);
@@ -224,7 +227,10 @@ const PostManagement: React.FC = () => {
     if (!window.confirm('Bạn có chắc muốn xóa bài đăng này không? Hành động này không thể hoàn tác.')) return;
     try {
       const res = await apiFetch(`/posts/${postId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Lỗi xóa bài đăng');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Lỗi xóa bài đăng');
+      }
       setPosts(prev => prev.filter(p => p.id !== postId));
       alert('Đã xóa bài đăng thành công!');
     } catch (err: any) {
