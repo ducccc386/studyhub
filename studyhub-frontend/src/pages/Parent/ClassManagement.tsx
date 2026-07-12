@@ -56,7 +56,7 @@ const ClassManagement: React.FC = () => {
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [paymentType, setPaymentType] = useState<'deposit' | 'final' | 'extra' | ''>('');
 
-  useEffect(() => {
+  const fetchSessions = () => {
     if (!userId) { setLoading(false); return; }
     apiFetch(`/class-sessions/parent/${userId}`)
       .then(res => res.json())
@@ -68,6 +68,10 @@ const ClassManagement: React.FC = () => {
         console.error(err);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchSessions();
   }, [userId]);
 
   // Polling for payment status
@@ -80,12 +84,7 @@ const ClassManagement: React.FC = () => {
         .then(data => {
           if (data.status === 'SUCCESS') {
             setPaymentStatus('SUCCESS');
-            // Reload list
-            if (userId) {
-              apiFetch(`/class-sessions/parent/${userId}`)
-                .then(res => res.json())
-                .then(list => setSessions(Array.isArray(list) ? list : []));
-            }
+            fetchSessions();
           }
         })
         .catch(err => console.error('Error polling status:', err));
@@ -113,10 +112,11 @@ const ClassManagement: React.FC = () => {
     }
   };
 
-  const handlePayment = async (sessionId: number, type: 'deposit' | 'final' | 'extra') => {
+  const handlePayment = async (sessionId: number, type: 'deposit' | 'final' | 'extra' | 'renew') => {
     setUpdatingId(sessionId);
     try {
-      const res = await apiFetch(`/transactions/${type}/${sessionId}`, {
+      const url = type === 'renew' ? `/transactions/renew/${sessionId}` : `/transactions/${type}/${sessionId}`;
+      const res = await apiFetch(url, {
         method: 'POST',
       });
       if (!res.ok) {
@@ -128,8 +128,9 @@ const ClassManagement: React.FC = () => {
       setTransactionCode(data.transactionCode);
       setPaymentAmount(data.amount || 0);
       setPaymentStatus('PENDING');
-      setPaymentType(type);
+      setPaymentType(type === 'renew' ? 'deposit' : type);
       setShowPaymentModal(true);
+      fetchSessions();
     } catch (err: any) {
       toast.error('Lỗi: ' + err.message);
     } finally {
@@ -381,14 +382,28 @@ const ClassManagement: React.FC = () => {
                       </button>
                     )}
                     {session.status === 'PENDING_FINAL_PAYMENT' && (
-                      <button
-                        onClick={() => handlePayment(session.id, 'final')}
-                        disabled={updatingId === session.id}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-60 whitespace-nowrap flex items-center justify-center gap-2 shadow-sm"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">payments</span>
-                        Thanh toán nốt (75%)
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handlePayment(session.id, 'final')}
+                          disabled={updatingId === session.id}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-60 whitespace-nowrap flex items-center justify-center gap-2 shadow-sm"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">payments</span>
+                          Thanh toán nốt (75%)
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm("Xác nhận đăng ký học thêm tháng nữa? Bạn sẽ thanh toán tiếp 25% học phí làm phí hoa hồng hệ thống.")) {
+                              handlePayment(session.id, 'renew');
+                            }
+                          }}
+                          disabled={updatingId === session.id}
+                          className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 transition-colors disabled:opacity-60 whitespace-nowrap flex items-center justify-center gap-2 shadow-sm"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">sync</span>
+                          Học tiếp tháng mới (Gia hạn)
+                        </button>
+                      </div>
                     )}
                     {session.status === 'PENDING_SETTLEMENT' && (
                       <button

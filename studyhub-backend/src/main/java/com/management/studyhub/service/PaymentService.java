@@ -180,9 +180,8 @@ public class PaymentService {
                     Number amount = (Number) data.get("amount");
                     
                     if (description != null) {
-                        // Tìm transaction code trong description (Mô phỏng bằng Regex)
-                        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(SH\\d{1,10})");
-                        java.util.regex.Matcher matcher = pattern.matcher(description);
+                        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(SH[A-Z0-9]+)");
+                        java.util.regex.Matcher matcher = pattern.matcher(description.toUpperCase());
                         if (matcher.find()) {
                             String code = matcher.group(1);
                             transactionRepository.findByTransactionCode(code).ifPresent(t -> {

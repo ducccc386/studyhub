@@ -33,4 +33,7 @@ public interface TutorProfileRepository extends JpaRepository<TutorProfile, Long
      */
     @Query("SELECT DISTINCT t FROM TutorProfile t LEFT JOIN FETCH t.subjects s LEFT JOIN FETCH t.user u WHERE t.id IN :ids")
     List<TutorProfile> findAllWithSubjectsByIdIn(@Param("ids") List<Long> ids);
+
+    @Query("SELECT t FROM TutorProfile t JOIN FETCH t.user")
+    List<TutorProfile> findAllWithUser();
 }

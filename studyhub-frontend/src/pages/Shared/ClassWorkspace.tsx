@@ -132,6 +132,26 @@ const ClassWorkspace: React.FC = () => {
     }
   };
 
+  const handleRenewClass = async () => {
+    if (!window.confirm("Xác nhận đăng ký học thêm tháng nữa? Bạn sẽ thanh toán 25% học phí của tháng mới làm phí hoa hồng hệ thống, và 75% còn lại sẽ thanh toán trực tiếp cho gia sư.")) return;
+    try {
+      const res = await apiFetch(`/transactions/renew/${id}`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setQrUrl(data.qrUrl);
+        setTransactionCode(data.transactionCode);
+        setPaymentStatus('PENDING');
+        setShowPaymentModal(true);
+        fetchData();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Có lỗi xảy ra khi gia hạn lớp học.');
+      }
+    } catch (err) {
+      alert('Lỗi kết nối máy chủ.');
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, [id]);
@@ -1194,13 +1214,22 @@ const ClassWorkspace: React.FC = () => {
                 <div className="space-y-4">
                   <p className="font-bold text-teal-600">Gia sư đã báo hoàn thành. Chờ thanh toán 75% học phí còn lại...</p>
                   {isParent && (
-                    <button 
-                      onClick={handleFinalPayment}
-                      className="px-6 py-3 bg-primary text-white rounded-xl font-bold shadow-sm hover:bg-primary/90 flex items-center justify-center gap-2 mx-auto"
-                    >
-                      <span className="material-symbols-outlined text-[20px]">payments</span>
-                      Thanh toán nốt 75%
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                      <button 
+                        onClick={handleFinalPayment}
+                        className="px-6 py-3 bg-primary text-white rounded-xl font-bold shadow-sm hover:bg-primary/90 flex items-center justify-center gap-2"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">payments</span>
+                        Thanh toán nốt 75%
+                      </button>
+                      <button 
+                        onClick={handleRenewClass}
+                        className="px-6 py-3 bg-teal-600 text-white rounded-xl font-bold shadow-sm hover:bg-teal-700 flex items-center justify-center gap-2"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">sync</span>
+                        Học tiếp tháng mới (Gia hạn)
+                      </button>
+                    </div>
                   )}
                   {isTutor && (
                     <p className="text-xs text-on-surface-variant">Yêu cầu thanh toán 75% còn lại đã được gửi. Đang chờ Phụ huynh quét mã.</p>

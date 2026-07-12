@@ -82,10 +82,6 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
         System.out.println(">>> Seeding public documents...");
         seedPublicDocuments();
-        System.out.println(">>> Cleaning locked users and randomizing dates...");
-        cleanLockedUsersAndRandomizeJoinDates();
-        System.out.println(">>> Cleaning all classes and transactions...");
-        cleanAllClassesAndTransactions();
         System.out.println(">>> DATABASE SEEDER RUN SUCCESSFULLY COMPLETED!");
     }
 

@@ -228,4 +228,33 @@ public class TransactionController {
             return ResponseEntity.ok(Map.of("qrUrl", qrUrl, "transactionCode", extraTx.getTransactionCode(), "amount", extraTx.getAmount()));
         }
     }
+
+    @PostMapping("/renew/{classSessionId}")
+    @Transactional
+    public ResponseEntity<?> payRenew(@PathVariable Long classSessionId) {
+        ClassSession session = classSessionRepository.findById(classSessionId)
+                .orElseThrow(() -> new RuntimeException("ClassSession not found"));
+
+        if (session.getStatus() == ClassSessionStatus.TRIAL || session.getStatus() == ClassSessionStatus.PENDING_PAYMENT) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Lớp học chưa kích hoạt chính thức để gia hạn."));
+        }
+
+        double totalPrice = calculateTotalPrice(session);
+
+        // Tạo transaction DEPOSIT mới cho chu kỳ tiếp theo
+        Transaction tx = new Transaction();
+        tx.setClassSession(session);
+        tx.setType(TransactionType.DEPOSIT);
+        tx.setStatus(TransactionStatus.PENDING);
+        tx.setTransactionCode("SHREN" + classSessionId + (System.currentTimeMillis() % 10000));
+        tx.setAmount(totalPrice * 0.25);
+        transactionRepository.save(tx);
+
+        // Đặt trạng thái lớp học về PENDING_PAYMENT để chờ phụ huynh thanh toán
+        session.setStatus(ClassSessionStatus.PENDING_PAYMENT);
+        classSessionRepository.save(session);
+
+        String qrUrl = generateVietQR(tx.getAmount(), tx.getTransactionCode());
+        return ResponseEntity.ok(Map.of("qrUrl", qrUrl, "transactionCode", tx.getTransactionCode(), "amount", tx.getAmount()));
+    }
 }

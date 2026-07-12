@@ -35,25 +35,21 @@ public class AdminUserController {
         // Prefetch tutor profiles and parents to map them by userId and avoid N+1
         Map<Long, TutorProfile> tutorProfileMap = new java.util.HashMap<>();
         try {
-            List<TutorProfile> tutors = tutorProfileRepository.findAll();
+            List<TutorProfile> tutors = tutorProfileRepository.findAllWithUser();
             for (TutorProfile t : tutors) {
-                try {
-                    if (t.getUser() != null && t.getUser().getId() != null) {
-                        tutorProfileMap.put(t.getUser().getId(), t);
-                    }
-                } catch (Exception ignored) {}
+                if (t.getUser() != null) {
+                    tutorProfileMap.put(t.getUser().getId(), t);
+                }
             }
         } catch (Exception ignored) {}
 
         Map<Long, Parent> parentMap = new java.util.HashMap<>();
         try {
-            List<Parent> parents = parentRepository.findAll();
+            List<Parent> parents = parentRepository.findAllWithUser();
             for (Parent p : parents) {
-                try {
-                    if (p.getUser() != null && p.getUser().getId() != null) {
-                        parentMap.put(p.getUser().getId(), p);
-                    }
-                } catch (Exception ignored) {}
+                if (p.getUser() != null) {
+                    parentMap.put(p.getUser().getId(), p);
+                }
             }
         } catch (Exception ignored) {}
 
