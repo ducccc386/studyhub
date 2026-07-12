@@ -211,14 +211,30 @@ public class TutorService {
         );
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public TutorProfile getTutorProfile(Long tutorId) {
-        return tutorProfileRepository.findById(tutorId)
+        TutorProfile tutor = tutorProfileRepository.findById(tutorId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy gia sư"));
+        if (tutor.getCertificates() != null) {
+            tutor.getCertificates().size();
+        }
+        if (tutor.getSubjects() != null) {
+            tutor.getSubjects().size();
+        }
+        return tutor;
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public TutorProfile getTutorProfileByUserId(Long userId) {
-        return tutorProfileRepository.findByUserId(userId)
+        TutorProfile tutor = tutorProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy profile gia sư"));
+        if (tutor.getCertificates() != null) {
+            tutor.getCertificates().size();
+        }
+        if (tutor.getSubjects() != null) {
+            tutor.getSubjects().size();
+        }
+        return tutor;
     }
 
     public void updateAvatar(Long tutorId, String avatarUrl) {
