@@ -42,6 +42,9 @@ public class JobPosting {
     @Column(length = 20)
     private String learningMode; // ONLINE, OFFLINE
     
+    @Column(length = 100)
+    private String studentName; // Name of the child/student
+
     @Column(columnDefinition = "TEXT")
     private String requirement;
 }

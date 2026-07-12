@@ -441,7 +441,7 @@ const ClassManagement: React.FC = () => {
                   {paymentType === 'deposit' && (
                     <div className="w-full bg-blue-50 border border-blue-200 p-4 rounded-xl mb-6 text-sm text-blue-800 flex items-start gap-3 text-left">
                       <span className="material-symbols-outlined mt-0.5">info</span>
-                      <p>Hệ thống tạm thu học phí 1 tháng. Khi kết thúc, sẽ đối soát lại số buổi thực tế đã được bạn xác nhận để hoàn tiền hoặc yêu cầu đóng thêm.</p>
+                      <p>Hệ thống thu phí hoa hồng 25% học phí 1 tháng. 75% học phí còn lại phụ huynh và gia sư sẽ tự thanh toán trực tiếp sau khi hoàn thành khóa học.</p>
                     </div>
                   )}
                   <div className="text-center mb-6">

@@ -31,6 +31,7 @@ const CreatePost: React.FC = () => {
   const [city, setCity] = useState('Hà Nội');
   const [detailedAddress, setDetailedAddress] = useState('');
   const [req, setReq] = useState('');
+  const [studentName, setStudentName] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -38,7 +39,16 @@ const CreatePost: React.FC = () => {
       .then(res => res.json())
       .then(data => setSubjects(Array.isArray(data) ? data : []))
       .catch(() => {});
-  }, []);
+
+    if (userId) {
+      apiFetch(`/users/${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.childrenName) setStudentName(data.childrenName);
+        })
+        .catch(() => {});
+    }
+  }, [userId]);
 
   const validatePrice = (val: string) => {
     const n = parseInt(val.replace(/,/g, ''), 10);
@@ -85,6 +95,7 @@ const CreatePost: React.FC = () => {
       pricePerSession: priceNum,
       learningMode,
       requirement: req,
+      studentName,
     };
 
     setSubmitting(true);
@@ -124,6 +135,19 @@ const CreatePost: React.FC = () => {
         {/* Main Form */}
         <div className="lg:col-span-2">
           <form onSubmit={handleSubmit} className="bg-white border border-outline-variant rounded-2xl p-8 shadow-sm flex flex-col gap-7">
+
+            {/* Tên của con */}
+            <div className="space-y-2">
+              <label className="font-semibold text-sm text-on-surface block">Tên học sinh (các con) <span className="text-error">*</span></label>
+              <input
+                type="text"
+                value={studentName}
+                onChange={e => setStudentName(e.target.value)}
+                placeholder="Ví dụ: Nguyễn Văn A"
+                required
+                className="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-base"
+              />
+            </div>
 
             {/* Row 1: Môn học + Lớp */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

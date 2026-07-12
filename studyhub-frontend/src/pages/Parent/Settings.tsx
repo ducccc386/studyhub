@@ -14,6 +14,7 @@ const Settings: React.FC = () => {
   const [fullName, setFullName] = useState(name || '');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [childrenName, setChildrenName] = useState('');
   const [createdAt, setCreatedAt] = useState('');
 
   // Password fields
@@ -31,6 +32,7 @@ const Settings: React.FC = () => {
         if (data.avatarUrl) setAvatar(data.avatarUrl);
         if (data.phone) setPhone(data.phone);
         if (data.address) setAddress(data.address);
+        if (data.childrenName) setChildrenName(data.childrenName);
         if (data.createdAt) setCreatedAt(data.createdAt);
       })
       .catch(() => {});
@@ -64,7 +66,7 @@ const Settings: React.FC = () => {
     try {
       const res = await apiFetch(`/users/${userId}`, {
         method: 'PUT',
-        body: JSON.stringify({ fullName, avatarUrl: avatar, phone, address }),
+        body: JSON.stringify({ fullName, avatarUrl: avatar, phone, address, childrenName }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -232,6 +234,26 @@ const Settings: React.FC = () => {
                 <p className="text-xs font-medium text-on-surface-variant flex items-center gap-1 mt-1">
                   <span className="material-symbols-outlined text-[14px]">info</span>
                   Địa chỉ này giúp gia sư xác định khu vực giảng dạy phù hợp.
+                </p>
+              </div>
+
+              {/* Children Name */}
+              <div className="space-y-2">
+                <label className="block font-semibold text-sm text-on-surface-variant" htmlFor="children-name">Tên con của bạn</label>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">family_restroom</span>
+                  <input
+                    className="w-full pl-11 pr-4 py-3 bg-surface-container-lowest rounded-xl border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-base text-on-surface"
+                    id="children-name"
+                    placeholder="Ví dụ: Nguyễn Văn A, Nguyễn Thị B"
+                    type="text"
+                    value={childrenName}
+                    onChange={(e) => setChildrenName(e.target.value)}
+                  />
+                </div>
+                <p className="text-xs font-medium text-on-surface-variant flex items-center gap-1 mt-1">
+                  <span className="material-symbols-outlined text-[14px]">info</span>
+                  Thông tin các con của phụ huynh để hiển thị/điền nhanh khi đăng bài.
                 </p>
               </div>
 

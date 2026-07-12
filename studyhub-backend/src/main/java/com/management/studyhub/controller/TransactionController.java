@@ -81,10 +81,10 @@ public class TransactionController {
             tx.setType(TransactionType.DEPOSIT);
             tx.setStatus(TransactionStatus.PENDING);
             tx.setTransactionCode("SHDEP" + classSessionId + (System.currentTimeMillis() % 10000));
-            tx.setAmount(totalPrice);
+            tx.setAmount(totalPrice * 0.25);
             transactionRepository.save(tx);
         } else {
-            tx.setAmount(totalPrice);
+            tx.setAmount(totalPrice * 0.25);
             transactionRepository.save(tx);
         }
 

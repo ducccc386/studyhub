@@ -96,6 +96,40 @@ const ClassWorkspace: React.FC = () => {
     } catch (err) {
       alert('Lỗi kết nối máy chủ.');
     }
+  };  const handleFinalPayment = async () => {
+    try {
+      const res = await apiFetch(`/transactions/final/${id}`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setQrUrl(data.qrUrl);
+        setTransactionCode(data.transactionCode);
+        setPaymentStatus('PENDING');
+        setShowPaymentModal(true);
+      } else {
+        alert('Có lỗi xảy ra khi tạo giao dịch thanh toán.');
+      }
+    } catch (err) {
+      alert('Lỗi kết nối máy chủ.');
+    }
+  };
+
+  const handleRequestFinalPayment = async () => {
+    if (!window.confirm("Xác nhận đã dạy xong khóa học và yêu cầu Phụ huynh thanh toán 75% còn lại?")) return;
+    try {
+      const res = await apiFetch(`/class-sessions/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'PENDING_FINAL_PAYMENT' })
+      });
+      if (res.ok) {
+        setSession(await res.json());
+        alert("Đã gửi yêu cầu thanh toán thành công!");
+      } else {
+        alert("Gửi yêu cầu thất bại.");
+      }
+    } catch (err) {
+      alert("Lỗi kết nối.");
+    }
   };
 
   useEffect(() => {
@@ -1114,13 +1148,13 @@ const ClassWorkspace: React.FC = () => {
               {session.status === 'TRIAL' ? (
                 isParent ? (
                   <div className="space-y-4">
-                    <p className="font-medium text-on-surface">Sau khi hoàn thành học thử, hãy Xác nhận thuê gia sư và thanh toán để tiếp tục quá trình học tập chính thức.</p>
+                    <p className="font-medium text-on-surface">Sau khi hoàn thành học thử, hãy Xác nhận thuê gia sư và thanh toán 25% phí hoa hồng để tiếp tục quá trình học tập chính thức.</p>
                     <button 
                       onClick={handleConfirmHire}
                       className="px-6 py-3 bg-primary text-white rounded-xl font-bold shadow-sm hover:bg-primary/90 flex items-center justify-center gap-2 mx-auto"
                     >
                       <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
-                      Xác nhận thuê & Thanh toán
+                      Xác nhận thuê & Thanh toán 25%
                     </button>
                   </div>
                 ) : (
@@ -1128,7 +1162,7 @@ const ClassWorkspace: React.FC = () => {
                 )
               ) : session.status === 'PENDING_PAYMENT' ? (
                 <div className="space-y-4">
-                  <p className="font-bold text-amber-600">Đang chờ phụ huynh thanh toán học phí...</p>
+                  <p className="font-bold text-amber-600">Đang chờ phụ huynh thanh toán 25% phí hoa hồng...</p>
                   {isParent && (
                     <button 
                       onClick={handleConfirmHire}
@@ -1138,10 +1172,44 @@ const ClassWorkspace: React.FC = () => {
                     </button>
                   )}
                 </div>
+              ) : session.status === 'CONFIRMED' ? (
+                <div className="space-y-4">
+                  <p className="text-green-600 font-bold flex items-center justify-center gap-2">
+                    <span className="material-symbols-outlined text-green-600">verified</span>
+                    Đã thanh toán 25% hoa hồng. Lớp học chính thức diễn ra!
+                  </p>
+                  {isTutor ? (
+                    <button 
+                      onClick={handleRequestFinalPayment}
+                      className="px-6 py-3 bg-teal-600 text-white rounded-xl font-bold shadow-sm hover:bg-teal-700 flex items-center justify-center gap-2 mx-auto"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">task_alt</span>
+                      Đã dạy xong & Yêu cầu thanh toán 75% còn lại
+                    </button>
+                  ) : (
+                    <p className="text-xs text-on-surface-variant">75% học phí còn lại sẽ được thanh toán trực tiếp cho gia sư sau khi hoàn thành khóa học.</p>
+                  )}
+                </div>
+              ) : session.status === 'PENDING_FINAL_PAYMENT' ? (
+                <div className="space-y-4">
+                  <p className="font-bold text-teal-600">Gia sư đã báo hoàn thành. Chờ thanh toán 75% học phí còn lại...</p>
+                  {isParent && (
+                    <button 
+                      onClick={handleFinalPayment}
+                      className="px-6 py-3 bg-primary text-white rounded-xl font-bold shadow-sm hover:bg-primary/90 flex items-center justify-center gap-2 mx-auto"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">payments</span>
+                      Thanh toán nốt 75%
+                    </button>
+                  )}
+                  {isTutor && (
+                    <p className="text-xs text-on-surface-variant">Yêu cầu thanh toán 75% còn lại đã được gửi. Đang chờ Phụ huynh quét mã.</p>
+                  )}
+                </div>
               ) : (
                 <p className="text-green-600 font-bold flex items-center justify-center gap-2">
-                  <span className="material-symbols-outlined text-green-600">verified</span>
-                  Đã thanh toán thành công. Lớp học chính thức diễn ra!
+                  <span className="material-symbols-outlined text-green-600">task_alt</span>
+                  Đã hoàn tất thanh toán toàn bộ khóa học (25% hoa hồng + 75% học phí)!
                 </p>
               )}
             </div>
@@ -1155,7 +1223,9 @@ const ClassWorkspace: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-surface w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col">
             <div className="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
-              <h3 className="text-xl font-bold text-on-surface">Thanh toán & Chốt thuê</h3>
+              <h3 className="text-xl font-bold text-on-surface">
+                {session.status === 'PENDING_FINAL_PAYMENT' ? 'Thanh toán nốt 75%' : 'Thanh toán & Chốt thuê'}
+              </h3>
               <button onClick={() => setShowPaymentModal(false)} className="text-on-surface-variant hover:text-error transition-colors">
                 <span className="material-symbols-outlined">close</span>
               </button>
@@ -1168,7 +1238,12 @@ const ClassWorkspace: React.FC = () => {
                     <span className="material-symbols-outlined text-4xl">check_circle</span>
                   </div>
                   <h4 className="text-2xl font-black text-on-surface">Thanh toán thành công!</h4>
-                  <p className="text-on-surface-variant">Cảm ơn bạn đã lựa chọn gia sư của StudyHub. Lớp học đã được chuyển sang trạng thái Chính thức.</p>
+                  <p className="text-on-surface-variant">
+                    {session.status === 'PENDING_FINAL_PAYMENT'
+                      ? 'Thanh toán 75% còn lại thành công! Khóa học đã chính thức hoàn thành.'
+                      : 'Cảm ơn bạn đã lựa chọn gia sư của StudyHub. Lớp học đã được chuyển sang trạng thái Chính thức.'
+                    }
+                  </p>
                   <button 
                     onClick={() => setShowPaymentModal(false)}
                     className="mt-6 px-8 py-3 bg-primary text-white rounded-xl font-bold shadow hover:bg-primary/90 w-full"
@@ -1180,8 +1255,12 @@ const ClassWorkspace: React.FC = () => {
                 <>
                   <div className="text-center mb-6">
                     <p className="text-on-surface-variant text-sm mb-1">Quét mã VietQR bằng App ngân hàng để thanh toán</p>
-                    <p className="text-primary font-black text-2xl">{session.pricePerSession?.toLocaleString('vi-VN')}đ</p>
-
+                    <p className="text-primary font-black text-2xl">
+                      {session.status === 'PENDING_FINAL_PAYMENT'
+                        ? ((session.price || 0) * 0.75)?.toLocaleString('vi-VN') + 'đ (75% học phí còn lại)'
+                        : ((session.price || 0) * 0.25)?.toLocaleString('vi-VN') + 'đ (25% phí hoa hồng)'
+                      }
+                    </p>
                   </div>
                   
                   <div className="bg-white p-4 rounded-2xl shadow-inner border border-outline-variant mb-6 relative">

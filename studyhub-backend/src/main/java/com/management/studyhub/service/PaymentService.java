@@ -71,7 +71,7 @@ public class PaymentService {
             classSession.setPrice(totalAmount);
             classSessionRepository.save(classSession);
             
-            transaction.setAmount(totalAmount);
+            transaction.setAmount(totalAmount * 0.25);
             transactionRepository.save(transaction);
         } else {
             // Tạo Transaction mới
@@ -90,7 +90,7 @@ public class PaymentService {
             classSession.setPrice(totalAmount);
             classSessionRepository.save(classSession);
             
-            transaction.setAmount(totalAmount);
+            transaction.setAmount(totalAmount * 0.25);
             transaction.setStatus(TransactionStatus.PENDING);
             transactionRepository.save(transaction);
         }
@@ -138,10 +138,21 @@ public class PaymentService {
         // Tạo CommissionRecord (Hoa hồng 25%)
         com.management.studyhub.entity.CommissionRecord commission = new com.management.studyhub.entity.CommissionRecord();
         commission.setTransaction(transaction);
-        commission.setTotalAmount(transaction.getAmount());
-        double platformFee = transaction.getAmount() * 0.25;
-        commission.setPlatformFee(platformFee);
-        commission.setTutorPayout(transaction.getAmount() - platformFee);
+        
+        if (transaction.getType() == TransactionType.DEPOSIT) {
+            commission.setTotalAmount(transaction.getAmount() * 4.0); // Total tuition is 4 times the commission
+            commission.setPlatformFee(transaction.getAmount());
+            commission.setTutorPayout(0.0);
+        } else if (transaction.getType() == TransactionType.FINAL_PAYMENT) {
+            commission.setTotalAmount(transaction.getAmount() / 0.75); // Total tuition
+            commission.setPlatformFee(0.0);
+            commission.setTutorPayout(transaction.getAmount());
+        } else {
+            commission.setTotalAmount(transaction.getAmount());
+            double platformFee = transaction.getAmount() * 0.25;
+            commission.setPlatformFee(platformFee);
+            commission.setTutorPayout(transaction.getAmount() - platformFee);
+        }
         commissionRecordRepository.save(commission);
 
         log.info("Mock payment confirmed for transaction: {}", transactionCode);
@@ -189,14 +200,25 @@ public class PaymentService {
                                     }
                                     classSessionRepository.save(classSession);
                                     
-                                    // Tạo CommissionRecord (Hoa hồng 25%)
-                                    com.management.studyhub.entity.CommissionRecord commission = new com.management.studyhub.entity.CommissionRecord();
-                                    commission.setTransaction(t);
-                                    commission.setTotalAmount(t.getAmount());
-                                    double platformFee = t.getAmount() * 0.25;
-                                    commission.setPlatformFee(platformFee);
-                                    commission.setTutorPayout(t.getAmount() - platformFee);
-                                    commissionRecordRepository.save(commission);
+                                     // Tạo CommissionRecord (Hoa hồng 25%)
+                                     com.management.studyhub.entity.CommissionRecord commission = new com.management.studyhub.entity.CommissionRecord();
+                                     commission.setTransaction(t);
+                                     
+                                     if (t.getType() == TransactionType.DEPOSIT) {
+                                         commission.setTotalAmount(t.getAmount() * 4.0); // Total tuition is 4 times the commission
+                                         commission.setPlatformFee(t.getAmount());
+                                         commission.setTutorPayout(0.0);
+                                     } else if (t.getType() == TransactionType.FINAL_PAYMENT) {
+                                         commission.setTotalAmount(t.getAmount() / 0.75); // Total tuition
+                                         commission.setPlatformFee(0.0);
+                                         commission.setTutorPayout(t.getAmount());
+                                     } else {
+                                         commission.setTotalAmount(t.getAmount());
+                                         double platformFee = t.getAmount() * 0.25;
+                                         commission.setPlatformFee(platformFee);
+                                         commission.setTutorPayout(t.getAmount() - platformFee);
+                                     }
+                                     commissionRecordRepository.save(commission);
                                     
                                     log.info("Payment confirmed & Commission generated for transaction: {}", t.getTransactionCode());
                                 }

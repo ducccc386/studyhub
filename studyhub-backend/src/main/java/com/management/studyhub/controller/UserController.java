@@ -29,6 +29,7 @@ public class UserController {
                     resp.put("role", u.getRole().name());
                     resp.put("phone", u.getPhoneNumber() != null ? u.getPhoneNumber() : "");
                     resp.put("address", u.getAddress() != null ? u.getAddress() : "");
+                    resp.put("childrenName", u.getChildrenName() != null ? u.getChildrenName() : "");
                     resp.put("createdAt", u.getCreatedAt() != null ? u.getCreatedAt().toString() : "");
                     return ResponseEntity.ok(resp);
                 })
@@ -50,11 +51,15 @@ public class UserController {
             if (body.containsKey("address")) {
                 u.setAddress(body.get("address"));
             }
+            if (body.containsKey("childrenName")) {
+                u.setChildrenName(body.get("childrenName"));
+            }
             userRepository.save(u);
             return ResponseEntity.ok(Map.of(
                     "id", u.getId(),
                     "fullName", u.getFullName() != null ? u.getFullName() : "",
                     "avatarUrl", u.getAvatarUrl() != null ? u.getAvatarUrl() : "",
+                    "childrenName", u.getChildrenName() != null ? u.getChildrenName() : "",
                     "message", "Cập nhật thành công"
             ));
         }).orElse(ResponseEntity.notFound().build());

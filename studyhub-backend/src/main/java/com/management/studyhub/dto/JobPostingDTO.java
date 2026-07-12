@@ -22,6 +22,7 @@ public class JobPostingDTO {
     private Double pricePerSession;
     private String learningMode;
     private String requirement;
+    private String studentName;
     private Integer applicantsCount;
     private List<ApplicantDTO> applicants;
 }

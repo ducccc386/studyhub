@@ -60,6 +60,7 @@ public class JobPostingService {
             job.setPricePerSession(dto.getPricePerSession());
             job.setLearningMode(dto.getLearningMode());
             job.setRequirement(dto.getRequirement());
+            job.setStudentName(dto.getStudentName());
             job.setApplicantsCount(0);
             job.setTutorGenderPreference("ANY"); // Default to ANY to avoid NULL constraint violations
 
@@ -145,6 +146,7 @@ public class JobPostingService {
             if (dto.getPricePerSession() != null) job.setPricePerSession(dto.getPricePerSession());
             if (dto.getLearningMode() != null) job.setLearningMode(dto.getLearningMode());
             if (dto.getRequirement() != null) job.setRequirement(dto.getRequirement());
+            if (dto.getStudentName() != null) job.setStudentName(dto.getStudentName());
             
             if (job.getTutorGenderPreference() == null) {
                 job.setTutorGenderPreference("ANY");
@@ -277,6 +279,7 @@ public class JobPostingService {
         dto.setPricePerSession(job.getPricePerSession());
         dto.setLearningMode(job.getLearningMode());
         dto.setRequirement(job.getRequirement());
+        dto.setStudentName(job.getStudentName());
         dto.setApplicantsCount(job.getApplicantsCount() == null ? 0 : job.getApplicantsCount());
         return dto;
     }

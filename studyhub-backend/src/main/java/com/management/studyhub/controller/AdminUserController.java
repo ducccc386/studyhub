@@ -28,6 +28,7 @@ public class AdminUserController {
     private final EntityManager entityManager;
 
     @GetMapping
+    @Transactional(readOnly = true)
     public ResponseEntity<List<Map<String, Object>>> getAllUsers() {
         List<User> allUsers = userRepository.findAll();
 

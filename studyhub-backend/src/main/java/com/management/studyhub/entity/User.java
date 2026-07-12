@@ -34,6 +34,9 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String address;
 
+    @Column(length = 200)
+    private String childrenName;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
