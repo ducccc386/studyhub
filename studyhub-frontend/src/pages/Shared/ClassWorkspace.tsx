@@ -169,7 +169,7 @@ const ClassWorkspace: React.FC = () => {
     try {
       const payload = {
         ...newLog,
-        scheduledDate: new Date().toISOString()
+        scheduledDate: new Date().toISOString().split('.')[0]
       };
       const res = await apiFetch(`/lesson-logs/class/${id}`, {
         method: 'POST',
@@ -180,9 +180,12 @@ const ClassWorkspace: React.FC = () => {
         setShowLogForm(false);
         setNewLog({ title: '', content: '', tutorFeedback: '', status: 'PRESENT' });
         fetchData();
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        alert(errorData.error || 'Lỗi thêm nhật ký từ máy chủ');
       }
-    } catch (err) {
-      alert('Lỗi thêm nhật ký');
+    } catch (err: any) {
+      alert('Lỗi thêm nhật ký: ' + err.message);
     }
   };
 

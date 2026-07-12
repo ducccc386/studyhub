@@ -21,20 +21,22 @@ public class LessonLogController {
     }
 
     @PostMapping("/class/{classSessionId}")
-    public ResponseEntity<LessonLogDTO> createLessonLog(@PathVariable Long classSessionId, @RequestBody LessonLogDTO dto) {
+    public ResponseEntity<?> createLessonLog(@PathVariable Long classSessionId, @RequestBody LessonLogDTO dto) {
         try {
             return ResponseEntity.ok(lessonLogService.createLessonLog(classSessionId, dto));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage() != null ? e.getMessage() : "Lỗi không xác định"));
         }
     }
 
     @PutMapping("/{id}/parent-confirm")
-    public ResponseEntity<LessonLogDTO> parentConfirmLesson(@PathVariable Long id, @RequestBody com.management.studyhub.dto.ParentConfirmDTO dto) {
+    public ResponseEntity<?> parentConfirmLesson(@PathVariable Long id, @RequestBody com.management.studyhub.dto.ParentConfirmDTO dto) {
         try {
             return ResponseEntity.ok(lessonLogService.parentConfirmLesson(id, dto));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage() != null ? e.getMessage() : "Lỗi không xác định"));
         }
     }
 

@@ -54,8 +54,8 @@ public class TransactionController {
 
     private String generateVietQR(double amount, String transactionCode) {
         long amountStr = (long) amount;
-        String accountNameUrl = "NGUYEN%20ANH%20DUC";
-        return String.format("https://img.vietqr.io/image/970415-2516032004-compact2.png?amount=%d&addInfo=%s&accountName=%s",
+        String accountNameUrl = "TRAN%20THI%20LUYEN";
+        return String.format("https://img.vietqr.io/image/970423-00000800387-compact2.png?amount=%d&addInfo=%s&accountName=%s",
                 amountStr, transactionCode, accountNameUrl);
     }
 
