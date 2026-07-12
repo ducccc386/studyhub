@@ -83,11 +83,14 @@ public class DatabaseSeeder implements CommandLineRunner {
         System.out.println(">>> Seeding public documents...");
         seedPublicDocuments();
 
-        // One-off admin task: delete class session 36
+        // One-off admin task: delete class session 36 safely via Native SQL
         try {
-            entityManager.createQuery("DELETE FROM Transaction t WHERE t.classSession.id = 36").executeUpdate();
-            entityManager.createQuery("DELETE FROM LessonLog l WHERE l.classSession.id = 36").executeUpdate();
-            entityManager.createQuery("DELETE FROM ClassSession c WHERE c.id = 36").executeUpdate();
+            entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 0").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM commission_records WHERE transaction_id IN (SELECT id FROM transactions WHERE class_session_id = 36)").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM transactions WHERE class_session_id = 36").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM lesson_logs WHERE class_session_id = 36").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM class_sessions WHERE id = 36").executeUpdate();
+            entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 1").executeUpdate();
             System.out.println(">>> SUCCESSFULLY DELETED CLASS SESSION 36!");
         } catch (Exception e) {
             System.err.println(">>> ERROR DELETING CLASS SESSION 36: " + e.getMessage());
