@@ -107,12 +107,14 @@ public class JobPostingService {
                 .collect(Collectors.toList());
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public JobPostingDTO getPostById(Long id) {
         return jobPostingRepository.findById(id)
                 .map(this::mapToDTO)
                 .orElseThrow(() -> new RuntimeException("Job posting not found"));
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void approvePost(Long id) {
         JobPosting job = jobPostingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Job posting not found"));
@@ -120,6 +122,7 @@ public class JobPostingService {
         jobPostingRepository.save(job);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void rejectPost(Long id) {
         JobPosting job = jobPostingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Job posting not found"));
