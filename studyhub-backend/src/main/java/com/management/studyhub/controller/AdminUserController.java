@@ -28,74 +28,43 @@ public class AdminUserController {
     private final EntityManager entityManager;
 
     @GetMapping
-    @Transactional(readOnly = true)
-    public ResponseEntity<List<Map<String, Object>>> getAllUsers() {
-        List<User> allUsers = userRepository.findAll();
-
-        // Prefetch tutor profiles and parents to map them by userId and avoid N+1
-        Map<Long, TutorProfile> tutorProfileMap = new java.util.HashMap<>();
+    public ResponseEntity<?> getAllUsers() {
         try {
-            List<TutorProfile> tutors = tutorProfileRepository.findAllWithUser();
-            for (TutorProfile t : tutors) {
-                if (t.getUser() != null) {
-                    tutorProfileMap.put(t.getUser().getId(), t);
-                }
+            String sql = "SELECT " +
+                    " u.id, " +
+                    " u.email, " +
+                    " COALESCE(u.full_name, '') AS fullName, " +
+                    " COALESCE(u.avatar_url, '') AS avatarUrl, " +
+                    " u.role, " +
+                    " COALESCE(t.phone_number, p.phone, u.phone_number, '') AS phoneNumber, " +
+                    " COALESCE(t.address, u.address, '') AS address, " +
+                    " u.created_at AS createdAt, " +
+                    " u.status " +
+                    "FROM users u " +
+                    "LEFT JOIN tutor_profiles t ON t.user_id = u.id " +
+                    "LEFT JOIN parents p ON p.user_id = u.id";
+
+            List<Object[]> rows = entityManager.createNativeQuery(sql).getResultList();
+            List<Map<String, Object>> result = new java.util.ArrayList<>();
+            
+            for (Object[] row : rows) {
+                Map<String, Object> map = new java.util.LinkedHashMap<>();
+                map.put("id", row[0] != null ? ((Number) row[0]).longValue() : 0L);
+                map.put("email", row[1] != null ? row[1].toString() : "");
+                map.put("fullName", row[2] != null ? row[2].toString() : "");
+                map.put("avatarUrl", row[3] != null ? row[3].toString() : "");
+                map.put("role", row[4] != null ? row[4].toString() : "");
+                map.put("phoneNumber", row[5] != null ? row[5].toString() : "");
+                map.put("address", row[6] != null ? row[6].toString() : "");
+                map.put("createdAt", row[7] != null ? row[7].toString() : "");
+                map.put("status", row[8] != null ? row[8].toString() : "ACTIVE");
+                result.add(map);
             }
-        } catch (Exception ignored) {}
-
-        Map<Long, Parent> parentMap = new java.util.HashMap<>();
-        try {
-            List<Parent> parents = parentRepository.findAllWithUser();
-            for (Parent p : parents) {
-                if (p.getUser() != null) {
-                    parentMap.put(p.getUser().getId(), p);
-                }
-            }
-        } catch (Exception ignored) {}
-
-        List<Map<String, Object>> users = allUsers.stream()
-                .map(u -> {
-                    Map<String, Object> map = new java.util.LinkedHashMap<>();
-                    map.put("id", u.getId());
-                    map.put("email", u.getEmail());
-                    map.put("fullName", u.getFullName() != null ? u.getFullName() : "");
-                    map.put("avatarUrl", u.getAvatarUrl() != null ? u.getAvatarUrl() : "");
-                    
-                    String roleName = u.getRole() != null ? u.getRole().name() : "";
-                    map.put("role", roleName);
-
-                    String phone = "";
-                    String address = "";
-
-                    if ("TUTOR".equals(roleName)) {
-                        TutorProfile tutor = tutorProfileMap.get(u.getId());
-                        if (tutor != null) {
-                            phone = tutor.getPhoneNumber();
-                            address = tutor.getAddress();
-                        }
-                    } else if ("PARENT".equals(roleName)) {
-                        Parent parent = parentMap.get(u.getId());
-                        if (parent != null) {
-                            phone = parent.getPhone();
-                        }
-                    }
-
-                    // Fallback to User table fields if profile details are empty
-                    if (phone == null || phone.trim().isEmpty()) {
-                        phone = u.getPhoneNumber() != null ? u.getPhoneNumber() : "";
-                    }
-                    if (address == null || address.trim().isEmpty()) {
-                        address = u.getAddress() != null ? u.getAddress() : "";
-                    }
-
-                    map.put("phoneNumber", phone);
-                    map.put("address", address);
-                    map.put("createdAt", u.getCreatedAt() != null ? u.getCreatedAt().toString() : "");
-                    map.put("status", u.getStatus() != null ? u.getStatus() : "ACTIVE");
-                    return map;
-                })
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(users);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PutMapping("/{id}/lock")

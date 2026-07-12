@@ -1236,10 +1236,21 @@ const ClassWorkspace: React.FC = () => {
                   )}
                 </div>
               ) : (
-                <p className="text-green-600 font-bold flex items-center justify-center gap-2">
-                  <span className="material-symbols-outlined text-green-600">task_alt</span>
-                  Đã hoàn tất thanh toán toàn bộ khóa học (25% hoa hồng + 75% học phí)!
-                </p>
+                <div className="space-y-4">
+                  <p className="text-green-600 font-bold flex items-center justify-center gap-2">
+                    <span className="material-symbols-outlined text-green-600">task_alt</span>
+                    Đã hoàn tất thanh toán toàn bộ khóa học (25% hoa hồng + 75% học phí)!
+                  </p>
+                  {isParent && (
+                    <button 
+                      onClick={handleRenewClass}
+                      className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold shadow-sm flex items-center justify-center gap-2 mx-auto transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">sync</span>
+                      Đăng ký học tiếp tháng mới (Gia hạn)
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>
