@@ -212,6 +212,20 @@ public class TutorService {
     }
 
     @org.springframework.transaction.annotation.Transactional
+    public com.management.studyhub.dto.TutorDetailDTO getTutorDetail(Long tutorId) {
+        TutorProfile tutor = tutorProfileRepository.findById(tutorId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy gia sư"));
+        return mapToDetailDTO(tutor);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public com.management.studyhub.dto.TutorDetailDTO getTutorDetailByUserId(Long userId) {
+        TutorProfile tutor = tutorProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy profile gia sư"));
+        return mapToDetailDTO(tutor);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
     public TutorProfile getTutorProfile(Long tutorId) {
         TutorProfile tutor = tutorProfileRepository.findById(tutorId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy gia sư"));
@@ -236,6 +250,39 @@ public class TutorService {
         }
         return tutor;
     }
+
+    private com.management.studyhub.dto.TutorDetailDTO mapToDetailDTO(TutorProfile tutor) {
+        java.util.List<String> certs = tutor.getCertificates() != null
+                ? new java.util.ArrayList<>(tutor.getCertificates())
+                : new java.util.ArrayList<>();
+        java.util.List<com.management.studyhub.dto.SubjectDTO> subjectDTOs = tutor.getSubjects() != null
+                ? tutor.getSubjects().stream()
+                    .map(s -> new com.management.studyhub.dto.SubjectDTO(s.getId(), s.getName()))
+                    .collect(Collectors.toList())
+                : new java.util.ArrayList<>();
+        return com.management.studyhub.dto.TutorDetailDTO.builder()
+                .id(tutor.getId())
+                .fullName(tutor.getFullName())
+                .avatarUrl(tutor.getAvatarUrl())
+                .universityName(tutor.getUniversityName())
+                .major(tutor.getMajor())
+                .introduction(tutor.getIntroduction())
+                .cvUrl(tutor.getCvUrl())
+                .degreeImageUrl(tutor.getDegreeImageUrl())
+                .price(tutor.getPrice())
+                .teachingMethod(tutor.getTeachingMethod())
+                .averageRating(tutor.getAverageRating())
+                .totalReviews(tutor.getTotalReviews())
+                .experienceYears(tutor.getExperienceYears())
+                .ekycStatus(tutor.getEkycStatus() != null ? tutor.getEkycStatus().name() : null)
+                .address(tutor.getAddress())
+                .birthDate(tutor.getBirthDate() != null ? tutor.getBirthDate().toString() : null)
+                .phoneNumber(tutor.getPhoneNumber())
+                .certificates(certs)
+                .subjects(subjectDTOs)
+                .build();
+    }
+
 
     public void updateAvatar(Long tutorId, String avatarUrl) {
         TutorProfile tutor = tutorProfileRepository.findById(tutorId)

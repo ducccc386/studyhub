@@ -40,16 +40,18 @@ public class TutorController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<com.management.studyhub.entity.TutorProfile> getTutor(@PathVariable Long id) {
-        return ResponseEntity.ok(tutorService.getTutorProfile(id));
+    public ResponseEntity<?> getTutor(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(tutorService.getTutorDetail(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping("/by-user/{userId}")
     public ResponseEntity<?> getTutorByUserId(@PathVariable Long userId) {
         try {
-            com.management.studyhub.entity.TutorProfile profile =
-                tutorService.getTutorProfileByUserId(userId);
-            return ResponseEntity.ok(profile);
+            return ResponseEntity.ok(tutorService.getTutorDetailByUserId(userId));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
