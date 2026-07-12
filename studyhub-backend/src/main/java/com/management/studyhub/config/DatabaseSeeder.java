@@ -82,6 +82,17 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
         System.out.println(">>> Seeding public documents...");
         seedPublicDocuments();
+
+        // One-off admin task: delete class session 36
+        try {
+            entityManager.createQuery("DELETE FROM Transaction t WHERE t.classSession.id = 36").executeUpdate();
+            entityManager.createQuery("DELETE FROM LessonLog l WHERE l.classSession.id = 36").executeUpdate();
+            entityManager.createQuery("DELETE FROM ClassSession c WHERE c.id = 36").executeUpdate();
+            System.out.println(">>> SUCCESSFULLY DELETED CLASS SESSION 36!");
+        } catch (Exception e) {
+            System.err.println(">>> ERROR DELETING CLASS SESSION 36: " + e.getMessage());
+        }
+
         System.out.println(">>> DATABASE SEEDER RUN SUCCESSFULLY COMPLETED!");
     }
 
