@@ -53,7 +53,7 @@ public class AdminEkycController {
                     map.put("universityName", t.getUniversityName());
                     map.put("major", t.getMajor());
                     map.put("experienceYears", t.getExperienceYears());
-                    map.put("certificates", t.getCertificates());
+                    map.put("certificates", t.getCertificates() != null ? new java.util.ArrayList<>(t.getCertificates()) : java.util.List.of());
                     map.put("introduction", t.getIntroduction());
                     map.put("price", t.getPrice());
                     return map;
