@@ -51,7 +51,8 @@ public class LessonLogService {
         ClassSession session = classSessionRepository.findById(classSessionId)
                 .orElseThrow(() -> new RuntimeException("ClassSession not found"));
 
-        if (com.management.studyhub.entity.enums.ClassSessionStatus.TRIAL.equals(session.getStatus()) && session.getProgress() >= 2) {
+        int currentProgress = session.getProgress() != null ? session.getProgress() : 0;
+        if (com.management.studyhub.entity.enums.ClassSessionStatus.TRIAL.equals(session.getStatus()) && currentProgress >= 2) {
             throw new RuntimeException("Lớp học thử đã đạt giới hạn 2 buổi học. Vui lòng yêu cầu Phụ huynh 'Xác nhận thuê' và hoàn tất thanh toán để tiếp tục.");
         }
 
@@ -66,7 +67,7 @@ public class LessonLogService {
         LessonLog saved = lessonLogRepository.save(log);
 
         // Update class progress implicitly
-        session.setProgress(session.getProgress() + 1);
+        session.setProgress(currentProgress + 1);
         classSessionRepository.save(session);
 
         return mapToDTO(saved);
