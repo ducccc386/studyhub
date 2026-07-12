@@ -248,6 +248,12 @@ const TutorSearchClasses: React.FC = () => {
                         <p className="text-sm font-medium text-on-surface">{post.schedule}</p>
                       </div>
                     )}
+                    {post.studyDuration && (
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-outline-variant text-[20px]">hourglass_bottom</span>
+                        <p className="text-sm font-medium text-on-surface">Thời hạn học: <span className="font-semibold text-primary">{post.studyDuration}</span></p>
+                      </div>
+                    )}
                     <div className="flex items-center gap-3">
                       <span className="material-symbols-outlined text-outline-variant text-[20px]">payments</span>
                       <div>

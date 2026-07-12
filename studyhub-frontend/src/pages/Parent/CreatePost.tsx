@@ -32,6 +32,7 @@ const CreatePost: React.FC = () => {
   const [detailedAddress, setDetailedAddress] = useState('');
   const [req, setReq] = useState('');
   const [studentName, setStudentName] = useState('');
+  const [studyDuration, setStudyDuration] = useState('1 tháng');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -96,6 +97,7 @@ const CreatePost: React.FC = () => {
       learningMode,
       requirement: req,
       studentName,
+      studyDuration,
     };
 
     setSubmitting(true);
@@ -193,8 +195,8 @@ const CreatePost: React.FC = () => {
               </div>
             </div>
 
-            {/* Row 2: Hình thức học + Mức lương */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Row 2: Hình thức học + Mức lương + Thời hạn học */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <label className="font-semibold text-sm text-on-surface block">Hình thức học <span className="text-error">*</span></label>
                 <div className="flex gap-2">
@@ -235,6 +237,26 @@ const CreatePost: React.FC = () => {
                   ? <p className="text-xs text-error mt-1">{priceError}</p>
                   : <p className="text-xs text-on-surface-variant mt-1">Từ 50,000 đến 1,000,000 VNĐ/ca</p>
                 }
+              </div>
+
+              <div className="space-y-2">
+                <label className="font-semibold text-sm text-on-surface block">
+                  Thời hạn học mong muốn <span className="text-error">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={studyDuration}
+                    onChange={e => setStudyDuration(e.target.value)}
+                    className="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 appearance-none focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-base pr-10"
+                  >
+                    <option value="1 tháng">1 tháng</option>
+                    <option value="2 tháng">2 tháng</option>
+                    <option value="3 tháng">3 tháng</option>
+                    <option value="Dài hạn">Dài hạn (Lâu dài)</option>
+                  </select>
+                  <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant text-[20px]">expand_more</span>
+                </div>
+                <p className="text-xs text-on-surface-variant mt-1">Dùng làm mốc đối soát dạy học</p>
               </div>
             </div>
 

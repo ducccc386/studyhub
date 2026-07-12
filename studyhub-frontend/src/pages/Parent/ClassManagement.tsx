@@ -378,55 +378,7 @@ const ClassManagement: React.FC = () => {
                         className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-semibold hover:bg-orange-600 transition-opacity whitespace-nowrap flex items-center justify-center gap-2"
                       >
                         <span className="material-symbols-outlined text-[18px]">payments</span>
-                        Thanh toán học phí
-                      </button>
-                    )}
-                    {session.status === 'PENDING_FINAL_PAYMENT' && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handlePayment(session.id, 'final')}
-                          disabled={updatingId === session.id}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-60 whitespace-nowrap flex items-center justify-center gap-2 shadow-sm"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">payments</span>
-                          Thanh toán nốt (75%)
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (window.confirm("Xác nhận đăng ký học thêm tháng nữa? Bạn sẽ thanh toán tiếp 25% học phí làm phí hoa hồng hệ thống.")) {
-                              handlePayment(session.id, 'renew');
-                            }
-                          }}
-                          disabled={updatingId === session.id}
-                          className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 transition-colors disabled:opacity-60 whitespace-nowrap flex items-center justify-center gap-2 shadow-sm"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">sync</span>
-                          Học tiếp tháng mới (Gia hạn)
-                        </button>
-                      </div>
-                    )}
-                    {session.status === 'PENDING_SETTLEMENT' && (
-                      <button
-                        onClick={() => handlePayment(session.id, 'extra')}
-                        disabled={updatingId === session.id}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-60 whitespace-nowrap flex items-center justify-center gap-2 shadow-sm"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">payments</span>
-                        Thanh toán phát sinh
-                      </button>
-                    )}
-                    {['PAID_IN_FULL', 'COMPLETED', 'DISBURSED'].includes(session.status) && (
-                      <button
-                        onClick={() => {
-                          if (window.confirm("Xác nhận đăng ký học thêm tháng nữa? Bạn sẽ thanh toán tiếp 25% học phí làm phí hoa hồng hệ thống.")) {
-                            handlePayment(session.id, 'renew');
-                          }
-                        }}
-                        disabled={updatingId === session.id}
-                        className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 transition-colors disabled:opacity-60 whitespace-nowrap flex items-center justify-center gap-2 shadow-sm"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">sync</span>
-                        Đăng ký học tiếp tháng mới
+                        Thanh toán cọc (25%)
                       </button>
                     )}
                   </div>

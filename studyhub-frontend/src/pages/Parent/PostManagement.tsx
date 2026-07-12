@@ -62,6 +62,7 @@ interface JobPostingDTO {
   pricePerSession: number;
   learningMode: string;
   requirement: string;
+  studyDuration?: string;
   applicantsCount: number;
   applicants: ApplicantDTO[];
 }
@@ -192,6 +193,7 @@ const PostManagement: React.FC = () => {
       pricePerSession: post.pricePerSession,
       learningMode: post.learningMode,
       requirement: post.requirement,
+      studyDuration: (post as any).studyDuration || '1 tháng',
     });
   };
 
@@ -422,6 +424,12 @@ const PostManagement: React.FC = () => {
                       <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">payments</span> {post.pricePerSession?.toLocaleString('vi-VN')}đ/buổi</span>
                       <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">{post.learningMode === 'ONLINE' ? 'laptop_mac' : 'location_on'}</span> {post.learningMode === 'ONLINE' ? 'Online' : 'Offline'}</span>
                       <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">calendar_today</span> {post.schedule}</span>
+                      {post.studyDuration && (
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[16px]">hourglass_bottom</span>
+                          Thời hạn: {post.studyDuration}
+                        </span>
+                      )}
                       <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">schedule</span> Đăng ngày: {new Date(post.postedAt).toLocaleDateString('vi-VN')}</span>
                     </div>
                   </div>
@@ -673,31 +681,51 @@ const PostManagement: React.FC = () => {
                 </div>
               </div>
 
-              {/* Học phí — number input với min/max */}
-              <div className="space-y-1.5">
-                <label className="block text-sm font-semibold text-on-surface">Mức học phí đề xuất (VNĐ/buổi)</label>
-                <input
-                  type="number"
-                  min={50000}
-                  max={1000000}
-                  step={10000}
-                  className={`w-full bg-surface border rounded-xl px-4 py-3 focus:ring-2 outline-none text-sm ${
-                    editPriceError ? 'border-red-400 focus:border-red-400 focus:ring-red-200' : 'border-outline-variant focus:border-primary focus:ring-primary/20'
-                  }`}
-                  placeholder="Ví dụ: 200000"
-                  value={editForm.pricePerSession || ''}
-                  onChange={e => {
-                    const n = Number(e.target.value);
-                    setEditForm(prev => ({...prev, pricePerSession: n}));
-                    if (n < 50000) setEditPriceError('Tối thiểu 50,000 VNĐ');
-                    else if (n > 1000000) setEditPriceError('Tối đa 1,000,000 VNĐ');
-                    else setEditPriceError('');
-                  }}
-                />
-                {editPriceError
-                  ? <p className="text-xs text-red-500 mt-1">{editPriceError}</p>
-                  : <p className="text-xs text-on-surface-variant mt-1">Từ 50,000 đến 1,000,000 VNĐ/buổi</p>
-                }
+              {/* Học phí & Thời hạn học */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-semibold text-on-surface">Mức học phí đề xuất (VNĐ/buổi)</label>
+                  <input
+                    type="number"
+                    min={50000}
+                    max={1000000}
+                    step={10000}
+                    className={`w-full bg-surface border rounded-xl px-4 py-3 focus:ring-2 outline-none text-sm ${
+                      editPriceError ? 'border-red-400 focus:border-red-400 focus:ring-red-200' : 'border-outline-variant focus:border-primary focus:ring-primary/20'
+                    }`}
+                    placeholder="Ví dụ: 200000"
+                    value={editForm.pricePerSession || ''}
+                    onChange={e => {
+                      const n = Number(e.target.value);
+                      setEditForm(prev => ({...prev, pricePerSession: n}));
+                      if (n < 50000) setEditPriceError('Tối thiểu 50,000 VNĐ');
+                      else if (n > 1000000) setEditPriceError('Tối đa 1,000,000 VNĐ');
+                      else setEditPriceError('');
+                    }}
+                  />
+                  {editPriceError
+                    ? <p className="text-xs text-red-500 mt-1">{editPriceError}</p>
+                    : <p className="text-xs text-on-surface-variant mt-1">Từ 50,000 đến 1,000,000 VNĐ/buổi</p>
+                  }
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-semibold text-on-surface">Thời hạn học mong muốn</label>
+                  <div className="relative">
+                    <select
+                      className="w-full appearance-none bg-surface border border-outline-variant rounded-xl px-4 py-3 pr-10 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm"
+                      value={(editForm as any).studyDuration || '1 tháng'}
+                      onChange={e => setEditForm(prev => ({...prev, studyDuration: e.target.value}))}
+                    >
+                      <option value="1 tháng">1 tháng</option>
+                      <option value="2 tháng">2 tháng</option>
+                      <option value="3 tháng">3 tháng</option>
+                      <option value="Dài hạn">Dài hạn (Lâu dài)</option>
+                    </select>
+                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant text-[20px]">expand_more</span>
+                  </div>
+                  <p className="text-xs text-on-surface-variant mt-1">Dùng làm mốc đối soát dạy học</p>
+                </div>
               </div>
 
               {/* Lịch học — checkbox ngày + giờ */}

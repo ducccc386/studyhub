@@ -23,6 +23,7 @@ public class JobPostingDTO {
     private String learningMode;
     private String requirement;
     private String studentName;
+    private String studyDuration;
     private Integer applicantsCount;
     private List<ApplicantDTO> applicants;
 }

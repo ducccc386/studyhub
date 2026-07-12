@@ -41,6 +41,7 @@ export interface UnifiedPost {
   pricePerSession: number;
   learningMode: 'ONLINE' | 'OFFLINE';
   requirement: string;
+  studyDuration?: string;
 }
 
 export interface UnifiedApplication {

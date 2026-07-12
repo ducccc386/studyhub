@@ -45,6 +45,9 @@ public class JobPosting {
     @Column(length = 100)
     private String studentName; // Name of the child/student
 
+    @Column(length = 100)
+    private String studyDuration; // Duration of course (e.g., "1 tháng", "2 tháng", "Lâu dài")
+
     @Column(columnDefinition = "TEXT")
     private String requirement;
 }

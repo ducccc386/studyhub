@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import TutorProfileModal from '../../components/Shared/TutorProfileModal';
@@ -21,6 +21,7 @@ interface JobPostingDTO {
   pricePerSession: number;
   learningMode: string;
   requirement: string;
+  studyDuration?: string;
 }
 
 interface TutorProfile {
@@ -153,6 +154,7 @@ const TutorApplyClass: React.FC = () => {
           <div><span className="text-on-surface-variant">Hình thức:</span> <span className="font-medium text-on-surface">{post.learningMode === 'ONLINE' ? '🌐 Online' : post.learningMode === 'OFFLINE' ? '📍 Offline' : '🌐📍 Cả hai (Online & Offline)'}</span></div>
           <div><span className="text-on-surface-variant">Địa điểm:</span> <span className="font-medium text-on-surface">{post.learningMode === 'ONLINE' ? 'Học Online' : (post.detailedAddress ? `${post.detailedAddress}, ${post.location}` : post.location)}</span></div>
           <div><span className="text-on-surface-variant">Lịch học:</span> <span className="font-medium text-on-surface">{post.schedule || 'Chưa rõ'}</span></div>
+          {post.studyDuration && <div><span className="text-on-surface-variant">Thời hạn học:</span> <span className="font-bold text-primary">{post.studyDuration}</span></div>}
           <div className="col-span-2"><span className="text-on-surface-variant">Yêu cầu:</span> <span className="font-medium text-on-surface">{post.requirement || post.description || 'Không có yêu cầu đặc biệt'}</span></div>
         </div>
       </section>

@@ -90,7 +90,7 @@ const TutorClasses: React.FC = () => {
       if (!res.ok) throw new Error('Cập nhật thất bại');
       const updated: ClassSessionDTO = await res.json();
       setClasses(prev => prev.map(s => s.id === sessionId ? updated : s));
-      toast.success('Báo cáo hoàn thành thành công. Chờ phụ huynh thanh toán nốt 75%.');
+      toast.success('Báo cáo hoàn thành thành công.');
     } catch (err: any) {
       toast.error('Lỗi: ' + err.message);
     }
@@ -336,7 +336,7 @@ const TutorClasses: React.FC = () => {
                   {cls.status === 'CONFIRMED' && (
                     <button 
                       onClick={() => {
-                        toastConfirm('Xác nhận đã dạy xong khóa học này để phụ huynh thanh toán nốt?', () => updateStatus(cls.id, 'PENDING_FINAL_PAYMENT'));
+                        toastConfirm('Xác nhận đã dạy xong khóa học này?', () => updateStatus(cls.id, 'COMPLETED'));
                       }}
                       className="flex-1 text-sm font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700 transition-all active:scale-[0.98]">
                       <span className="material-symbols-outlined text-[18px]">task_alt</span>

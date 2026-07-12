@@ -61,6 +61,7 @@ public class JobPostingService {
             job.setLearningMode(dto.getLearningMode());
             job.setRequirement(dto.getRequirement());
             job.setStudentName(dto.getStudentName());
+            job.setStudyDuration(dto.getStudyDuration());
             job.setApplicantsCount(0);
             job.setTutorGenderPreference("ANY"); // Default to ANY to avoid NULL constraint violations
 
@@ -280,6 +281,7 @@ public class JobPostingService {
         dto.setLearningMode(job.getLearningMode());
         dto.setRequirement(job.getRequirement());
         dto.setStudentName(job.getStudentName());
+        dto.setStudyDuration(job.getStudyDuration());
         dto.setApplicantsCount(job.getApplicantsCount() == null ? 0 : job.getApplicantsCount());
         return dto;
     }
