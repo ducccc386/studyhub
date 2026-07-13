@@ -171,17 +171,22 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public CourseDto approveCourse(Long id) {
         Course course = courseRepository.findById(id).orElseThrow(() -> new RuntimeException("Course not found"));
         course.setStatus("ACTIVE");
-        return mapToDto(courseRepository.save(course));
+        Course saved = courseRepository.save(course);
+        // Re-fetch with tutor & subject to avoid LazyInitializationException
+        return courseRepository.findById(saved.getId()).map(this::mapToDto).orElse(mapToDto(saved));
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public CourseDto rejectCourse(Long id) {
         Course course = courseRepository.findById(id).orElseThrow(() -> new RuntimeException("Course not found"));
         course.setStatus("REJECTED");
-        return mapToDto(courseRepository.save(course));
+        Course saved = courseRepository.save(course);
+        return courseRepository.findById(saved.getId()).map(this::mapToDto).orElse(mapToDto(saved));
     }
 
     @Override
@@ -194,7 +199,13 @@ public class CourseServiceImpl implements CourseService {
     @Override
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<CourseDto> getCoursesByTutorId(Long tutorId) {
-        return courseRepository.findByTutorId(tutorId).stream()
+        List<Course> courses;
+        try {
+            courses = courseRepository.findByTutorIdFetched(tutorId);
+        } catch (Exception e) {
+            courses = courseRepository.findByTutorId(tutorId);
+        }
+        return courses.stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
