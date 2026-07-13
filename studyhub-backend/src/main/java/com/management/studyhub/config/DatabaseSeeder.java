@@ -28,6 +28,8 @@ import com.management.studyhub.entity.LessonLog;
 import com.management.studyhub.repository.LessonLogRepository;
 import com.management.studyhub.entity.PublicDocument;
 import com.management.studyhub.repository.PublicDocumentRepository;
+import com.management.studyhub.entity.Transaction;
+import com.management.studyhub.repository.TransactionRepository;
 import jakarta.persistence.EntityManager;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.stream.Collectors;
@@ -59,6 +61,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final ApplicantRepository applicantRepository;
     private final LessonLogRepository lessonLogRepository;
     private final PublicDocumentRepository publicDocumentRepository;
+    private final TransactionRepository transactionRepository;
     private final EntityManager entityManager;
 
     @Override
@@ -83,18 +86,73 @@ public class DatabaseSeeder implements CommandLineRunner {
         System.out.println(">>> Seeding public documents...");
         seedPublicDocuments();
 
-        // One-off admin task: delete class session 36 safely via ordered JPQL
-        try {
-            entityManager.createQuery("DELETE FROM CommissionRecord cr WHERE cr.transaction.classSession.id = 36").executeUpdate();
-            entityManager.createQuery("DELETE FROM Transaction t WHERE t.classSession.id = 36").executeUpdate();
-            entityManager.createQuery("DELETE FROM LessonLog l WHERE l.classSession.id = 36").executeUpdate();
-            entityManager.createQuery("DELETE FROM ClassSession c WHERE c.id = 36").executeUpdate();
-            System.out.println(">>> SUCCESSFULLY DELETED CLASS SESSION 36!");
-        } catch (Exception e) {
-            System.err.println(">>> ERROR DELETING CLASS SESSION 36: " + e.getMessage());
-        }
+        // Admin task: fix deposit amounts to match the agreed sheet values
+        fixDepositAmounts();
 
         System.out.println(">>> DATABASE SEEDER RUN SUCCESSFULLY COMPLETED!");
+    }
+
+    /**
+     * Fix deposit amounts for all class sessions to match the agreed amounts from the project sheet.
+     * Sheet column "Tiền Sơn cần làm" values (which equal the 25% deposit amounts):
+     * 1. Trần Thị Nguyên     → 900,000
+     * 2. Nguyễn Danh Tuyên   → 800,000
+     * 3. Hoàng Gia Bảo       → 880,000
+     * 4. Lê Nguyễn Diễu Anh  → 1,000,000
+     * 5. Dương Văn Thỏ       → 1,000,000
+     * 6. Nguyễn Thị Khuyên   → 600,000
+     * 7. Lê Thị Cẩm Vân      → 1,000,000
+     * 8. Tạ Văn Anh           → 750,000
+     * 9. Lê Thị Việt Hà      → 660,000
+     * 10. Đặng Khánh Linh    → 900,000
+     * 11. Nguyễn Hồng Nhung  → 800,000
+     * 12. Nguyễn Thị Thùy    → 900,000
+     *
+     * Strategy: update all DEPOSIT transactions by matching parentName on the class session.
+     * Only update if the amount is wrong (to avoid overwriting manually corrected data).
+     */
+    @Transactional
+    private void fixDepositAmounts() {
+        System.out.println(">>> Fixing deposit amounts to match agreed sheet values...");
+
+        // Map of parentName → correct deposit amount (as agreed in the project sheet)
+        java.util.Map<String, Double> correctAmounts = new java.util.LinkedHashMap<>();
+        correctAmounts.put("Trần Thị Nguyên", 900000.0);
+        correctAmounts.put("Nguyễn Danh Tuyên", 800000.0);
+        correctAmounts.put("Hoàng Gia Bảo", 880000.0);
+        correctAmounts.put("Lê Nguyễn Diễu Anh", 1000000.0);
+        correctAmounts.put("Dương Văn Thỏ", 1000000.0);
+        correctAmounts.put("Nguyễn Thị Khuyên", 600000.0);
+        correctAmounts.put("Lê Thị Cẩm Vân", 1000000.0);
+        correctAmounts.put("Tạ Văn Anh", 750000.0);
+        correctAmounts.put("Tạ Tiến Ninh", 750000.0);
+        correctAmounts.put("Lê Thị Việt Hà", 660000.0);
+        correctAmounts.put("Đặng Khánh Linh", 900000.0);
+        correctAmounts.put("Nguyễn Hồng Nhung", 800000.0);
+        correctAmounts.put("Nguyễn Thị Thùy", 900000.0);
+
+        try {
+            List<Transaction> allTransactions = transactionRepository.findAll();
+            int fixCount = 0;
+            for (Transaction tx : allTransactions) {
+                if (tx.getClassSession() == null) continue;
+                String parentName = tx.getClassSession().getParentName();
+                if (parentName == null) continue;
+                Double correct = correctAmounts.get(parentName.trim());
+                if (correct == null) continue;
+                // Only fix DEPOSIT type transactions
+                if (tx.getType() == null || !tx.getType().name().equals("DEPOSIT")) continue;
+                if (Math.abs(tx.getAmount() - correct) > 0.01) {
+                    System.out.printf(">>> Fixing %s: %.0f → %.0f%n", parentName, tx.getAmount(), correct);
+                    tx.setAmount(correct);
+                    transactionRepository.save(tx);
+                    fixCount++;
+                }
+            }
+            System.out.println(">>> Fixed " + fixCount + " deposit transactions.");
+        } catch (Exception e) {
+            System.err.println(">>> Error fixing deposit amounts: " + e.getMessage());
+        }
     }
 
     private void seedBookings() {
