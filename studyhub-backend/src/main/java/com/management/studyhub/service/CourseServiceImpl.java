@@ -22,6 +22,7 @@ public class CourseServiceImpl implements CourseService {
     private final SubjectRepository subjectRepository;
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<CourseDto> getFeaturedCourses() {
         // Fetch top 6 courses sorted by rating and review count
         List<Course> courses = courseRepository.findFeaturedCourses(PageRequest.of(0, 6));
@@ -31,6 +32,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<CourseDto> getAllCourses(List<Integer> subjectIds, Double maxPrice, String teachingMethod, List<String> grades, String keyword) {
         List<Course> courses;
         if (subjectIds != null && !subjectIds.isEmpty()) {
@@ -211,6 +213,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public CourseDto updateCourse(Long id, CourseDto courseDto) {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
@@ -223,7 +226,8 @@ public class CourseServiceImpl implements CourseService {
         course.setSchedule(courseDto.getSchedule() != null ? courseDto.getSchedule() : "TBD");
         
         Course updatedCourse = courseRepository.save(course);
-        return mapToDto(updatedCourse);
+        // Re-fetch with associations to avoid LazyInitializationException in mapToDto
+        return courseRepository.findById(updatedCourse.getId()).map(this::mapToDto).orElse(mapToDto(updatedCourse));
     }
 
     @Override
