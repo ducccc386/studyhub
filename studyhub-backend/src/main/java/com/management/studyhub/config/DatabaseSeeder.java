@@ -129,7 +129,9 @@ public class DatabaseSeeder implements CommandLineRunner {
         correctAmounts.put("Lê Thị Việt Hà", 660000.0);
         correctAmounts.put("Đặng Khánh Linh", 900000.0);
         correctAmounts.put("Nguyễn Hồng Nhung", 800000.0);
-        correctAmounts.put("Nguyễn Thị Thùy", 900000.0);
+        correctAmounts.put("Nguyễn Thị Thùy", 900000.0);   // ù variant
+        correctAmounts.put("Nguyễn Thị Thủy", 900000.0);   // ủ variant
+        correctAmounts.put("Nguyễn Thị Thuỷ", 900000.0);   // ỷ variant
 
         try {
             List<Transaction> allTransactions = transactionRepository.findAll();
@@ -138,12 +140,26 @@ public class DatabaseSeeder implements CommandLineRunner {
                 if (tx.getClassSession() == null) continue;
                 String parentName = tx.getClassSession().getParentName();
                 if (parentName == null) continue;
-                Double correct = correctAmounts.get(parentName.trim());
-                if (correct == null) continue;
+                String trimmed = parentName.trim();
                 // Only fix DEPOSIT type transactions
                 if (tx.getType() == null || !tx.getType().name().equals("DEPOSIT")) continue;
+
+                // Determine correct amount — try exact map lookup first
+                Double correct = correctAmounts.get(trimmed);
+
+                // Special case: handle all Unicode variants of "Thủy / Thùy / Thuỷ"
+                if (correct == null && trimmed.startsWith("Nguyễn Thị Th") && (
+                        trimmed.endsWith("y") || trimmed.endsWith("ỷ") ||
+                        trimmed.endsWith("ủy") || trimmed.endsWith("ùy") || trimmed.endsWith("uỷ")
+                )) {
+                    correct = 900000.0;
+                    System.out.println(">>> Matched Nguyễn Thị Thủy variant: [" + trimmed + "]");
+                }
+
+                if (correct == null) continue;
+
                 if (Math.abs(tx.getAmount() - correct) > 0.01) {
-                    System.out.printf(">>> Fixing %s: %.0f → %.0f%n", parentName, tx.getAmount(), correct);
+                    System.out.printf(">>> Fixing %s: %.0f → %.0f%n", trimmed, tx.getAmount(), correct);
                     tx.setAmount(correct);
                     transactionRepository.save(tx);
                     fixCount++;
